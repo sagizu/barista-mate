@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0f0a08;
+  --foreground: #EAE0D5;
+  --card: #1F1712;
+  --card-border: #3E2C22;
+  --input-bg: #15100d;
+  --input-border: #4A3B32;
+  --crema: #E6D2B5;
+  --bone: #EAE0D5;
+  --golden: #C67C4E;
+}
+
+body {
+  @apply text-[#EAE0D5] antialiased;
+  font-feature-settings: "ss01", "ss02", "cv01", "cv02";
+}
+
+[dir="rtl"] {
+  font-family: var(--font-hebrew), Heebo, system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    border-color: #3E2C22;
+  }
+}
