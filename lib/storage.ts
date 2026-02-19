@@ -6,7 +6,7 @@ const PEOPLE_KEY = "barista-mate-people";
 const DIAL_IN_HISTORY_KEY = "barista-mate-dial-in-history";
 const SAVED_BEANS_KEY = "barista-mate-saved-beans";
 const MACHINE_NAME_KEY = "barista-mate-machine-name";
-const ACTIVE_BEAN_ID_KEY = "barista-mate-active-bean-id";
+export const ACTIVE_BEAN_ID_KEY = "barista-mate-active-bean-id";
 
 
 export function getStoredPeople(): Person[] {
