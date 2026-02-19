@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -126,7 +127,7 @@ export function PeopleOrders() {
             הוסף אנשים והגדר מתכוני משקה לכל אחד
           </p>
         </div>
-        <Button onClick={() => setAddPersonOpen(true)}>
+        <Button onClick={() => setAddPersonOpen(true)} className="bg-[#C67C4E] text-white hover:bg-[#C67C4E]/90">
           <UserPlus className="h-4 w-4 ml-2" />
           הוסף אדם
         </Button>
@@ -223,7 +224,7 @@ export function PeopleOrders() {
 
       {/* Add Person Dialog */}
       <Dialog open={addPersonOpen} onOpenChange={setAddPersonOpen}>
-        <DialogContent onClose={() => setAddPersonOpen(false)}>
+        <DialogContent className="bg-[#1F1712] border-[#3E2C22]">
           <DialogHeader>
             <DialogTitle>הוסף אדם</DialogTitle>
           </DialogHeader>
@@ -250,7 +251,7 @@ export function PeopleOrders() {
 
       {/* Recipe Dialog */}
       <Dialog open={recipeDialogOpen} onOpenChange={setRecipeDialogOpen}>
-        <DialogContent onClose={() => setRecipeDialogOpen(false)}>
+        <DialogContent className="bg-[#1F1712] border-[#3E2C22]">
           <DialogHeader>
             <DialogTitle>
               {editingRecipe?.id && person?.recipes.some((r) => r.id === editingRecipe.id)

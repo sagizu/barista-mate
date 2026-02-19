@@ -43,11 +43,11 @@ export function calculateDialIn(
   if (time < targetMin) {
     feedback = "too_fast";
     message = "מהיר מדי! (חוסר חילוץ)";
-    advice = "טחן דק יותר.";
+    advice = "טחן דק יותר ⬆️";
   } else if (time > targetMax) {
     feedback = "too_slow";
     message = "איטי מדי! (חילוץ יתר)";
-    advice = "טחן גס יותר.";
+    advice = "טחן גס יותר ⬇️";
   } else {
     feedback = "perfect";
     message = "שוט מושלם! 🎯";

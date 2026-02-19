@@ -1,3 +1,5 @@
+import type { RoastLevel } from './dial-in';
+
 export type DrinkType =
   | "לאטה"
   | "קפוצ'ינו"
@@ -53,9 +55,15 @@ export interface SavedBean {
   roasterName: string;
   beanName: string;
   grindSetting: string;
+  roastLevel?: RoastLevel;
+  roasteryLink?: string;
+  beanDescription?: string;
   /** Flavor profile tags (multiple) */
   flavorTags?: string[];
+  pricePaid?: number;
+  bagWeightGrams?: number;
   createdAt: string;
+  openedDate?: string;
 }
 
 /** Pre-defined flavor tags for beans */
