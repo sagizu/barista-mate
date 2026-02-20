@@ -271,7 +271,7 @@ export default function Home() {
 
       <main className="container mx-auto max-w-4xl px-4 py-8">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 max-w-2xl">
+          <TabsList className="grid w-full h-auto grid-cols-2 gap-2 sm:h-10 sm:grid-cols-4 max-w-2xl">
             <TabsTrigger value="dial-in">כיול</TabsTrigger>
             <TabsTrigger value="beans">ספריית פולים</TabsTrigger>
             <TabsTrigger value="people">אנשים והזמנות</TabsTrigger>
