@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Heebo } from "next/font/google";
 import "./globals.css";
+import AuthWrapper from "@/components/AuthWrapper";
 
 const heebo = Heebo({
   subsets: ["hebrew", "latin"],
@@ -28,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="he" dir="rtl">
       <body className={`${heebo.variable} font-hebrew min-h-screen text-[#EAE0D5] bg-[#0f0a08]`}>
-        {children}
+        <AuthWrapper>{children}</AuthWrapper>
       </body>
     </html>
   );

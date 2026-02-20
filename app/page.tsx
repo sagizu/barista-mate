@@ -1,7 +1,18 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { Coffee, Settings, Calendar } from "lucide-react";
+import { Coffee, Settings, Calendar, User, LogOut } from "lucide-react";
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '../firebase-config';
+import { signOut } from 'firebase/auth';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +43,7 @@ import {
 import type { SavedBean } from "@/lib/types";
 
 export default function Home() {
+  const [user, loading, error] = useAuthState(auth);
   const [tab, setTab] = useState("dial-in");
   const [machineName, setMachineNameState] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -135,6 +147,10 @@ export default function Home() {
     setSettingsOpen(false);
     window.location.reload();
   };
+  
+  const handleSignOut = async () => {
+    await signOut(auth);
+  };
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#2a1d18] via-[#1a110e] to-[#0f0a08]">
@@ -171,6 +187,40 @@ export default function Home() {
             >
               <Settings className="h-5 w-5 text-[#E6D2B5]" />
             </Button>
+
+            {user && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="תפריט משתמש"
+                  >
+                    <User className="h-5 w-5 text-[#E6D2B5]" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-[#1F1712] border-[#3E2C22] text-[#EAE0D5]">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        שלום, {user.displayName || 'משתמש'}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground text-[#EAE0D5]/70">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-[#3E2C22]" />
+                  <DropdownMenuItem
+                    onClick={handleSignOut}
+                    className="cursor-pointer focus:bg-[#3E2C22] focus:text-[#EAE0D5]"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>התנתק</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </header>

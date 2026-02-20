@@ -1,3 +1,4 @@
+
 import type { RoastLevel } from './dial-in';
 
 export type DrinkType =
@@ -38,6 +39,12 @@ export interface Person {
   id: string;
   name: string;
   recipes: DrinkRecipe[];
+}
+
+export interface Roastery {
+  id: string;
+  name: string;
+  isFromStaticList: boolean;
 }
 
 export interface DialInRecord {
