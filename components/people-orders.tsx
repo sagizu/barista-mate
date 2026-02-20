@@ -1,5 +1,11 @@
 import {
-  Card,  CardContent,  CardDescription,  CardFooter,  CardHeader,  CardTitle,} from "./ui/card";
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
 import { DrinkRecipe, Person } from "../lib/types";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
@@ -19,23 +25,23 @@ import { PeopleRecipeDialog } from "./people-recipe-dialog";
 const LOCAL_STORAGE_KEY = "barista_mate_people";
 
 const newPerson = (name: string): Person => ({
-    id: crypto.randomUUID(),
-    name,
-    recipes: [],
-  });
-  
-  const newRecipe = (): DrinkRecipe => ({
-    id: crypto.randomUUID(),
-    drinkType: "Espresso",
-    milkType: "Oat",
-    milkAmountMl: 150,
-    extraNotes: "",
-  });
+  id: crypto.randomUUID(),
+  name,
+  recipes: [],
+});
 
+// Corrected to match the DrinkRecipe interface and use Hebrew literals
+const newRecipe = (): DrinkRecipe => ({
+  id: crypto.randomUUID(),
+  drinkType: "אספרסו",
+  milkType: "ללא",
+  milkAmountMl: 0,
+  sugarSyrup: "ללא",
+  ice: "ללא",
+  notes: "",
+});
 
 const persist = (people: Person[]) => {
-  // In a real app, this would be an API call to a server.
-  // For now, we''''''ll use local storage.
   localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(people));
   window.dispatchEvent(
     new StorageEvent("storage", { key: LOCAL_STORAGE_KEY, newValue: JSON.stringify(people) })
@@ -62,9 +68,6 @@ export const PeopleOrders = () => {
   }, []);
 
   useEffect(() => {
-    // This is a bit of a hack to persist the people state
-    // whenever it changes. A better solution would be to use a state
-    // management library like Redux or Zustand.
     const handler = (e: StorageEvent) => {
       if (e.key === LOCAL_STORAGE_KEY && e.newValue) {
         setPeople(JSON.parse(e.newValue));
@@ -74,63 +77,62 @@ export const PeopleOrders = () => {
     return () => window.removeEventListener("storage", handler);
   }, []);
 
-    const addPerson = () => {
-        const name = newPersonName.trim();
-        if (!name) return;
-        const next = [...people, newPerson(name)];
-        persist(next);
-        setNewPersonName("");
-        setAddPersonOpen(false);
-      };
-    
-      const removePerson = (id: string) => {
-        persist(people.filter((p) => p.id !== id));
-      };
-    
-      const addRecipe = (personId: string) => {
-        setEditingPersonId(personId);
-        setEditingRecipe(newRecipe());
-        setRecipeDialogOpen(true);
-      };
-    
-      const editRecipe = (personId: string, recipe: DrinkRecipe) => {
-        setEditingPersonId(personId);
-        setEditingRecipe({ ...recipe });
-        setRecipeDialogOpen(true);
-      };
+  const addPerson = () => {
+    const name = newPersonName.trim();
+    if (!name) return;
+    const next = [...people, newPerson(name)];
+    persist(next);
+    setNewPersonName("");
+    setAddPersonOpen(false);
+  };
 
-      const saveRecipe = (recipe: DrinkRecipe) => {
-        if (!editingPersonId) return;
-        const person = people.find((p) => p.id === editingPersonId);
-        if (!person) return;
+  const removePerson = (id: string) => {
+    persist(people.filter((p) => p.id !== id));
+  };
 
-        const isNew = !person.recipes.some(r => r.id === recipe.id);
+  const addRecipe = (personId: string) => {
+    setEditingPersonId(personId);
+    setEditingRecipe(newRecipe());
+    setRecipeDialogOpen(true);
+  };
 
-        const updatedRecipes = isNew
-          ? [...person.recipes, recipe]
-          : person.recipes.map((r) => (r.id === recipe.id ? recipe : r));
+  const editRecipe = (personId: string, recipe: DrinkRecipe) => {
+    setEditingPersonId(personId);
+    setEditingRecipe({ ...recipe });
+    setRecipeDialogOpen(true);
+  };
 
-        const next = people.map((p) =>
-          p.id === editingPersonId ? { ...p, recipes: updatedRecipes } : p
-        );
-        persist(next);
-        setRecipeDialogOpen(false);
-      };
+  const saveRecipe = (recipe: DrinkRecipe) => {
+    if (!editingPersonId) return;
+    const person = people.find((p) => p.id === editingPersonId);
+    if (!person) return;
 
-      const deleteRecipe = (recipeId: string) => {
-        if (!editingPersonId) return;
-        const person = people.find((p) => p.id === editingPersonId);
-        if (!person) return;
+    const isNew = !person.recipes.some((r) => r.id === recipe.id);
 
-        const next = people.map((p) =>
-          p.id === editingPersonId
-            ? { ...p, recipes: p.recipes.filter((r) => r.id !== recipeId) }
-            : p
-        );
-        persist(next);
-        setRecipeDialogOpen(false);
-      }
+    const updatedRecipes = isNew
+      ? [...person.recipes, recipe]
+      : person.recipes.map((r) => (r.id === recipe.id ? recipe : r));
 
+    const next = people.map((p) =>
+      p.id === editingPersonId ? { ...p, recipes: updatedRecipes } : p
+    );
+    persist(next);
+    setRecipeDialogOpen(false);
+  };
+
+  const deleteRecipe = (recipeId: string) => {
+    if (!editingPersonId) return;
+    const person = people.find((p) => p.id === editingPersonId);
+    if (!person) return;
+
+    const next = people.map((p) =>
+      p.id === editingPersonId
+        ? { ...p, recipes: p.recipes.filter((r) => r.id !== recipeId) }
+        : p
+    );
+    persist(next);
+    setRecipeDialogOpen(false);
+  };
 
   return (
     <div className="p-4">
@@ -152,11 +154,13 @@ export const PeopleOrders = () => {
               ) : (
                 <ul className="space-y-2">
                   {person.recipes.map((recipe) => (
-                     <li key={recipe.id} 
-                         className="text-sm p-2 rounded-md bg-stone-900/50 cursor-pointer hover:bg-stone-900"
-                         onClick={() => editRecipe(person.id, recipe)} >
-                     {recipe.drinkType} - {recipe.milkType}, {recipe.milkAmountMl}ml
-                   </li>
+                    <li
+                      key={recipe.id}
+                      className="text-sm p-2 rounded-md bg-stone-900/50 cursor-pointer hover:bg-stone-900"
+                      onClick={() => editRecipe(person.id, recipe)}
+                    >
+                      {recipe.drinkType} - {recipe.milkType}, {recipe.milkAmountMl}ml
+                    </li>
                   ))}
                 </ul>
               )}
@@ -179,23 +183,22 @@ export const PeopleOrders = () => {
           <DialogHeader>
             <DialogTitle>הוספת אדם חדש</DialogTitle>
             <DialogDescription>
-                הזן את שם האדם שברצונך להוסיף לרשימת ההזמנות.
+              הזן את שם האדם שברצונך להוסיף לרשימת ההזמנות.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <Input 
-                value={newPersonName} 
-                onChange={e => setNewPersonName(e.target.value)} 
-                placeholder="לדוגמה: שרה" 
-                onKeyDown={(e) => e.key === 'Enter' && addPerson()}
-                />
+            <Input
+              value={newPersonName}
+              onChange={(e) => setNewPersonName(e.target.value)}
+              placeholder="לדוגמה: שרה"
+              onKeyDown={(e) => e.key === "Enter" && addPerson()}
+            />
           </div>
           <DialogFooter>
             <Button onClick={addPerson}>שמור</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
 
       {editingRecipe && (
         <PeopleRecipeDialog

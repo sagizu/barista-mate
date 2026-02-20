@@ -9,8 +9,14 @@ import {
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Select } from "./ui/select"; // Simplified import
-import { DrinkRecipe, DrinkType, MilkType } from "../lib/types";
+import { Select } from "./ui/select";
+import {
+  DrinkRecipe,
+  DrinkType,
+  MilkType,
+  DRINK_TYPES, // Import from types
+  MILK_TYPES, // Import from types
+} from "../lib/types";
 import { useEffect, useState } from "react";
 import { Textarea } from "./ui/textarea";
 
@@ -21,9 +27,6 @@ interface PeopleRecipeDialogProps {
   onSave: (recipe: DrinkRecipe) => void;
   onDelete: (recipeId: string) => void;
 }
-
-const DRINK_TYPES: DrinkType[] = ["Espresso", "Americano", "Latte", "Cappuccino"];
-const MILK_TYPES: MilkType[] = ["None", "Whole", "Skim", "Oat", "Soy", "Almond"];
 
 export const PeopleRecipeDialog = ({
   open,
@@ -60,7 +63,6 @@ export const PeopleRecipeDialog = ({
             <Label htmlFor="drinkType" className="text-right">
               סוג משקה
             </Label>
-            {/* Using the simplified Select component */}
             <Select
               id="drinkType"
               className="col-span-3"
@@ -113,25 +115,53 @@ export const PeopleRecipeDialog = ({
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="extraNotes" className="text-right">
+            <Label htmlFor="sugarSyrup" className="text-right">
+              סירופ סוכר
+            </Label>
+            <Input
+              id="sugarSyrup"
+              value={editedRecipe.sugarSyrup}
+              onChange={(e) =>
+                setEditedRecipe({ ...editedRecipe, sugarSyrup: e.target.value })
+              }
+              className="col-span-3"
+              placeholder="לדוגמה: כפית אחת, ללא"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="ice" className="text-right">
+              קרח
+            </Label>
+            <Input
+              id="ice"
+              value={editedRecipe.ice}
+              onChange={(e) =>
+                setEditedRecipe({ ...editedRecipe, ice: e.target.value })
+              }
+              className="col-span-3"
+              placeholder="לדוגמה: 3 קוביות, גרוס"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="notes" className="text-right">
               הערות
             </Label>
             <Textarea
-              id="extraNotes"
-              value={editedRecipe.extraNotes}
+              id="notes"
+              value={editedRecipe.notes}
               onChange={(e) =>
-                setEditedRecipe({ ...editedRecipe, extraNotes: e.target.value })
+                setEditedRecipe({ ...editedRecipe, notes: e.target.value })
               }
               className="col-span-3"
-              placeholder="לדוגמה: חזק במיוחד, כפית סוכר"
+              placeholder="לדוגמה: חזק במיוחד"
             />
           </div>
         </div>
         <DialogFooter className="justify-between sm:justify-between">
-            <Button variant="destructive" onClick={handleDelete}>
-                מחק
-            </Button>
-            <Button onClick={handleSave}>שמור שינויים</Button>
+          <Button variant="destructive" onClick={handleDelete}>
+            מחק
+          </Button>
+          <Button onClick={handleSave}>שמור שינויים</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
