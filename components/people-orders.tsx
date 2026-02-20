@@ -3,9 +3,7 @@ import {
 import { DrinkRecipe, Person } from "../lib/types";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
-import { newPerson, newRecipe } from "../lib/factory";
 import { PlusCircle, Trash2 } from "lucide-react";
-import { PeopleRecipeDialog } from "./people-recipe-dialog";
 import {
   Dialog,
   DialogContent,
@@ -16,14 +14,33 @@ import {
   DialogTrigger,
 } from "./ui/dialog";
 import { Input } from "./ui/input";
+import { PeopleRecipeDialog } from "./PeopleRecipeDialog";
 
 const LOCAL_STORAGE_KEY = "barista_mate_people";
 
-// TODO: Add a way to reorder people
-// TODO: Add a way to order drinks for a person
+
+const newPerson = (name: string): Person => ({
+    id: crypto.randomUUID(),
+    name,
+    recipes: [],
+  });
+  
+  const newRecipe = (): DrinkRecipe => ({
+    id: crypto.randomUUID(),
+    drinkType: "Espresso",
+    milkType: "Oat",
+    milkAmountMl: 150,
+    extraNotes: "",
+  });
+
 
 const persist = (people: Person[]) => {
+  // In a real app, this would be an API call to a server.
+  // For now, we''''''ll use local storage.
   localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(people));
+  window.dispatchEvent(
+    new StorageEvent("storage", { key: LOCAL_STORAGE_KEY, newValue: JSON.stringify(people) })
+  );
 };
 
 export const PeopleOrders = () => {
@@ -193,4 +210,3 @@ export const PeopleOrders = () => {
     </div>
   );
 };
-// Trigger rebuild
