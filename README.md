@@ -1,9 +1,7 @@
+
 # ☕ Barista Mate | Your Personal Espresso Companion
 
 A professional Progressive Web App (PWA) designed to manage and perfect your home espresso experience. This tool helps you dial in shots, track your beans, and manage custom drink orders for family and friends.
-
-**🚀 Live Access**
-App URL: https://social-coffe-app.vercel.app/
 
 ---
 
@@ -39,7 +37,7 @@ App URL: https://social-coffe-app.vercel.app/
 - **Deployment**: Vercel
 
 ##  Roadmap
-1.  **Full User Authentication**: Implement Google & Apple sign-in options.
+1.  **Full User Authentication**: **✓ Done!** Google sign-in is now implemented.
 2.  **Bean Library V2**: Add sharing capabilities and user ratings for beans.
 3.  **Community Features**: Create a social feed to see what beans friends are using.
 4.  **PWA & Native**: Enhance PWA capabilities and wrap the app for native mobile stores.
