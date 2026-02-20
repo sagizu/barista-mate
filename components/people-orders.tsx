@@ -14,10 +14,9 @@ import {
   DialogTrigger,
 } from "./ui/dialog";
 import { Input } from "./ui/input";
-import { PeopleRecipeDialog } from "./PeopleRecipeDialog";
+import { PeopleRecipeDialog } from "./people-recipe-dialog";
 
 const LOCAL_STORAGE_KEY = "barista_mate_people";
-
 
 const newPerson = (name: string): Person => ({
     id: crypto.randomUUID(),
