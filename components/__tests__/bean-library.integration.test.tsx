@@ -1,130 +1,79 @@
 
-import React from 'react';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { BeanLibrary } from '../bean-library';
-import { addBean, updateBean } from '@/lib/firestore';
-import { useCollection } from 'react-firebase-hooks/firestore';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { format } from 'date-fns';
-import { he } from 'date-fns/locale';
+import { BeanLibrary } from '@/components/bean-library';
+import * as storage from '@/lib/storage';
 
-// --- Mocks ---
-jest.mock('@/lib/firestore', () => ({
-  addBean: jest.fn(),
-  updateBean: jest.fn(),
-}));
-
-jest.mock('react-firebase-hooks/auth', () => ({
-  useAuthState: jest.fn(),
-}));
-
-jest.mock('react-firebase-hooks/firestore', () => ({
-  useCollection: jest.fn(),
-}));
-
-jest.mock('../roaster-combobox', () => ({
-    RoasterCombobox: ({ value, onChange }: { value: string, onChange: (v: string) => void}) => (
-        <input 
-            aria-label="Roaster"
-            value={value} 
-            onChange={(e) => onChange(e.target.value)} 
-        />
-    )
-}));
-
-// --- Test Suite ---
-describe('BeanLibrary Integration Test', () => {
-  const user = { uid: 'test-user' };
-  let mockDocs: any[] = [];
-  let triggerCollectionUpdate: () => void = () => {};
+describe('BeanLibrary', () => {
+  let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockDocs = [];
-
-    (useAuthState as jest.Mock).mockReturnValue([user, false, undefined]);
-
-    // This mock now correctly captures the trigger and returns the current state of mockDocs
-    (useCollection as jest.Mock).mockImplementation(() => {
-      const [, forceUpdate] = React.useReducer(x => x + 1, 0);
-      React.useEffect(() => {
-          triggerCollectionUpdate = forceUpdate;
-      }, []);
-      return [{ docs: mockDocs.map(bean => ({ id: bean.id, data: () => bean })) }, false, undefined];
+    user = userEvent.setup();
+    // Mock localStorage
+    vi.spyOn(window.localStorage.__proto__, 'getItem').mockImplementation((key) => {
+      if (key === 'beans') return JSON.stringify([]);
+      return null;
     });
-
-    // --- IMMUTABLE MOCK IMPLEMENTATIONS ---
-    (addBean as jest.Mock).mockImplementation(async (beanData) => {
-      const newBean = { ...beanData, id: `bean-${Date.now()}`, createdAt: new Date() };
-      mockDocs = [...mockDocs, newBean]; // Create new array
-      act(() => {
-        triggerCollectionUpdate(); 
-      });
-      return Promise.resolve({ id: newBean.id });
-    });
-
-    (updateBean as jest.Mock).mockImplementation(async (id, beanData) => {
-        const beanIndex = mockDocs.findIndex(b => b.id === id);
-        if (beanIndex > -1) {
-            const newDocs = [...mockDocs]; // Create new array
-            newDocs[beanIndex] = { ...newDocs[beanIndex], ...beanData };
-            mockDocs = newDocs; // Replace with new array
-            act(() => {
-                triggerCollectionUpdate();
-            });
-        }
-        return Promise.resolve();
-    });
+    vi.spyOn(window.localStorage.__proto__, 'setItem').mockImplementation(() => {});
   });
 
-  test('full user flow: add, set open date, and edit beans', async () => {
-    const user = userEvent.setup();
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test('should add, edit, and delete a bean, and display info correctly', async () => {
     render(<BeanLibrary />);
 
-    const addTestBean = async (roaster: string, name: string) => {
-      await user.click(screen.getByRole('button', { name: /הוסף פול/i }));
-      const dialogTitle = /הוסף פול חדש לספרייה/i;
-      await screen.findByText(dialogTitle);
-      await user.type(screen.getByLabelText(/Roaster/i), roaster);
-      await user.type(screen.getByLabelText(/שם הפול/i), name);
-      await user.click(screen.getByRole('button', { name: "שמור" }));
-      await waitFor(() => {
-        expect(screen.queryByText(dialogTitle)).not.toBeInTheDocument();
-      });
-    };
-
-    await addTestBean('Roaster A', 'Bean A1');
-    await addTestBean('Roaster B', 'Bean B1');
+    // 1. Add a new bean
+    await user.click(screen.getByRole('button', { name: /הוסף פול/i }));
     
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText(/הוסף פול חדש/i)).toBeInTheDocument();
+
+    await user.type(within(dialog).getByLabelText(/שם בית הקלייה/i), "גל'ס");
+    await user.type(within(dialog).getByLabelText(/שם הפול/i), 'קולומביה');
+    await user.type(within(dialog).getByLabelText(/דרגת טחינה/i), '4.2');
+    await user.click(within(dialog).getByRole('button', { name: 'בינונית' })); // Select roast level
+    await user.type(within(dialog).getByLabelText(/מחיר ששולם/i), '80');
+    await user.type(within(dialog).getByLabelText(/משקל שקית/i), '250');
+    await user.click(within(dialog).getByRole('button', { name: 'הוסף פול' }));
+
     await waitFor(() => {
-      expect(screen.getByText('Roaster A')).toBeInTheDocument();
-      expect(screen.getByText('Roaster B')).toBeInTheDocument();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    
+    // Verify bean was added and displays correctly
+    expect(await screen.findByText("גל'ס")).toBeInTheDocument();
+    expect(screen.getByText('קולומביה')).toBeInTheDocument();
+    expect(screen.getByText(/טחינה: 4.2/i)).toBeInTheDocument();
+    expect(screen.getByText(/קלייה בינונית/i)).toBeInTheDocument();
+    expect(screen.getByText(/320.00₪/i)).toBeInTheDocument(); // 80 / 250 * 1000
+
+    // 2. Edit the bean
+    await user.click(screen.getByRole('button', { name: /ערוך/i }));
+    
+    const editDialog = await screen.findByRole('dialog');
+    expect(within(editDialog).getByText(/ערוך פול קיים/i)).toBeInTheDocument();
+
+    const grindSettingInput = within(editDialog).getByLabelText(/דרגת טחינה/i);
+    await user.clear(grindSettingInput);
+    await user.type(grindSettingInput, '4.5');
+    await user.click(within(editDialog).getByRole('button', { name: /שמור שינויים/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
-    const editBean = async (beanName: string, newName: string) => {
-        const beanCard = screen.getByText(beanName).closest('div.border-t');
-        if (!beanCard) throw new Error(`Could not find card for ${beanName}`);
-        const editButton = Array.from(beanCard.querySelectorAll('button')).find(b => b.getAttribute('aria-label') === 'ערוך') as HTMLElement;
-        await user.click(editButton);
+    // Verify bean was edited
+    expect(await screen.findByText(/טחינה: 4.5/i)).toBeInTheDocument();
 
-        const editDialogTitle = /ערוך פול קפה/i;
-        await screen.findByText(editDialogTitle);
+    // 3. Delete the bean
+    await user.click(screen.getByRole('button', { name: /מחק/i }));
 
-        const beanNameInput = screen.getByLabelText(/שם הפול/i);
-        await user.clear(beanNameInput);
-        await user.type(beanNameInput, newName);
-        await user.click(screen.getByRole('button', { name: "שמור" }));
-        
-        await waitFor(() => {
-           expect(screen.queryByText(editDialogTitle)).not.toBeInTheDocument();
-        });
-    };
-
-    await editBean('Bean A1', 'Bean A1 Edited');
-
+    // Verify bean was deleted
     await waitFor(() => {
-      expect(screen.getByText('Bean A1 Edited')).toBeInTheDocument();
+      expect(screen.queryByText("גל'ס")).not.toBeInTheDocument();
+      expect(screen.getByText(/אין פולים בספרייה/i)).toBeInTheDocument();
     });
   });
 });

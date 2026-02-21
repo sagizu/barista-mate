@@ -2,13 +2,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BookOpen, Trash2, ExternalLink, PlusCircle, Pencil } from "lucide-react"; // Removed CalendarIcon
+import { BookOpen, Trash2, ExternalLink, PlusCircle, Pencil } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getStoredBeans, removeSavedBean } from "@/lib/storage";
 import type { SavedBean } from "@/lib/types";
+import type { RoastLevel } from "@/lib/dial-in";
 import { AddBeanDialog } from "@/components/add-bean-dialog";
+
+const ROAST_LEVEL_LABELS: Record<RoastLevel, string> = {
+  light: "קלייה בהירה",
+  medium: "קלייה בינונית",
+  dark: "קלייה כהה",
+};
 
 export function BeanLibrary() {
   const [beans, setBeans] = useState<SavedBean[]>([]);
@@ -91,19 +98,33 @@ export function BeanLibrary() {
                 <CardContent className="space-y-4 flex-grow">
                  {beansInGroup.map(bean => {
                      const pricePerKg = calculatePricePerKg(bean.pricePaid, bean.bagWeightGrams);
+                     const roastLabel = bean.roastLevel ? ROAST_LEVEL_LABELS[bean.roastLevel] : null;
+
                      return (
                         <div key={bean.id} className="border-t border-[#3E2C22] pt-4">
                             <div className="flex justify-between items-start">
-                                <div className="space-y-1.5">
+                                <div className="space-y-2">
                                     <p className="font-semibold text-[#E6D2B5]">{bean.beanName}</p>
-                                     <Badge
-                                        variant="secondary"
-                                        className="bg-[#C67C4E]/20 text-[#E6D2B5] border-[#C67C4E]/40 font-medium"
-                                    >
-                                        טחינה: {bean.grindSetting}
-                                    </Badge>
+                                     <div className="flex flex-wrap gap-2">
+                                        {bean.grindSetting && (
+                                            <Badge
+                                                variant="secondary"
+                                                className="bg-[#C67C4E]/20 text-[#E6D2B5] border-[#C67C4E]/40 font-medium"
+                                            >
+                                                טחינה: {bean.grindSetting}
+                                            </Badge>
+                                        )}
+                                        {roastLabel && (
+                                            <Badge
+                                                variant="secondary"
+                                                className="bg-sky-900/30 text-sky-300 border-sky-700/80 font-medium"
+                                            >
+                                                {roastLabel}
+                                            </Badge>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="flex gap-1">
+                                <div className="flex gap-1 flex-shrink-0">
                                     <Button
                                     variant="ghost"
                                     size="icon"
@@ -126,12 +147,11 @@ export function BeanLibrary() {
                             </div>
                             
                             {bean.beanDescription && (
-                                <p className="text-sm text-[#EAE0D5]/90 whitespace-pre-line mt-2">{bean.beanDescription}</p>
+                                <p className="text-sm text-[#EAE0D5]/90 whitespace-pre-line mt-3">{bean.beanDescription}</p>
                             )}
-                            {(bean.pricePaid && bean.bagWeightGrams) && (
-                                <div className="text-sm text-[#EAE0D5]/80 mt-2">
-                                    <span>{bean.pricePaid}₪ לשקית של {bean.bagWeightGrams} גרם</span>
-                                    {pricePerKg && <span> · <span className="font-medium text-[#C67C4E]">{pricePerKg}₪</span> לק"ג</span>}
+                            {pricePerKg && (
+                                <div className="text-sm text-[#EAE0D5]/80 mt-2 font-medium">
+                                    <span className="font-bold text-[#C67C4E]">{pricePerKg}₪</span> / לק"ג
                                 </div>
                             )}
                             {bean.roasteryLink && (
@@ -146,7 +166,7 @@ export function BeanLibrary() {
                                 </a>
                             )}
                             {bean.flavorTags && bean.flavorTags.length > 0 && (
-                                <div className="flex flex-wrap gap-1 pt-2">
+                                <div className="flex flex-wrap gap-1 pt-3">
                                 {bean.flavorTags.map((tag) => (
                                     <span
                                     key={tag}
