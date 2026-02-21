@@ -2,19 +2,24 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BeanLibrary } from '@/components/bean-library';
-import * as storage from '@/lib/storage';
 
 describe('BeanLibrary', () => {
   let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
     user = userEvent.setup();
-    // Mock localStorage
-    vi.spyOn(window.localStorage.__proto__, 'getItem').mockImplementation((key) => {
-      if (key === 'beans') return JSON.stringify([]);
-      return null;
+    // More realistic localStorage mock
+    let store: { [key: string]: string } = {};
+    vi.spyOn(window.localStorage.__proto__, 'getItem').mockImplementation((key: string) => store[key] || null);
+    vi.spyOn(window.localStorage.__proto__, 'setItem').mockImplementation((key: string, value: string) => {
+      store[key] = value.toString();
     });
-    vi.spyOn(window.localStorage.__proto__, 'setItem').mockImplementation(() => {});
+    vi.spyOn(window.localStorage.__proto__, 'clear').mockImplementation(() => {
+      store = {};
+    });
+
+    // Initialize with an empty 'beans' array
+    localStorage.setItem('beans', '[]');
   });
 
   afterEach(() => {
@@ -43,7 +48,7 @@ describe('BeanLibrary', () => {
     });
     
     // Verify bean was added and displays correctly
-    expect(await screen.findByText("גל'ס")).toBeInTheDocument();
+    expect(await screen.findByText(/גל'ס/i)).toBeInTheDocument();
     expect(screen.getByText('קולומביה')).toBeInTheDocument();
     expect(screen.getByText(/טחינה: 4.2/i)).toBeInTheDocument();
     expect(screen.getByText(/קלייה בינונית/i)).toBeInTheDocument();
@@ -72,7 +77,7 @@ describe('BeanLibrary', () => {
 
     // Verify bean was deleted
     await waitFor(() => {
-      expect(screen.queryByText("גל'ס")).not.toBeInTheDocument();
+      expect(screen.queryByText(/גל'ס/i)).not.toBeInTheDocument();
       expect(screen.getByText(/אין פולים בספרייה/i)).toBeInTheDocument();
     });
   });
