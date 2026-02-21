@@ -44,7 +44,7 @@ import type { SavedBean } from "@/lib/types";
 
 export default function Home() {
   const [user, loading, error] = useAuthState(auth);
-  const [tab, setTab] = useState("dial-in");
+  const [tab, setTab] = useState("beans"); // Changed default tab to 'beans'
   const [machineName, setMachineNameState] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [beans, setBeans] = useState<SavedBean[]>([]);
@@ -322,22 +322,22 @@ export default function Home() {
       <main className="container mx-auto max-w-4xl px-4 py-8">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList className="grid w-full h-auto grid-cols-2 gap-2 sm:h-10 sm:grid-cols-4 max-w-2xl">
-            <TabsTrigger value="dial-in">כיול</TabsTrigger>
             <TabsTrigger value="beans">ספריית פולים</TabsTrigger>
-            <TabsTrigger value="people">אנשים והזמנות</TabsTrigger>
+            <TabsTrigger value="dial-in">כיול</TabsTrigger>
             <TabsTrigger value="maintenance">תחזוקה</TabsTrigger>
+            <TabsTrigger value="people">אנשים והזמנות</TabsTrigger>
           </TabsList>
-          <TabsContent value="dial-in" className="mt-6">
-            <SmartDialIn />
-          </TabsContent>
-          <TabsContent value="people" className="mt-6 overflow-y-auto">
-            <PeopleOrders />
-          </TabsContent>
           <TabsContent value="beans" className="mt-6 overflow-y-auto">
             <BeanLibrary />
           </TabsContent>
+          <TabsContent value="dial-in" className="mt-6">
+            <SmartDialIn />
+          </TabsContent>
           <TabsContent value="maintenance" className="mt-6">
             <MaintenanceLog />
+          </TabsContent>
+          <TabsContent value="people" className="mt-6 overflow-y-auto">
+            <PeopleOrders />
           </TabsContent>
         </Tabs>
       </main>
