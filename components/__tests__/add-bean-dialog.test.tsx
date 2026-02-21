@@ -1,0 +1,78 @@
+
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { AddBeanDialog } from '@/components/add-bean-dialog';
+import * as storage from '@/lib/storage';
+import * as roasteryStorage from '@/lib/roasteries-storage';
+
+describe('AddBeanDialog', () => {
+  let user: ReturnType<typeof userEvent.setup>;
+  const onBeanAdded = vi.fn();
+  const onDialogClose = vi.fn();
+
+  beforeEach(() => {
+    user = userEvent.setup();
+    vi.spyOn(storage, 'addSavedBean').mockImplementation(() => {});
+    vi.spyOn(storage, 'updateSavedBean').mockImplementation(() => {});
+    vi.spyOn(roasteryStorage, 'addStoredRoastery').mockImplementation(() => {});
+    vi.spyOn(roasteryStorage, 'getStoredRoasteries').mockReturnValue([]);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    onBeanAdded.mockClear();
+    onDialogClose.mockClear();
+  });
+
+  test('should display an error if bean name is missing', async () => {
+    render(<AddBeanDialog open={true} onOpenChange={() => {}} onBeanAdded={onBeanAdded} beanToEdit={null} onDialogClose={onDialogClose} />);
+    
+    await user.click(screen.getByRole('button', { name: /הוסף פול/i }));
+
+    expect(await screen.findByText(/"שם הפול" הוא שדה חובה./i)).toBeInTheDocument();
+    expect(storage.addSavedBean).not.toHaveBeenCalled();
+    expect(onBeanAdded).not.toHaveBeenCalled();
+  });
+
+  test('should add a new bean successfully', async () => {
+    render(<AddBeanDialog open={true} onOpenChange={() => {}} onBeanAdded={onBeanAdded} beanToEdit={null} onDialogClose={onDialogClose} />);
+    
+    const dialog = screen.getByRole('dialog');
+    await user.type(within(dialog).getByLabelText(/שם הפול/i), 'טסט פול');
+    await user.type(within(dialog).getByLabelText(/שם בית הקלייה/i), 'טסט קלייה');
+    await user.click(within(dialog).getByRole('button', { name: /הוסף פול/i }));
+
+    await waitFor(() => {
+        expect(storage.addSavedBean).toHaveBeenCalledWith({ beanName: 'טסט פול', roasterName: 'טסט קלייה', flavorTags: [], roastLevel: 'medium' });
+    });
+    await waitFor(() => {
+        expect(onBeanAdded).toHaveBeenCalled();
+    });
+  });
+
+  test('should edit an existing bean', async () => {
+    const beanToEdit = { id: '1', beanName: 'פול ישן', roasterName: 'קלייה ישנה', grindSetting: '4' };
+    render(<AddBeanDialog open={true} onOpenChange={() => {}} onBeanAdded={onBeanAdded} beanToEdit={beanToEdit} onDialogClose={onDialogClose} />);
+    
+    const dialog = screen.getByRole('dialog');
+    const beanNameInput = within(dialog).getByLabelText(/שם הפול/i);
+    await user.clear(beanNameInput);
+    await user.type(beanNameInput, 'פול חדש');
+    await user.click(within(dialog).getByRole('button', { name: /שמור שינויים/i }));
+
+    await waitFor(() => {
+        expect(storage.updateSavedBean).toHaveBeenCalledWith({ ...beanToEdit, beanName: 'פול חדש' });
+    });
+     await waitFor(() => {
+        expect(onBeanAdded).toHaveBeenCalled();
+    });
+  });
+
+  test('should call onClose when cancel button is clicked', async () => {
+    render(<AddBeanDialog open={true} onOpenChange={() => {}} onBeanAdded={onBeanAdded} beanToEdit={null} onDialogClose={onDialogClose} />);
+    
+    await user.click(screen.getByRole('button', { name: /ביטול/i }));
+
+    expect(onDialogClose).toHaveBeenCalled();
+  });
+});

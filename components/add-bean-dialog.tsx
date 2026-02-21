@@ -43,6 +43,7 @@ export function AddBeanDialog({
 }: AddBeanDialogProps) {
   const [bean, setBean] = useState<Partial<SavedBean>>({});
   const [roasteries, setRoasteries] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -56,25 +57,29 @@ export function AddBeanDialog({
   }, [open, beanToEdit]);
 
   const handleSave = () => {
-    // Basic validation
-    if (bean.beanName && bean.roasterName && bean.grindSetting) {
-      if (bean.roasterName) {
-        addStoredRoastery(bean.roasterName);
-      }
-      
-      if (bean.id) {
-        updateSavedBean(bean as SavedBean);
-      } else {
-        addSavedBean(bean as any);
-      }
-      setBean({}); // Reset form
-      onBeanAdded();
+    setError(null);
+    if (!bean.beanName?.trim()) {
+        setError('"שם הפול" הוא שדה חובה.');
+        return;
     }
+
+    if (bean.roasterName) {
+      addStoredRoastery(bean.roasterName);
+    }
+    
+    if (bean.id) {
+      updateSavedBean(bean as SavedBean);
+    } else {
+      addSavedBean(bean as any);
+    }
+    setBean({}); // Reset form
+    onBeanAdded();
   };
 
   const handleClose = () => {
     onDialogClose();
     setBean({ flavorTags: [] }); // Reset form state on close
+    setError(null);
   };
 
   const toggleFlavorTag = (tag: string) => {
@@ -172,13 +177,12 @@ export function AddBeanDialog({
             <Textarea id="beanDescription" value={bean.beanDescription || ''} onChange={(e) => setBean({ ...bean, beanDescription: e.target.value })} />
           </div>
         </div>
-        <DialogFooter className="flex-shrink-0 pt-4 items-center justify-end">
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleClose}>
-              ביטול
-            </Button>
-            <Button onClick={handleSave}>{bean.id ? "שמור שינויים" : "הוסף פול"}</Button>
-          </div>
+        <DialogFooter className="flex-shrink-0 pt-4 items-center justify-between">
+            {error && <p className="text-sm text-red-500 text-right">{error}</p>}
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleClose}>ביטול</Button>
+              <Button onClick={handleSave}>{bean.id ? "שמור שינויים" : "הוסף פול"}</Button>
+            </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

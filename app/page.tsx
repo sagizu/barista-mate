@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { Coffee, Settings, Calendar, User, LogOut } from "lucide-react";
+import { Coffee, Settings, User, LogOut } from "lucide-react"; // Removed Calendar
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../firebase-config';
 import { signOut } from 'firebase/auth';
@@ -44,7 +44,7 @@ import type { SavedBean } from "@/lib/types";
 
 export default function Home() {
   const [user, loading, error] = useAuthState(auth);
-  const [tab, setTab] = useState("beans"); // Changed default tab to 'beans'
+  const [tab, setTab] = useState("beans");
   const [machineName, setMachineNameState] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [beans, setBeans] = useState<SavedBean[]>([]);
@@ -55,7 +55,6 @@ export default function Home() {
     dose: number;
     ratio: number;
     activeBeanId: string | null;
-    openedDate: string;
   } | null>(null);
 
   const refreshActiveBean = () => {
@@ -80,16 +79,12 @@ export default function Home() {
     const allBeans = getStoredBeans();
     setBeans(allBeans);
     const activeId = getActiveBeanId();
-    const activeBeanFromStorage = activeId ? allBeans.find((b) => b.id === activeId) : null;
 
     setSettingsInput({
       name: getMachineName(),
       dose: currentSettings.defaultDose,
       ratio: currentSettings.targetRatio,
       activeBeanId: activeId,
-      openedDate: activeBeanFromStorage?.openedDate
-        ? new Date(activeBeanFromStorage.openedDate).toISOString().split("T")[0]
-        : "",
     });
     setSettingsOpen(true);
   };
@@ -100,14 +95,6 @@ export default function Home() {
   ) => {
     if (settingsInput) {
       const newSettings = { ...settingsInput, [field]: value };
-
-      if (field === 'activeBeanId') {
-        const selectedBean = beans.find((b) => b.id === value);
-        newSettings.openedDate = selectedBean?.openedDate
-          ? new Date(selectedBean.openedDate).toISOString().split('T')[0]
-          : '';
-      }
-
       setSettingsInput(newSettings);
     }
   };
@@ -128,24 +115,13 @@ export default function Home() {
 
     if (newActiveBeanId && newActiveBeanId !== '-') {
       setActiveBeanId(newActiveBeanId);
-      const selectedBean = beans.find(b => b.id === newActiveBeanId);
-
-      if (selectedBean) {
-        const updatedBean = { 
-          ...selectedBean, 
-          openedDate: settingsInput.openedDate 
-            ? new Date(settingsInput.openedDate).toISOString() 
-            : undefined
-        };
-        updateSavedBean(updatedBean as SavedBean);
-      }
     } else {
       localStorage.removeItem(ACTIVE_BEAN_ID_KEY);
     }
     
     refreshActiveBean();
     setSettingsOpen(false);
-    window.location.reload();
+    window.location.reload(); // Reload to reflect changes globally
   };
   
   const handleSignOut = async () => {
@@ -166,14 +142,6 @@ export default function Home() {
               {activeBean && (
                 <span title={activeBean.beanName} className="inline-flex items-baseline gap-1">
                   <span>· {activeBean.beanName}</span>
-                  {activeBean.openedDate && (
-                    <span className="text-xs opacity-70">
-                      ({new Date(activeBean.openedDate).toLocaleDateString("he-IL", {
-                        day: "2-digit",
-                        month: "2-digit",
-                      })})
-                    </span>
-                  )}
                 </span>
               )}
             </div>
@@ -258,29 +226,6 @@ export default function Home() {
                   ))}
                 </Select>
               </div>
-
-              {settingsInput.activeBeanId && settingsInput.activeBeanId !== '-' && (
-                <div>
-                  <Label htmlFor="opened-date">תאריך פתיחת השקית</Label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Input
-                      id="opened-date"
-                      type="date"
-                      value={settingsInput.openedDate}
-                      onChange={(e) => handleSettingChange("openedDate", e.target.value)}
-                      className="flex-grow"
-                    />
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      onClick={() => handleSettingChange('openedDate', new Date().toISOString().split('T')[0])}
-                      aria-label="Set today"
-                    >
-                      <Calendar className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
 
               <div>
                 <Label htmlFor="defaultDose">משקל קפה מועדף (גרם)</Label>

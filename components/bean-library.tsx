@@ -2,15 +2,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BookOpen, Trash2, ExternalLink, PlusCircle, Pencil, Calendar as CalendarIcon } from "lucide-react";
+import { BookOpen, Trash2, ExternalLink, PlusCircle, Pencil } from "lucide-react"; // Removed CalendarIcon
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getStoredBeans, removeSavedBean } from "@/lib/storage";
 import type { SavedBean } from "@/lib/types";
 import { AddBeanDialog } from "@/components/add-bean-dialog";
-import { format, parseISO } from "date-fns";
-import { he } from 'date-fns/locale';
 
 export function BeanLibrary() {
   const [beans, setBeans] = useState<SavedBean[]>([]);
@@ -127,15 +125,6 @@ export function BeanLibrary() {
                                 </div>
                             </div>
                             
-                            {bean.openedDate && (
-                                <div className="text-xs text-[#EAE0D5]/70 flex items-center gap-1.5 mt-2">
-                                    <CalendarIcon className="h-3.5 w-3.5" />
-                                    <span>
-                                        נפתח ב: {format(parseISO(bean.openedDate), 'd MMMM yyyy', { locale: he })}
-                                    </span>
-                                </div>
-                            )}
-
                             {bean.beanDescription && (
                                 <p className="text-sm text-[#EAE0D5]/90 whitespace-pre-line mt-2">{bean.beanDescription}</p>
                             )}
