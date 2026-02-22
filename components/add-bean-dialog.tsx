@@ -16,8 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getStoredRoasteries, addStoredRoastery } from "@/lib/roasteries-storage";
 import { addSavedBean, updateSavedBean } from "@/lib/storage";
 import type { SavedBean } from "@/lib/types";
-import type { RoastLevel } from "@/lib/dial-in";
-import { cn } from "@/lib/utils";
+import { RoastRatingInput } from "./roast-rating-input";
 
 interface AddBeanDialogProps {
   open: boolean;
@@ -28,11 +27,6 @@ interface AddBeanDialogProps {
 }
 
 const flavorTagsOptions = ["שוקולדי", "אגוזי", "פירותי", "פרחוני", "מתוק", "חמצמץ"];
-const ROAST_OPTIONS: { value: RoastLevel; label: string }[] = [
-  { value: "light", label: "בהירה" },
-  { value: "medium", label: "בינונית" },
-  { value: "dark", label: "כהה" },
-];
 
 export function AddBeanDialog({
   open,
@@ -49,9 +43,12 @@ export function AddBeanDialog({
     if (open) {
       setRoasteries(getStoredRoasteries());
       if (beanToEdit) {
-        setBean(beanToEdit);
+        setBean({
+            ...beanToEdit,
+            roastLevel: typeof beanToEdit.roastLevel === 'number' ? beanToEdit.roastLevel : 0,
+        });
       } else {
-        setBean({ flavorTags: [], roastLevel: "medium" });
+        setBean({ flavorTags: [], roastLevel: 0 }); // Default to no rating
       }
     }
   }, [open, beanToEdit]);
@@ -67,10 +64,15 @@ export function AddBeanDialog({
       addStoredRoastery(bean.roasterName);
     }
     
-    if (bean.id) {
-      updateSavedBean(bean as SavedBean);
+    const beanToSave = { ...bean };
+    if (beanToSave.roastLevel === 0) {
+      delete beanToSave.roastLevel;
+    }
+
+    if (beanToSave.id) {
+      updateSavedBean(beanToSave as SavedBean);
     } else {
-      addSavedBean(bean as any);
+      addSavedBean(beanToSave as any);
     }
     setBean({}); // Reset form
     onBeanAdded();
@@ -78,7 +80,7 @@ export function AddBeanDialog({
 
   const handleClose = () => {
     onDialogClose();
-    setBean({ flavorTags: [] }); // Reset form state on close
+    setBean({ flavorTags: [], roastLevel: 0 }); // Reset form state on close
     setError(null);
   };
 
@@ -118,24 +120,13 @@ export function AddBeanDialog({
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-             <div>
+             <div className="pt-2">
                 <Label>דרגת קלייה</Label>
-                <div className="inline-flex w-full rounded-lg border border-[#3E2C22] bg-[#15100d] p-0.5 mt-2" role="group">
-                  {ROAST_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setBean({...bean, roastLevel: opt.value})}
-                      className={cn(
-                        "flex-1 min-w-0 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                        bean.roastLevel === opt.value
-                          ? "bg-[#C67C4E] text-white shadow"
-                          : "text-[#EAE0D5] hover:bg-[#2a1d18]"
-                      )}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+                <div className="pt-2">
+                 <RoastRatingInput 
+                    rating={bean.roastLevel || 0}
+                    onRatingChange={(newRating) => setBean({...bean, roastLevel: newRating})} 
+                 />
                 </div>
              </div>
              <div>
@@ -179,7 +170,7 @@ export function AddBeanDialog({
         </div>
         <DialogFooter className="flex-shrink-0 pt-4 items-center justify-between">
             {error && <p className="text-sm text-red-500 text-right">{error}</p>}
-            <div className="flex gap-2">
+            <div className="flex gap-2 ml-auto">
               <Button variant="outline" onClick={handleClose}>ביטול</Button>
               <Button onClick={handleSave}>{bean.id ? "שמור שינויים" : "הוסף פול"}</Button>
             </div>

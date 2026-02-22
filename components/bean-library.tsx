@@ -8,14 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getStoredBeans, removeSavedBean } from "@/lib/storage";
 import type { SavedBean } from "@/lib/types";
-import type { RoastLevel } from "@/lib/dial-in";
 import { AddBeanDialog } from "@/components/add-bean-dialog";
-
-const ROAST_LEVEL_LABELS: Record<RoastLevel, string> = {
-  light: "קלייה בהירה",
-  medium: "קלייה בינונית",
-  dark: "קלייה כהה",
-};
+import { RoastRatingInput } from "./roast-rating-input";
 
 export function BeanLibrary() {
   const [beans, setBeans] = useState<SavedBean[]>([]);
@@ -98,14 +92,13 @@ export function BeanLibrary() {
                 <CardContent className="space-y-4 flex-grow">
                  {beansInGroup.map(bean => {
                      const pricePerKg = calculatePricePerKg(bean.pricePaid, bean.bagWeightGrams);
-                     const roastLabel = bean.roastLevel ? ROAST_LEVEL_LABELS[bean.roastLevel] : null;
 
                      return (
                         <div key={bean.id} className="border-t border-[#3E2C22] pt-4">
                             <div className="flex justify-between items-start">
                                 <div className="space-y-2">
                                     <p className="font-semibold text-[#E6D2B5]">{bean.beanName}</p>
-                                     <div className="flex flex-wrap gap-2">
+                                     <div className="flex flex-wrap items-center gap-4">
                                         {bean.grindSetting && (
                                             <Badge
                                                 variant="secondary"
@@ -114,13 +107,11 @@ export function BeanLibrary() {
                                                 טחינה: {bean.grindSetting}
                                             </Badge>
                                         )}
-                                        {roastLabel && (
-                                            <Badge
-                                                variant="secondary"
-                                                className="bg-sky-900/30 text-sky-300 border-sky-700/80 font-medium"
-                                            >
-                                                {roastLabel}
-                                            </Badge>
+                                        {bean.roastLevel && (
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-medium text-[#EAE0D5]/80">קלייה:</span>
+                                                <RoastRatingInput rating={bean.roastLevel} onRatingChange={() => {}} disabled />
+                                            </div>
                                         )}
                                     </div>
                                 </div>

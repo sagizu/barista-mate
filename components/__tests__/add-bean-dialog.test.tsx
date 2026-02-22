@@ -40,10 +40,12 @@ describe('AddBeanDialog', () => {
     const dialog = screen.getByRole('dialog');
     await user.type(within(dialog).getByLabelText(/שם הפול/i), 'טסט פול');
     await user.type(within(dialog).getByLabelText(/שם בית הקלייה/i), 'טסט קלייה');
+    // Click the 4th star
+    await user.click(within(dialog).getByRole('radio', { name: /דרגת קלייה 4/ }));
     await user.click(within(dialog).getByRole('button', { name: /הוסף פול/i }));
 
     await waitFor(() => {
-        expect(storage.addSavedBean).toHaveBeenCalledWith({ beanName: 'טסט פול', roasterName: 'טסט קלייה', flavorTags: [], roastLevel: 'medium' });
+        expect(storage.addSavedBean).toHaveBeenCalledWith({ beanName: 'טסט פול', roasterName: 'טסט קלייה', flavorTags: [], roastLevel: 4 });
     });
     await waitFor(() => {
         expect(onBeanAdded).toHaveBeenCalled();
@@ -51,17 +53,21 @@ describe('AddBeanDialog', () => {
   });
 
   test('should edit an existing bean', async () => {
-    const beanToEdit = { id: '1', beanName: 'פול ישן', roasterName: 'קלייה ישנה', grindSetting: '4' };
+    const beanToEdit = { id: '1', beanName: 'פול ישן', roasterName: 'קלייה ישנה', grindSetting: '4', roastLevel: 2 };
     render(<AddBeanDialog open={true} onOpenChange={() => {}} onBeanAdded={onBeanAdded} beanToEdit={beanToEdit} onDialogClose={onDialogClose} />);
     
     const dialog = screen.getByRole('dialog');
     const beanNameInput = within(dialog).getByLabelText(/שם הפול/i);
     await user.clear(beanNameInput);
     await user.type(beanNameInput, 'פול חדש');
+
+    // Change the rating
+    await user.click(within(dialog).getByRole('radio', { name: /דרגת קלייה 5/ }));
+
     await user.click(within(dialog).getByRole('button', { name: /שמור שינויים/i }));
 
     await waitFor(() => {
-        expect(storage.updateSavedBean).toHaveBeenCalledWith({ ...beanToEdit, beanName: 'פול חדש' });
+        expect(storage.updateSavedBean).toHaveBeenCalledWith({ ...beanToEdit, beanName: 'פול חדש', roastLevel: 5 });
     });
      await waitFor(() => {
         expect(onBeanAdded).toHaveBeenCalled();

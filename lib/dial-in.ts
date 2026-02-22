@@ -1,3 +1,4 @@
+
 /**
  * Smart Dial-In logic:
  * - Ratio = Yield / Dose (display only)
@@ -9,12 +10,14 @@
 
 export type DialInFeedback = "perfect" | "too_fast" | "too_slow";
 
-export type RoastLevel = "light" | "medium" | "dark";
+export type RoastLevel = 1 | 2 | 3 | 4 | 5;
 
 const ROAST_WINDOWS: Record<RoastLevel, { min: number; max: number }> = {
-  light: { min: 20, max: 28 },
-  medium: { min: 25, max: 30 },
-  dark: { min: 30, max: 35 },
+  1: { min: 20, max: 28 }, // Lightest
+  2: { min: 22, max: 29 },
+  3: { min: 25, max: 30 }, // Medium
+  4: { min: 28, max: 33 },
+  5: { min: 30, max: 35 }, // Darkest
 };
 
 export interface DialInResult {
@@ -30,7 +33,7 @@ export function calculateDialIn(
   dose: number,
   yieldWeight: number,
   time: number,
-  roastLevel: RoastLevel = "medium"
+  roastLevel: RoastLevel = 3
 ): DialInResult | null {
   if (dose <= 0 || time <= 0) return null;
   const ratio = yieldWeight / dose;
