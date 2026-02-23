@@ -14,9 +14,9 @@ import { cn } from "@/lib/utils";
 import type { SavedBean } from "@/lib/types";
 
 const ROAST_OPTIONS: { value: RoastLevel; label: string }[] = [
-  { value: "light", label: "בהירה" },
-  { value: "medium", label: "בינונית" },
-  { value: "dark", label: "כהה" },
+  { value: 1, label: "בהירה" },
+  { value: 3, label: "בינונית" },
+  { value: 5, label: "כהה" },
 ];
 
 const feedbackStyles = {
@@ -26,7 +26,7 @@ const feedbackStyles = {
 };
 
 export function SmartDialIn() {
-  const [roastLevel, setRoastLevel] = useState<RoastLevel>("medium");
+  const [roastLevel, setRoastLevel] = useState<RoastLevel>(3);
   const [grindSetting, setGrindSetting] = useState("");
   const [dose, setDose] = useState("");
   const [yieldWeight, setYieldWeight] = useState("");

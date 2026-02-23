@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { getStoredRoasteries, addStoredRoastery } from "@/lib/roasteries-storage";
 import { addSavedBean, updateSavedBean } from "@/lib/storage";
-import type { SavedBean } from "@/lib/types";
+import type { SavedBean, RoastLevel } from "@/lib/types";
 import { RoastRatingInput } from "./roast-rating-input";
 
 interface AddBeanDialogProps {
@@ -42,13 +42,10 @@ export function AddBeanDialog({
   useEffect(() => {
     if (open) {
       setRoasteries(getStoredRoasteries());
-      if (beanToEdit) {
-        setBean({
-            ...beanToEdit,
-            roastLevel: typeof beanToEdit.roastLevel === 'number' ? beanToEdit.roastLevel : 0,
-        });
-      } else {
-        setBean({ flavorTags: [], roastLevel: 0 }); // Default to no rating
+      if (beanToEdit && beanToEdit.id) { // Check for a full bean to edit
+        setBean(beanToEdit);
+      } else { // For new beans, or partial beans without ID
+        setBean({ flavorTags: [], roastLevel: undefined });
       }
     }
   }, [open, beanToEdit]);
@@ -64,15 +61,10 @@ export function AddBeanDialog({
       addStoredRoastery(bean.roasterName);
     }
     
-    const beanToSave = { ...bean };
-    if (beanToSave.roastLevel === 0) {
-      delete beanToSave.roastLevel;
-    }
-
-    if (beanToSave.id) {
-      updateSavedBean(beanToSave as SavedBean);
+    if (bean.id) {
+      updateSavedBean(bean as SavedBean);
     } else {
-      addSavedBean(beanToSave as any);
+      addSavedBean(bean as any);
     }
     setBean({}); // Reset form
     onBeanAdded();
@@ -80,7 +72,7 @@ export function AddBeanDialog({
 
   const handleClose = () => {
     onDialogClose();
-    setBean({ flavorTags: [], roastLevel: 0 }); // Reset form state on close
+    setBean({ flavorTags: [], roastLevel: undefined }); // Reset form state on close
     setError(null);
   };
 
@@ -125,7 +117,7 @@ export function AddBeanDialog({
                 <div className="pt-2">
                  <RoastRatingInput 
                     rating={bean.roastLevel || 0}
-                    onRatingChange={(newRating) => setBean({...bean, roastLevel: newRating})} 
+                    onRatingChange={(newRating) => setBean({...bean, roastLevel: newRating === 0 ? undefined : newRating as RoastLevel})} 
                  />
                 </div>
              </div>

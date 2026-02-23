@@ -1,6 +1,8 @@
 
 import type { RoastLevel } from './dial-in';
 
+export type { RoastLevel };
+
 export type DrinkType =
   | "לאטה"
   | "קפוצ'ינו"
