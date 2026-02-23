@@ -1,7 +1,5 @@
 
-import type { RoastLevel } from './dial-in';
-
-export type { RoastLevel };
+export type RoastLevel = 1 | 2 | 3 | 4 | 5;
 
 export type DrinkType =
   | "לאטה"

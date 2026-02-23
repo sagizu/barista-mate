@@ -44,6 +44,8 @@ export function AddBeanDialog({
       setRoasteries(getStoredRoasteries());
       if (beanToEdit && beanToEdit.id) { // Check for a full bean to edit
         setBean(beanToEdit);
+      } else if (beanToEdit && beanToEdit.grindSetting) { // Partial bean with grind setting from dial-in
+        setBean({ ...beanToEdit, flavorTags: [], roastLevel: undefined });
       } else { // For new beans, or partial beans without ID
         setBean({ flavorTags: [], roastLevel: undefined });
       }
@@ -56,20 +58,48 @@ export function AddBeanDialog({
       setError('"שם הפול" הוא שדה חובה.');
       return;
     }
-
-    if (bean.roasterName) {
-      addStoredRoastery(bean.roasterName);
+    if (!bean.roasterName?.trim()) {
+      setError('"שם בית הקלייה" הוא שדה חובה.');
+      return;
     }
+
+    addStoredRoastery(bean.roasterName);
 
     try {
       if (bean.id) {
         await updateBean(bean.id, bean);
       } else {
-        await addBean(bean as any);
+        // Build bean object without undefined fields
+        const beanToSave: any = {
+          roasterName: bean.roasterName,
+          beanName: bean.beanName,
+          grindSetting: bean.grindSetting || '',
+          flavorTags: bean.flavorTags || [],
+        };
+        
+        // Only add optional fields if they have values
+        if (bean.roastLevel !== undefined) {
+          beanToSave.roastLevel = bean.roastLevel;
+        }
+        if (bean.roasteryLink) {
+          beanToSave.roasteryLink = bean.roasteryLink;
+        }
+        if (bean.beanDescription) {
+          beanToSave.beanDescription = bean.beanDescription;
+        }
+        if (bean.pricePaid !== undefined) {
+          beanToSave.pricePaid = bean.pricePaid;
+        }
+        if (bean.bagWeightGrams !== undefined) {
+          beanToSave.bagWeightGrams = bean.bagWeightGrams;
+        }
+        
+        await addBean(beanToSave);
       }
       setBean({}); // Reset form
       onBeanAdded();
     } catch (err) {
+      console.error('Error saving bean:', err);
       setError("שגיאה בשמירת הפול. נסה שוב.");
     }
   };

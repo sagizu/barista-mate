@@ -2,22 +2,16 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Calculator, Target, BookMarked, PlusCircle } from "lucide-react";
+import { Calculator, Target, BookMarked } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { calculateDialIn, type DialInResult, type RoastLevel } from "@/lib/dial-in";
+import { calculateDialIn, type DialInResult } from "@/lib/dial-in";
 import { addDialInRecord, getGeneralSettings, getActiveBeanId, getStoredBeans } from "@/lib/storage";
 import { AddBeanDialog } from "@/components/add-bean-dialog";
 import { cn } from "@/lib/utils";
 import type { SavedBean } from "@/lib/types";
-
-const ROAST_OPTIONS: { value: RoastLevel; label: string }[] = [
-  { value: 1, label: "בהירה" },
-  { value: 3, label: "בינונית" },
-  { value: 5, label: "כהה" },
-];
 
 const feedbackStyles = {
   perfect: "bg-emerald-900/40 text-emerald-200 border-emerald-700/50",
@@ -26,11 +20,12 @@ const feedbackStyles = {
 };
 
 export function SmartDialIn() {
-  const [roastLevel, setRoastLevel] = useState<RoastLevel>(3);
   const [grindSetting, setGrindSetting] = useState("");
   const [dose, setDose] = useState("");
   const [yieldWeight, setYieldWeight] = useState("");
   const [time, setTime] = useState("");
+  const [targetMin, setTargetMin] = useState("25");
+  const [targetMax, setTargetMax] = useState("30");
   const [result, setResult] = useState<DialInResult | null>(null);
   const [addBeanOpen, setAddBeanOpen] = useState(false);
   const [activeBean, setActiveBean] = useState<SavedBean | null>(null);
@@ -51,9 +46,6 @@ export function SmartDialIn() {
         if (currentBean.grindSetting) {
           setGrindSetting(currentBean.grindSetting);
         }
-        if (currentBean.roastLevel) {
-          setRoastLevel(currentBean.roastLevel);
-        }
       }
     }
   }, []);
@@ -62,8 +54,10 @@ export function SmartDialIn() {
     const d = parseFloat(dose);
     const y = parseFloat(yieldWeight);
     const t = parseFloat(time);
-    if (Number.isNaN(d) || Number.isNaN(y) || Number.isNaN(t)) return;
-    const res = calculateDialIn(d, y, t, roastLevel);
+    const tMin = parseFloat(targetMin);
+    const tMax = parseFloat(targetMax);
+    if (Number.isNaN(d) || Number.isNaN(y) || Number.isNaN(t) || Number.isNaN(tMin) || Number.isNaN(tMax)) return;
+    const res = calculateDialIn(d, y, t, tMin, tMax);
     setResult(res ?? null);
     if (res) {
       addDialInRecord({
@@ -74,20 +68,25 @@ export function SmartDialIn() {
         feedback: res.feedback,
       });
     }
-  }, [dose, yieldWeight, time, roastLevel]);
+  }, [dose, yieldWeight, time, targetMin, targetMax]);
 
   const handleSaveToLibrary = () => {
+    const d = parseFloat(dose);
+    const y = parseFloat(yieldWeight);
+    const t = parseFloat(time);
+    const tMin = parseFloat(targetMin);
+    const tMax = parseFloat(targetMax);
+    
+    if (Number.isNaN(d) || Number.isNaN(y) || Number.isNaN(t) || Number.isNaN(tMin) || Number.isNaN(tMax) || !grindSetting.trim()) {
+      return; // All fields are required
+    }
+    
     const beanData = activeBean 
-      ? { ...activeBean, grindSetting, roastLevel } 
-      : { grindSetting, roastLevel };
+      ? { ...activeBean, grindSetting } 
+      : { grindSetting };
     setBeanForDialog(beanData);
     setAddBeanOpen(true);
   };
-
-  const handleAddNewBean = () => {
-    setBeanForDialog(null);
-    setAddBeanOpen(true);
-  }
 
   const handleDialogClose = () => {
     setAddBeanOpen(false);
@@ -95,16 +94,10 @@ export function SmartDialIn() {
     // The main page reload on settings save will refresh the active bean info
   };
 
-  const isValid = dose && yieldWeight && time;
+  const isValid = dose && yieldWeight && time && targetMin && targetMax && grindSetting.trim();
 
   return (
     <>
-      <div className="flex justify-end mb-4">
-        <Button onClick={handleAddNewBean} variant="outline">
-          <PlusCircle className="h-4 w-4 ml-2" />
-          הוסף פול חדש
-        </Button>
-      </div>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-[#E6D2B5]">
@@ -117,23 +110,33 @@ export function SmartDialIn() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>רמת קלייה</Label>
-            <div className="inline-flex rounded-lg border border-[#3E2C22] bg-[#15100d] p-0.5" role="group" aria-label="רמת קלייה">
-              {ROAST_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setRoastLevel(opt.value)}
-                  className={cn(
-                    "flex-1 min-w-0 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    roastLevel === opt.value
-                      ? "bg-[#C67C4E] text-white shadow"
-                      : "text-[#EAE0D5] hover:bg-[#2a1d18]"
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
+            <Label>טווח זמן משוער (שניות)</Label>
+            <p className="text-sm text-[#EAE0D5]/70 mb-2">הגדר את טווח הזמן שבמבחינתך הוא תקין לכיול טוב</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="targetMin" className="text-sm">מינימום</Label>
+                <Input
+                  id="targetMin"
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={targetMin}
+                  onChange={(e) => setTargetMin(e.target.value)}
+                  placeholder="25"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="targetMax" className="text-sm">מקסימום</Label>
+                <Input
+                  id="targetMax"
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={targetMax}
+                  onChange={(e) => setTargetMax(e.target.value)}
+                  placeholder="30"
+                />
+              </div>
             </div>
           </div>
           <div className="space-y-2">
@@ -144,7 +147,7 @@ export function SmartDialIn() {
               inputMode="numeric"
               value={grindSetting}
               onChange={(e) => setGrindSetting(e.target.value)}
-              placeholder={activeBean?.grindSetting ? `מומלץ: ${activeBean.grindSetting}` : "למשל: 1.5"}
+              placeholder={activeBean?.grindSetting ? `מומלץ: ${activeBean.grindSetting}` : ""}
             />
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -215,6 +218,7 @@ export function SmartDialIn() {
                 size="sm"
                 className="mt-3 border-[#C67C4E]/50 text-[#EAE0D5] hover:bg-[#2a1d18]"
                 onClick={handleSaveToLibrary}
+                disabled={!dose || !yieldWeight || !time || !targetMin || !targetMax || !grindSetting.trim()}
               >
                 <BookMarked className="h-4 w-4 ml-2" />
                 {activeBean ? 'עדכן הגדרת טחינה' : 'שמור הגדרה לספרייה'}

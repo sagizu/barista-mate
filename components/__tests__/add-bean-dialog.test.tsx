@@ -45,7 +45,12 @@ describe('AddBeanDialog', () => {
     await user.click(within(dialog).getByRole('button', { name: /הוסף פול/i }));
 
     await waitFor(() => {
-      expect(firestore.addBean).toHaveBeenCalledWith({ beanName: 'טסט פול', roasterName: 'טסט קלייה', flavorTags: [], roastLevel: 4 });
+      expect(firestore.addBean).toHaveBeenCalledWith(expect.objectContaining({
+        beanName: 'טסט פול',
+        roasterName: 'טסט קלייה',
+        flavorTags: [],
+        roastLevel: 4,
+      }));
     });
     await waitFor(() => {
         expect(onBeanAdded).toHaveBeenCalled();
