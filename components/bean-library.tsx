@@ -1,12 +1,15 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+// ...existing code...
 import { BookOpen, Trash2, ExternalLink, PlusCircle, Pencil } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getStoredBeans, removeSavedBean } from "@/lib/storage";
+import { useEffect, useState } from "react";
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import { db, auth } from "@/firebase-config";
+import { deleteBean } from "@/lib/firestore";
 import type { SavedBean } from "@/lib/types";
 import { AddBeanDialog } from "@/components/add-bean-dialog";
 import { RoastRatingInput } from "./roast-rating-input";
@@ -16,12 +19,17 @@ export function BeanLibrary() {
   const [addBeanOpen, setAddBeanOpen] = useState(false);
   const [editingBean, setEditingBean] = useState<SavedBean | null>(null);
 
-  const refreshBeans = () => {
-    setBeans(getStoredBeans());
-  };
 
   useEffect(() => {
-    refreshBeans();
+    const user = auth.currentUser;
+    if (!user) return;
+    const beansRef = collection(db, "users", user.uid, "beans");
+    const q = query(beansRef, orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const beans: SavedBean[] = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as SavedBean));
+      setBeans(beans);
+    });
+    return () => unsubscribe();
   }, []);
 
   const handleEdit = (bean: SavedBean) => {
@@ -29,17 +37,14 @@ export function BeanLibrary() {
     setAddBeanOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    removeSavedBean(id);
-    refreshBeans();
+
+  const handleDelete = async (id: string) => {
+    await deleteBean(id);
   };
 
-  const handleDialogClose = (addedOrUpdated: boolean) => {
+  const handleDialogClose = () => {
     setAddBeanOpen(false);
     setEditingBean(null);
-    if (addedOrUpdated) {
-      refreshBeans();
-    }
   };
 
   const groupedBeans = beans.reduce((acc, bean) => {
@@ -87,7 +92,7 @@ export function BeanLibrary() {
                 className="transition-colors hover:border-[#C67C4E]/30 flex flex-col"
               >
                 <CardHeader>
-                    <CardTitle className="text-[#E6D2B5]">{roasteryName}</CardTitle>
+                  <CardTitle className="text-[#E6D2B5]" data-testid="roastery-title">{roasteryName}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 flex-grow">
                  {beansInGroup.map(bean => {
@@ -180,9 +185,9 @@ export function BeanLibrary() {
       <AddBeanDialog
         open={addBeanOpen}
         onOpenChange={setAddBeanOpen}
-        onBeanAdded={() => handleDialogClose(true)}
+        onBeanAdded={handleDialogClose}
         beanToEdit={editingBean}
-        onDialogClose={() => handleDialogClose(false)}
+        onDialogClose={handleDialogClose}
       />
     </>
   );

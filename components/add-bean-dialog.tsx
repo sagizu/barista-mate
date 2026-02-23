@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { getStoredRoasteries, addStoredRoastery } from "@/lib/roasteries-storage";
-import { addSavedBean, updateSavedBean } from "@/lib/storage";
+import { addBean, updateBean } from "@/lib/firestore";
 import type { SavedBean, RoastLevel } from "@/lib/types";
 import { RoastRatingInput } from "./roast-rating-input";
 
@@ -50,24 +50,28 @@ export function AddBeanDialog({
     }
   }, [open, beanToEdit]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setError(null);
     if (!bean.beanName?.trim()) {
-        setError('"שם הפול" הוא שדה חובה.');
-        return;
+      setError('"שם הפול" הוא שדה חובה.');
+      return;
     }
 
     if (bean.roasterName) {
       addStoredRoastery(bean.roasterName);
     }
-    
-    if (bean.id) {
-      updateSavedBean(bean as SavedBean);
-    } else {
-      addSavedBean(bean as any);
+
+    try {
+      if (bean.id) {
+        await updateBean(bean.id, bean);
+      } else {
+        await addBean(bean as any);
+      }
+      setBean({}); // Reset form
+      onBeanAdded();
+    } catch (err) {
+      setError("שגיאה בשמירת הפול. נסה שוב.");
     }
-    setBean({}); // Reset form
-    onBeanAdded();
   };
 
   const handleClose = () => {

@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
-    setupFiles: './jest.setup.js',
+    setupFiles: ['dotenv/config', './jest.setup.js'],
     globals: true,
   },
   resolve: {

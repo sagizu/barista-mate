@@ -2,7 +2,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AddBeanDialog } from '@/components/add-bean-dialog';
-import * as storage from '@/lib/storage';
+import * as firestore from '@/lib/firestore';
 import * as roasteryStorage from '@/lib/roasteries-storage';
 
 describe('AddBeanDialog', () => {
@@ -12,8 +12,8 @@ describe('AddBeanDialog', () => {
 
   beforeEach(() => {
     user = userEvent.setup();
-    vi.spyOn(storage, 'addSavedBean').mockImplementation(() => {});
-    vi.spyOn(storage, 'updateSavedBean').mockImplementation(() => {});
+    vi.spyOn(firestore, 'addBean').mockImplementation(async () => ({ id: 'mock-id' }));
+    vi.spyOn(firestore, 'updateBean').mockImplementation(async () => {});
     vi.spyOn(roasteryStorage, 'addStoredRoastery').mockImplementation(() => {});
     vi.spyOn(roasteryStorage, 'getStoredRoasteries').mockReturnValue([]);
   });
@@ -30,7 +30,7 @@ describe('AddBeanDialog', () => {
     await user.click(screen.getByRole('button', { name: /הוסף פול/i }));
 
     expect(await screen.findByText(/"שם הפול" הוא שדה חובה./i)).toBeInTheDocument();
-    expect(storage.addSavedBean).not.toHaveBeenCalled();
+    expect(firestore.addBean).not.toHaveBeenCalled();
     expect(onBeanAdded).not.toHaveBeenCalled();
   });
 
@@ -45,7 +45,7 @@ describe('AddBeanDialog', () => {
     await user.click(within(dialog).getByRole('button', { name: /הוסף פול/i }));
 
     await waitFor(() => {
-        expect(storage.addSavedBean).toHaveBeenCalledWith({ beanName: 'טסט פול', roasterName: 'טסט קלייה', flavorTags: [], roastLevel: 4 });
+      expect(firestore.addBean).toHaveBeenCalledWith({ beanName: 'טסט פול', roasterName: 'טסט קלייה', flavorTags: [], roastLevel: 4 });
     });
     await waitFor(() => {
         expect(onBeanAdded).toHaveBeenCalled();
@@ -67,7 +67,7 @@ describe('AddBeanDialog', () => {
     await user.click(within(dialog).getByRole('button', { name: /שמור שינויים/i }));
 
     await waitFor(() => {
-        expect(storage.updateSavedBean).toHaveBeenCalledWith({ ...beanToEdit, beanName: 'פול חדש', roastLevel: 5 });
+      expect(firestore.updateBean).toHaveBeenCalledWith('1', { ...beanToEdit, beanName: 'פול חדש', roastLevel: 5 });
     });
      await waitFor(() => {
         expect(onBeanAdded).toHaveBeenCalled();
