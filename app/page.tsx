@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from "react";
-import { Coffee, Settings, User, LogOut } from "lucide-react"; // Removed Calendar
+import { useState, useEffect, useMemo } from "react";
+import { Coffee, Settings, User, LogOut } from "lucide-react";
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../firebase-config';
+import { auth, db } from '../firebase-config';
 import { signOut } from 'firebase/auth';
+import { doc, onSnapshot, collection, query, orderBy } from 'firebase/firestore';
+import { updateGeneralSettings } from "@/lib/firestore";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -29,107 +31,72 @@ import { SmartDialIn } from "@/components/smart-dial-in";
 import { PeopleOrders } from "@/components/people-orders";
 import { BeanLibrary } from "@/components/bean-library";
 import { MaintenanceLog } from "@/components/maintenance-log";
-import {
-  getMachineName,
-  setMachineName,
-  getGeneralSettings,
-  setGeneralSettings,
-  getStoredBeans,
-  getActiveBeanId,
-  setActiveBeanId,
-  getActiveBeanOpenedDate,
-  setActiveBeanOpenedDate,
-  updateSavedBean,
-  ACTIVE_BEAN_ID_KEY,
-} from "@/lib/storage";
-import type { SavedBean } from "@/lib/types";
+import type { SavedBean, GeneralSettings } from "@/lib/types";
 
 export default function Home() {
-  const [user, loading, error] = useAuthState(auth);
+  const [user] = useAuthState(auth);
   const [tab, setTab] = useState("beans");
-  const [machineName, setMachineNameState] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  
   const [beans, setBeans] = useState<SavedBean[]>([]);
-  const [activeBean, setActiveBean] = useState<SavedBean | null>(null);
-
-  const [settingsInput, setSettingsInput] = useState<{
-    name: string;
-    dose: number;
-    ratio: number;
-    activeBeanId: string | null;
-    openedDate: string;
-  } | null>(null);
-
-  const refreshActiveBean = () => {
-    const activeId = getActiveBeanId();
-    const allBeans = getStoredBeans();
-    if (activeId) {
-      const active = allBeans.find((b) => b.id === activeId) || null;
-      setActiveBean(active);
-    } else {
-      setActiveBean(null);
-    }
-    setBeans(allBeans);
-  };
+  const [settings, setSettings] = useState<GeneralSettings>({});
+  const [settingsInput, setSettingsInput] = useState<GeneralSettings | null>(null);
 
   useEffect(() => {
-    setMachineNameState(getMachineName());
-    refreshActiveBean();
-  }, []);
+    if (!user) {
+      setBeans([]);
+      setSettings({});
+      return;
+    }
+
+    // Listener for general settings
+    const settingsRef = doc(db, 'users', user.uid, 'settings', 'general');
+    const unsubscribeSettings = onSnapshot(settingsRef, (snapshot) => {
+      setSettings(snapshot.data() as GeneralSettings || {});
+    });
+
+    // Listener for beans
+    const beansRef = collection(db, "users", user.uid, "beans");
+    const q = query(beansRef, orderBy("createdAt", "desc"));
+    const unsubscribeBeans = onSnapshot(q, (snapshot) => {
+      const beansData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as SavedBean));
+      setBeans(beansData);
+    });
+
+    return () => {
+      unsubscribeSettings();
+      unsubscribeBeans();
+    };
+  }, [user]);
+
+  const activeBean = useMemo(() => {
+    if (!settings.activeBeanId || beans.length === 0) return null;
+    return beans.find(b => b.id === settings.activeBeanId) || null;
+  }, [settings.activeBeanId, beans]);
+
 
   const openSettings = () => {
-    const currentSettings = getGeneralSettings();
-    const allBeans = getStoredBeans();
-    setBeans(allBeans);
-    const activeId = getActiveBeanId();
-
     setSettingsInput({
-      name: getMachineName(),
-      dose: currentSettings.defaultDose,
-      ratio: currentSettings.targetRatio,
-      activeBeanId: activeId,
-      openedDate: activeId ? getActiveBeanOpenedDate() : "",
+      machineName: settings.machineName || "",
+      defaultDose: settings.defaultDose || 18,
+      targetRatio: settings.targetRatio || 2,
+      activeBeanId: settings.activeBeanId || null,
+      activeBeanOpenedDate: settings.activeBeanOpenedDate || "",
     });
     setSettingsOpen(true);
   };
 
- const handleSettingChange = (
-    field: keyof NonNullable<typeof settingsInput>,
-    value: string | number | null
-  ) => {
+  const handleSettingChange = (field: keyof GeneralSettings, value: string | number | null) => {
     if (settingsInput) {
-      const newSettings = { ...settingsInput, [field]: value };
-      setSettingsInput(newSettings);
+      setSettingsInput({ ...settingsInput, [field]: value });
     }
   };
 
-  const saveSettings = () => {
+  const saveSettings = async () => {
     if (!settingsInput) return;
-
-    const name = settingsInput.name.trim();
-    setMachineName(name);
-    setMachineNameState(name);
-
-    setGeneralSettings({
-      defaultDose: settingsInput.dose,
-      targetRatio: settingsInput.ratio,
-    });
-
-    const newActiveBeanId = settingsInput.activeBeanId;
-
-    if (newActiveBeanId && newActiveBeanId !== "-") {
-      setActiveBeanId(newActiveBeanId);
-      if (settingsInput.openedDate.trim()) {
-        setActiveBeanOpenedDate(settingsInput.openedDate);
-      }
-    } else {
-      localStorage.removeItem(ACTIVE_BEAN_ID_KEY);
-      setActiveBeanOpenedDate(""); // Clear the date if no bean is active
-    }
-    
-    refreshActiveBean();
+    await updateGeneralSettings(settingsInput);
     setSettingsOpen(false);
-    window.location.reload(); // Reload to reflect changes globally
+    setSettingsInput(null);
   };
   
   const handleSignOut = async () => {
@@ -146,7 +113,7 @@ export default function Home() {
               <span className="font-semibold text-lg">Barista Mate</span>
             </div>
             <div className="text-[#C67C4E] text-sm font-medium truncate hidden sm:inline-flex items-center space-x-2">
-              {machineName && <span title={machineName}>· {machineName}</span>}
+              {settings.machineName && <span title={settings.machineName}>· {settings.machineName}</span>}
               {activeBean && (
                 <span title={activeBean.beanName} className="inline-flex items-baseline gap-1">
                   <span>· {activeBean.beanName}</span>
@@ -212,8 +179,8 @@ export default function Home() {
                 <Label htmlFor="machine-name">שם המכונה שלי</Label>
                 <Input
                   id="machine-name"
-                  value={settingsInput.name}
-                  onChange={(e) => handleSettingChange("name", e.target.value)}
+                  value={settingsInput.machineName}
+                  onChange={(e) => handleSettingChange("machineName", e.target.value)}
                 />
               </div>
               <div>
@@ -242,9 +209,9 @@ export default function Home() {
                   <Input
                     id="opened-date"
                     type="date"
-                    value={settingsInput.openedDate}
+                    value={settingsInput.activeBeanOpenedDate}
                     onChange={(e) =>
-                      handleSettingChange("openedDate", e.target.value)
+                      handleSettingChange("activeBeanOpenedDate", e.target.value)
                     }
                     disabled={
                       !settingsInput.activeBeanId ||
@@ -258,7 +225,7 @@ export default function Home() {
                     size="sm"
                     onClick={() =>
                       handleSettingChange(
-                        "openedDate",
+                        "activeBeanOpenedDate",
                         new Date().toISOString().split("T")[0]
                       )
                     }
@@ -276,9 +243,9 @@ export default function Home() {
                 <Input
                   id="defaultDose"
                   type="number"
-                  value={settingsInput.dose}
+                  value={settingsInput.defaultDose}
                   onChange={(e) =>
-                    handleSettingChange("dose", parseFloat(e.target.value))
+                    handleSettingChange("defaultDose", parseFloat(e.target.value))
                   }
                 />
               </div>
@@ -288,9 +255,9 @@ export default function Home() {
                   id="targetRatio"
                   type="number"
                   step="0.1"
-                  value={settingsInput.ratio}
+                  value={settingsInput.targetRatio}
                   onChange={(e) =>
-                    handleSettingChange("ratio", parseFloat(e.target.value))
+                    handleSettingChange("targetRatio", parseFloat(e.target.value))
                   }
                 />
               </div>
@@ -333,7 +300,7 @@ export default function Home() {
 
       <footer className="border-t border-[#3E2C22] py-4 mt-12">
         <p className="text-center text-sm text-[#EAE0D5]/70">
-          Barista Mate · נתונים נשמרים במכשיר (localStorage)
+          Barista Mate · Built with ❤️
         </p>
       </footer>
     </div>

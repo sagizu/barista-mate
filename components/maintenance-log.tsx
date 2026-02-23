@@ -5,8 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getMaintenanceDates, markMaintenanceDone, MaintenanceDates } from '@/lib/storage';
 import { format, parseISO, differenceInDays } from 'date-fns';
+import { auth, db } from '@/firebase-config';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { updateMaintenanceDates } from '@/lib/firestore';
+import type { MaintenanceDates } from '@/lib/types';
 
 const MAINTENANCE_TASKS: { key: keyof MaintenanceDates; label: string }[] = [
   { key: 'lastGroupHeadCleaning', label: 'ניקוי ראש' },
@@ -16,19 +19,38 @@ const MAINTENANCE_TASKS: { key: keyof MaintenanceDates; label: string }[] = [
 ];
 
 export function MaintenanceLog() {
-  const [dates, setDates] = useState<MaintenanceDates | null>(null);
+  const [dates, setDates] = useState<MaintenanceDates>({});
 
   useEffect(() => {
-    setDates(getMaintenanceDates());
+    const user = auth.currentUser;
+    if (!user) {
+        // Handle case where user is not logged in, maybe show a message
+        setDates({});
+        return;
+    };
+
+    const maintenanceRef = doc(db, 'users', user.uid, 'maintenance', 'log');
+    const unsubscribe = onSnapshot(maintenanceRef, (snapshot) => {
+        if (snapshot.exists()) {
+            setDates(snapshot.data() as MaintenanceDates);
+        } else {
+            // Document doesn't exist yet, so we have no dates.
+            setDates({});
+        }
+    });
+
+    return () => unsubscribe();
   }, []);
+
+  const handleDateChange = (key: keyof MaintenanceDates, value: string) => {
+    setDates(prev => ({...prev, [key]: value})); // Optimistic update
+    updateMaintenanceDates({ [key]: value });
+  }
 
   const handleMarkDone = (key: keyof MaintenanceDates) => {
     const today = format(new Date(), 'yyyy-MM-dd');
-    const newDates = markMaintenanceDone(key, today);
-    setDates(newDates);
+    handleDateChange(key, today);
   };
-
-  if (!dates) return null;
 
   const isFilterOverdue = dates.waterFilterLastChanged && differenceInDays(new Date(), parseISO(dates.waterFilterLastChanged)) > 90;
 
@@ -56,8 +78,8 @@ export function MaintenanceLog() {
                 <Input
                   id={`date-${key}`}
                   type="date"
-                  value={dates[key] ? format(parseISO(dates[key]), 'yyyy-MM-dd') : ''}
-                  onChange={(e) => setDates({ ...dates, [key]: e.target.value })}
+                  value={(dates[key] && format(parseISO(dates[key] as string), 'yyyy-MM-dd')) || ''}
+                  onChange={(e) => handleDateChange(key, e.target.value)}
                   className="text-lg p-4"
                 />
               </div>

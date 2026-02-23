@@ -73,6 +73,21 @@ export interface SavedBean {
   openedDate?: string;
 }
 
+export interface MaintenanceDates {
+  lastGroupHeadCleaning?: string;
+  lastBackflush?: string;
+  lastDescaling?: string;
+  waterFilterLastChanged?: string;
+}
+
+export interface GeneralSettings {
+  machineName?: string;
+  defaultDose?: number;
+  targetRatio?: number;
+  activeBeanId?: string | null;
+  activeBeanOpenedDate?: string;
+}
+
 /** Pre-defined flavor tags for beans */
 export const FLAVOR_TAGS = [
   "שוקולדי",
