@@ -37,6 +37,8 @@ import {
   getStoredBeans,
   getActiveBeanId,
   setActiveBeanId,
+  getActiveBeanOpenedDate,
+  setActiveBeanOpenedDate,
   updateSavedBean,
   ACTIVE_BEAN_ID_KEY,
 } from "@/lib/storage";
@@ -55,6 +57,7 @@ export default function Home() {
     dose: number;
     ratio: number;
     activeBeanId: string | null;
+    openedDate: string;
   } | null>(null);
 
   const refreshActiveBean = () => {
@@ -85,6 +88,7 @@ export default function Home() {
       dose: currentSettings.defaultDose,
       ratio: currentSettings.targetRatio,
       activeBeanId: activeId,
+      openedDate: activeId ? getActiveBeanOpenedDate() : "",
     });
     setSettingsOpen(true);
   };
@@ -113,10 +117,14 @@ export default function Home() {
 
     const newActiveBeanId = settingsInput.activeBeanId;
 
-    if (newActiveBeanId && newActiveBeanId !== '-') {
+    if (newActiveBeanId && newActiveBeanId !== "-") {
       setActiveBeanId(newActiveBeanId);
+      if (settingsInput.openedDate.trim()) {
+        setActiveBeanOpenedDate(settingsInput.openedDate);
+      }
     } else {
       localStorage.removeItem(ACTIVE_BEAN_ID_KEY);
+      setActiveBeanOpenedDate(""); // Clear the date if no bean is active
     }
     
     refreshActiveBean();
@@ -204,7 +212,6 @@ export default function Home() {
                 <Label htmlFor="machine-name">שם המכונה שלי</Label>
                 <Input
                   id="machine-name"
-                  placeholder="למשל: Rocket Apartamento"
                   value={settingsInput.name}
                   onChange={(e) => handleSettingChange("name", e.target.value)}
                 />
@@ -215,7 +222,10 @@ export default function Home() {
                   id="active-bean"
                   value={settingsInput.activeBeanId || "-"}
                   onChange={(e) =>
-                    handleSettingChange("activeBeanId", e.target.value)
+                    handleSettingChange(
+                      "activeBeanId",
+                      e.target.value === "-" ? null : e.target.value
+                    )
                   }
                 >
                   <option value="-">ללא</option>
@@ -226,7 +236,41 @@ export default function Home() {
                   ))}
                 </Select>
               </div>
-
+              <div>
+                <Label htmlFor="opened-date">תאריך פתיחת שקית</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="opened-date"
+                    type="date"
+                    value={settingsInput.openedDate}
+                    onChange={(e) =>
+                      handleSettingChange("openedDate", e.target.value)
+                    }
+                    disabled={
+                      !settingsInput.activeBeanId ||
+                      settingsInput.activeBeanId === "-"
+                    }
+                    className="flex-grow"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      handleSettingChange(
+                        "openedDate",
+                        new Date().toISOString().split("T")[0]
+                      )
+                    }
+                    disabled={
+                      !settingsInput.activeBeanId ||
+                      settingsInput.activeBeanId === "-"
+                    }
+                  >
+                    היום
+                  </Button>
+                </div>
+              </div>
               <div>
                 <Label htmlFor="defaultDose">משקל קפה מועדף (גרם)</Label>
                 <Input

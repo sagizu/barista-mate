@@ -112,6 +112,19 @@ export function setActiveBeanId(id: string) {
     localStorage.setItem(ACTIVE_BEAN_ID_KEY, id);
 }
 
+export const ACTIVE_BEAN_OPENED_DATE_KEY = "barista-mate-active-bean-opened-date";
+
+export function getActiveBeanOpenedDate(): string {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem(ACTIVE_BEAN_OPENED_DATE_KEY) ?? "";
+}
+
+export function setActiveBeanOpenedDate(date: string) {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(ACTIVE_BEAN_OPENED_DATE_KEY, date);
+}
+
+
 
 // --- Maintenance Log ---
 export interface MaintenanceDates {

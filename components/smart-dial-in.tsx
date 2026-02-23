@@ -71,19 +71,18 @@ export function SmartDialIn() {
   }, [dose, yieldWeight, time, targetMin, targetMax]);
 
   const handleSaveToLibrary = () => {
-    const d = parseFloat(dose);
-    const y = parseFloat(yieldWeight);
-    const t = parseFloat(time);
-    const tMin = parseFloat(targetMin);
-    const tMax = parseFloat(targetMax);
-    
-    if (Number.isNaN(d) || Number.isNaN(y) || Number.isNaN(t) || Number.isNaN(tMin) || Number.isNaN(tMax) || !grindSetting.trim()) {
-      return; // All fields are required
+    if (!grindSetting.trim()) {
+      return; 
     }
     
-    const beanData = activeBean 
-      ? { ...activeBean, grindSetting } 
-      : { grindSetting };
+    let beanData: Partial<SavedBean> = { grindSetting };
+    if (activeBean) {
+      // Create a template from the active bean, but without its ID
+      // so the dialog opens in "add" mode instead of "edit".
+      const { id, ...beanTemplate } = activeBean;
+      beanData = { ...beanTemplate, grindSetting };
+    }
+
     setBeanForDialog(beanData);
     setAddBeanOpen(true);
   };
@@ -221,7 +220,7 @@ export function SmartDialIn() {
                 disabled={!dose || !yieldWeight || !time || !targetMin || !targetMax || !grindSetting.trim()}
               >
                 <BookMarked className="h-4 w-4 ml-2" />
-                {activeBean ? 'עדכן הגדרת טחינה' : 'שמור הגדרה לספרייה'}
+                שמור הגדרה לספרייה
               </Button>
             </div>
           )}

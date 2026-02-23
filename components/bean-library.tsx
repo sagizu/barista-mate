@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { db, auth } from "@/firebase-config";
 import { deleteBean } from "@/lib/firestore";
+import { setStoredBeans } from "@/lib/storage";
 import type { SavedBean } from "@/lib/types";
 import { AddBeanDialog } from "@/components/add-bean-dialog";
 import { RoastRatingInput } from "./roast-rating-input";
@@ -28,6 +29,7 @@ export function BeanLibrary() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const beans: SavedBean[] = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as SavedBean));
       setBeans(beans);
+      setStoredBeans(beans);
     });
     return () => unsubscribe();
   }, []);

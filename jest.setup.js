@@ -51,3 +51,11 @@ vi.mock('@/firebase-config', () => ({
 	auth: { currentUser: { uid: 'test-user' } },
 	db: {},
 }));
+
+export const mockActiveBean = {
+  id: 'active-bean-id',
+  beanName: 'Active Bean',
+  roasterName: 'Active Roastery',
+  grindSetting: '1.2',
+  createdAt: new Date().toISOString(),
+};

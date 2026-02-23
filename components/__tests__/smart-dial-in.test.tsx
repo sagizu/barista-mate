@@ -2,7 +2,13 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, test, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { SmartDialIn } from '@/components/smart-dial-in';
-import { setupMocks } from '../../jest.setup.js';
+import { setupMocks, mockActiveBean } from '../../jest.setup.js';
+import * as storage from '@/lib/storage';
+import { AddBeanDialog } from '@/components/add-bean-dialog';
+
+vi.mock('@/components/add-bean-dialog', () => ({
+    AddBeanDialog: vi.fn(),
+}));
 
 describe('SmartDialIn', () => {
   let user: ReturnType<typeof userEvent.setup>;
@@ -16,6 +22,42 @@ describe('SmartDialIn', () => {
     vi.restoreAllMocks();
   });
 
+  test('should open AddBeanDialog in "add" mode even when an active bean is selected', async () => {
+    // Mock that there is an active bean
+    vi.spyOn(storage, 'getActiveBeanId').mockReturnValue(mockActiveBean.id);
+    vi.spyOn(storage, 'getStoredBeans').mockReturnValue([mockActiveBean]);
+
+    render(<SmartDialIn />);
+
+    // Fill form and calculate
+    await user.clear(screen.getByLabelText(/קפה נכנס/i));
+    await user.type(screen.getByLabelText(/קפה נכנס/i), '18');
+    await user.clear(screen.getByLabelText(/אספרסו יצא/i));
+    await user.type(screen.getByLabelText(/אספרסו יצא/i), '36');
+    await user.clear(screen.getByLabelText(/^זמן \(שניות\)/i));
+    await user.type(screen.getByLabelText(/^זמן \(שניות\)/i), '27');
+    // Grind setting is pre-filled from active bean, but let's clear and re-type
+    const grindInput = screen.getByLabelText(/דרגת טחינה/i);
+    await user.clear(grindInput);
+    await user.type(grindInput, '2.0');
+    
+    await user.click(screen.getByRole('button', { name: /חשב/i }));
+
+    // Click the save button
+    const saveButton = await screen.findByRole('button', { name: /שמור הגדרה לספרייה/i });
+    await user.click(saveButton);
+
+    // Check that AddBeanDialog was opened in "add" mode (no ID)
+    await waitFor(() => {
+        expect(AddBeanDialog).toHaveBeenCalled();
+        const lastCallProps = (AddBeanDialog as any).mock.lastCall[0];
+        expect(lastCallProps.beanToEdit).not.toBeNull();
+        expect(lastCallProps.beanToEdit.id).toBeUndefined();
+        expect(lastCallProps.beanToEdit.beanName).toBe(mockActiveBean.beanName);
+        expect(lastCallProps.beanToEdit.grindSetting).toBe('2.0');
+    });
+  });
+  
   test('should disable calculate button when required fields are empty', async () => {
     render(<SmartDialIn />);
 
