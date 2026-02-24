@@ -13,6 +13,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
 } from "@/components/ui/command"
 import {
   Popover,
@@ -47,30 +48,32 @@ export function RoasterCombobox({ value, onChange, "aria-labelledby": ariaLabell
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" portalled={false}>
         <Command>
           <CommandInput placeholder="חיפוש בית קלייה..." />
           <CommandEmpty>לא נמצא בית קלייה.</CommandEmpty>
-          <CommandGroup>
-            {roastersList.map((roaster) => (
-              <CommandItem
-                key={roaster.value}
-                value={roaster.value}
-                onSelect={(currentValue) => {
-                  onChange(currentValue === value ? "" : currentValue)
-                  setOpen(false)
-                }}
-              >
-                <Check
-                  className={cn(
-                    "mr-2 h-4 w-4",
-                    value === roaster.value ? "opacity-100" : "opacity-0"
-                  )}
-                />
-                {roaster.label}
-              </CommandItem>
-            ))}
-          </CommandGroup>
+          <CommandList>
+            <CommandGroup>
+              {roastersList.map((roaster) => (
+                <CommandItem
+                  key={roaster.value}
+                  value={roaster.value}
+                  onSelect={(currentValue) => {
+                    onChange(currentValue === value ? "" : currentValue)
+                    setOpen(false)
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === roaster.value ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {roaster.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
