@@ -45,6 +45,17 @@ import '@testing-library/jest-dom';
 import 'dotenv/config';
 require('whatwg-fetch');
 
+// Mock ResizeObserver for Vitest/JSDOM
+const ResizeObserver = vi.fn(() => ({
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+}));
+vi.stubGlobal('ResizeObserver', ResizeObserver);
+
+// Mock scrollIntoView for Vitest/JSDOM
+window.HTMLElement.prototype.scrollIntoView = vi.fn();
+
 // Mock firebase-config.ts for all tests
 vi.mock('@/firebase-config', () => ({
 	app: {},
