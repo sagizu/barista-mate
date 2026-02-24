@@ -28,7 +28,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { SmartDialIn } from "@/components/smart-dial-in";
-import { PeopleOrders } from "@/components/people-orders";
 import { BeanLibrary } from "@/components/bean-library";
 import { MaintenanceLog } from "@/components/maintenance-log";
 import type { SavedBean, GeneralSettings } from "@/lib/types";
@@ -277,11 +276,10 @@ export default function Home() {
 
       <main className="container mx-auto max-w-4xl px-4 py-8">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className="grid w-full h-auto grid-cols-2 gap-2 sm:h-10 sm:grid-cols-4 max-w-2xl">
+          <TabsList className="grid w-full h-auto grid-cols-3 gap-2 sm:h-10 max-w-xl">
             <TabsTrigger value="beans">ספריית פולים</TabsTrigger>
             <TabsTrigger value="dial-in">כיול</TabsTrigger>
             <TabsTrigger value="maintenance">תחזוקה</TabsTrigger>
-            <TabsTrigger value="people">אנשים והזמנות</TabsTrigger>
           </TabsList>
           <TabsContent value="beans" className="mt-6 overflow-y-auto">
             <BeanLibrary />
@@ -291,9 +289,6 @@ export default function Home() {
           </TabsContent>
           <TabsContent value="maintenance" className="mt-6">
             <MaintenanceLog />
-          </TabsContent>
-          <TabsContent value="people" className="mt-6 overflow-y-auto">
-            <PeopleOrders />
           </TabsContent>
         </Tabs>
       </main>

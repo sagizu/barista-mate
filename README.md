@@ -1,7 +1,7 @@
 
 # ☕ Barista Mate | Your Personal Espresso Companion
 
-A professional Progressive Web App (PWA) designed to manage and perfect your home espresso experience. This tool helps you dial in shots, track your beans, and manage custom drink orders for family and friends.
+A professional Progressive Web App (PWA) designed to manage and perfect your home espresso experience. This tool helps you dial in shots and track your beans.
 
 ---
 
@@ -27,11 +27,6 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 - **Comprehensive Bean Library**: Maintain a detailed library of your coffee beans, including roaster name, bean name, grind setting, roast level (visual 1-5 rating), price paid, bag weight, and flavor notes.
 - **Dial-In Integration**: Save dial-in settings (grind size) directly from the Smart Dial-In Calculator to your bean library as a default for future shots.
 
-### 4. Friends & Family Order Management
-- **Personalized Profiles**: Create profiles for friends and family, including their names and photos.
-- **Custom Drink Recipes**: Save multiple custom drink recipes for each person (e.g., "Morning Latte," "Iced Americano").
-- **Effortless Order Taking**: No more texting back and forth. Just select the person and their desired drink for a streamlined workflow.
-
 ## 🛠️ Tech Stack
 - **Framework**: Next.js
 - **Language**: TypeScript
@@ -47,7 +42,7 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 - **Integration Tests**: Full workflow testing for critical features like the Bean Library (add, edit, delete beans with Firestore mocking).
 - **Smart Dial-In Tests**: 7 comprehensive tests covering dial-in calculation accuracy, feedback logic, and UI state management.
 - **Run Tests**: `npm test`
-- **All tests pass** with 18 passing tests covering core functionality.
+- **All tests pass** with 22 passing tests covering core functionality.
 
 ##  Roadmap
 1.  **Full User Authentication**: **✓ Done!** Google sign-in is now implemented.

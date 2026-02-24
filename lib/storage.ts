@@ -1,29 +1,12 @@
 "use client";
 
-import type { Person, DialInRecord, SavedBean } from "./types";
+import type { DialInRecord, SavedBean } from "./types";
 
-const PEOPLE_KEY = "barista-mate-people";
 const DIAL_IN_HISTORY_KEY = "barista-mate-dial-in-history";
 const SAVED_BEANS_KEY = "barista-mate-saved-beans";
 const MACHINE_NAME_KEY = "barista-mate-machine-name";
 export const ACTIVE_BEAN_ID_KEY = "barista-mate-active-bean-id";
 
-
-export function getStoredPeople(): Person[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(PEOPLE_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw);
-  } catch {
-    return [];
-  }
-}
-
-export function setStoredPeople(people: Person[]) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(PEOPLE_KEY, JSON.stringify(people));
-}
 
 export function getStoredDialInHistory(): DialInRecord[] {
   if (typeof window === "undefined") return [];
