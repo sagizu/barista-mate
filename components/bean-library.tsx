@@ -2,7 +2,7 @@
 "use client";
 
 // ...existing code...
-import { BookOpen, Trash2, ExternalLink, PlusCircle, Pencil } from "lucide-react";
+import { BookOpen, Trash2, PlusCircle, Pencil } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -151,17 +151,6 @@ export function BeanLibrary() {
                                 <div className="text-sm text-[#EAE0D5]/80 mt-2 font-medium">
                                     <span className="font-bold text-[#C67C4E]">{pricePerKg}₪</span> / לק"ג
                                 </div>
-                            )}
-                            {bean.roasteryLink && (
-                                <a
-                                href={bean.roasteryLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 text-sm text-[#C67C4E] hover:underline mt-2"
-                                >
-                                <ExternalLink className="h-4 w-4" />
-                                קישור לבית הקלייה
-                                </a>
                             )}
                             {bean.flavorTags && bean.flavorTags.length > 0 && (
                                 <div className="flex flex-wrap gap-1 pt-3">

@@ -6,7 +6,7 @@ import { Check, ChevronsUpDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { ROASTERS } from "@/lib/constants"
+import roasteries from '@/roasteries.json';
 import {
   Command,
   CommandEmpty,
@@ -23,10 +23,13 @@ import {
 interface RoasterComboboxProps {
     value: string;
     onChange: (value: string) => void;
+    "aria-labelledby"?: string;
 }
 
-export function RoasterCombobox({ value, onChange }: RoasterComboboxProps) {
+export function RoasterCombobox({ value, onChange, "aria-labelledby": ariaLabelledBy }: RoasterComboboxProps) {
   const [open, setOpen] = React.useState(false)
+
+  const roastersList = roasteries.map(roastery => ({ label: roastery, value: roastery }));
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -35,10 +38,11 @@ export function RoasterCombobox({ value, onChange }: RoasterComboboxProps) {
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-labelledby={ariaLabelledBy}
           className="w-full justify-between"
         >
           {value
-            ? ROASTERS.find((roaster) => roaster.value === value)?.label
+            ? roastersList.find((roaster) => roaster.value === value)?.label
             : "בחר בית קלייה..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -48,7 +52,7 @@ export function RoasterCombobox({ value, onChange }: RoasterComboboxProps) {
           <CommandInput placeholder="חיפוש בית קלייה..." />
           <CommandEmpty>לא נמצא בית קלייה.</CommandEmpty>
           <CommandGroup>
-            {ROASTERS.map((roaster) => (
+            {roastersList.map((roaster) => (
               <CommandItem
                 key={roaster.value}
                 value={roaster.value}

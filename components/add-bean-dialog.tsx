@@ -13,10 +13,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { getStoredRoasteries, addStoredRoastery } from "@/lib/roasteries-storage";
 import { addBean, updateBean } from "@/lib/firestore";
 import type { SavedBean, RoastLevel } from "@/lib/types";
 import { RoastRatingInput } from "./roast-rating-input";
+import { RoasterCombobox } from "./roaster-combobox";
 
 interface AddBeanDialogProps {
   open: boolean;
@@ -36,12 +36,10 @@ export function AddBeanDialog({
   onDialogClose,
 }: AddBeanDialogProps) {
   const [bean, setBean] = useState<Partial<SavedBean>>({});
-  const [roasteries, setRoasteries] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
-      setRoasteries(getStoredRoasteries());
       if (beanToEdit && beanToEdit.id) { // Check for a full bean to edit
         setBean(beanToEdit);
       } else if (beanToEdit && beanToEdit.grindSetting) { // Partial bean with grind setting from dial-in
@@ -63,8 +61,6 @@ export function AddBeanDialog({
       return;
     }
 
-    addStoredRoastery(bean.roasterName);
-
     try {
       if (bean.id) {
         await updateBean(bean.id, bean);
@@ -80,9 +76,6 @@ export function AddBeanDialog({
         // Only add optional fields if they have values
         if (bean.roastLevel !== undefined) {
           beanToSave.roastLevel = bean.roastLevel;
-        }
-        if (bean.roasteryLink) {
-          beanToSave.roasteryLink = bean.roasteryLink;
         }
         if (bean.beanDescription) {
           beanToSave.beanDescription = bean.beanDescription;
@@ -128,17 +121,12 @@ export function AddBeanDialog({
         <div className="flex-grow overflow-y-auto pr-6 pl-2 -mr-6 -ml-2 space-y-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="roasterName" className="text-right">שם בית הקלייה</Label>
-              <Input
-                id="roasterName"
+              <Label htmlFor="roasterName" id="roaster-label" className="text-right">שם בית הקלייה</Label>
+              <RoasterCombobox 
                 value={bean.roasterName || ""}
-                onChange={(e) => setBean({ ...bean, roasterName: e.target.value })}
-                placeholder="הזן או בחר בית קלייה"
-                list="roastery-suggestions"
+                onChange={(value) => setBean({ ...bean, roasterName: value })}
+                aria-labelledby="roaster-label"
               />
-              <datalist id="roastery-suggestions">
-                {roasteries.map((r) => <option key={r} value={r} />)}
-              </datalist>
             </div>
             <div>
               <Label htmlFor="beanName" className="text-right">שם הפול</Label>
@@ -184,10 +172,6 @@ export function AddBeanDialog({
                 </Button>
               ))}
             </div>
-          </div>
-          <div>
-            <Label htmlFor="roasteryLink" className="text-right">קישור לבית הקלייה</Label>
-            <Input id="roasteryLink" type="url" value={bean.roasteryLink || ''} onChange={(e) => setBean({ ...bean, roasteryLink: e.target.value })} />
           </div>
           <div>
             <Label htmlFor="beanDescription" className="text-right">תיאור הפולים</Label>

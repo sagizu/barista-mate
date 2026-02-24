@@ -63,7 +63,6 @@ export interface SavedBean {
   beanName: string;
   grindSetting: string;
   roastLevel?: RoastLevel;
-  roasteryLink?: string;
   beanDescription?: string;
   /** Flavor profile tags (multiple) */
   flavorTags?: string[];
