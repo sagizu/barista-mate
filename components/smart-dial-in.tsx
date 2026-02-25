@@ -1,88 +1,77 @@
 
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { Calculator, Target, BookMarked } from "lucide-react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { Calculator, BookMarked, Timer, Play, Square } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { calculateDialIn, type DialInResult } from "@/lib/dial-in";
-import { addDialInRecord, getGeneralSettings, getActiveBeanId, getStoredBeans } from "@/lib/storage";
+import { calculateSmartDialIn, type DialInResult, type DrinkType } from "@/lib/dial-in";
+import { addDialInRecord } from "@/lib/firestore";
 import { AddBeanDialog } from "@/components/add-bean-dialog";
+import { RoastRatingInput } from "@/components/roast-rating-input";
 import { cn } from "@/lib/utils";
-import type { SavedBean } from "@/lib/types";
+import type { SavedBean, RoastLevel } from "@/lib/types";
+import { Label } from "./ui/label";
+
+import { RistrettoIcon } from "./ui/ristretto-icon";
+import { EspressoIcon } from "./ui/espresso-icon";
+import { LungoIcon } from "./ui/lungo-icon";
 
 const feedbackStyles = {
   perfect: "bg-emerald-900/40 text-emerald-200 border-emerald-700/50",
-  too_fast: "bg-amber-900/40 text-amber-200 border-amber-700/50",
-  too_slow: "bg-red-900/40 text-red-200 border-red-700/50",
+  good: "bg-amber-900/40 text-amber-200 border-amber-700/50",
+  bad: "bg-red-900/40 text-red-200 border-red-700/50",
 };
 
+const drinkOptions: { type: DrinkType, label: string, ratio: string, Icon: React.ElementType }[] = [
+    { type: 'ristretto', label: 'ריסטרטו', ratio: '1:1.5', Icon: RistrettoIcon },
+    { type: 'espresso', label: 'אספרסו', ratio: '1:2', Icon: EspressoIcon },
+    { type: 'lungo', label: 'לונגו', ratio: '1:3', Icon: LungoIcon },
+];
+
 export function SmartDialIn() {
-  const [grindSetting, setGrindSetting] = useState("");
-  const [dose, setDose] = useState("");
-  const [yieldWeight, setYieldWeight] = useState("");
-  const [time, setTime] = useState("");
-  const [targetMin, setTargetMin] = useState("25");
-  const [targetMax, setTargetMax] = useState("30");
-  const [result, setResult] = useState<DialInResult | null>(null);
-  const [addBeanOpen, setAddBeanOpen] = useState(false);
-  const [activeBean, setActiveBean] = useState<SavedBean | null>(null);
-  const [beanForDialog, setBeanForDialog] = useState<SavedBean | Partial<SavedBean> | null>(null);
+    const [drinkType, setDrinkType] = useState<DrinkType | null>(null);
+    const [roastLevel, setRoastLevel] = useState<number>(0);
+  
+    const [timer, setTimer] = useState(0);
+    const [isTimerRunning, setIsTimerRunning] = useState(false);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
+  
+    const [result, setResult] = useState<DialInResult | null>(null);
+    const [addBeanOpen, setAddBeanOpen] = useState(false);
+    const [beanForDialog, setBeanForDialog] = useState<Partial<SavedBean> | null>(null);
 
-  useEffect(() => {
-    const settings = getGeneralSettings();
-    setDose(String(settings.defaultDose));
-    const calculatedYield = settings.defaultDose * settings.targetRatio;
-    setYieldWeight(String(calculatedYield));
-
-    const activeId = getActiveBeanId();
-    if (activeId) {
-      const beans = getStoredBeans();
-      const currentBean = beans.find(b => b.id === activeId);
-      if (currentBean) {
-        setActiveBean(currentBean);
-        if (currentBean.grindSetting) {
-          setGrindSetting(currentBean.grindSetting);
-        }
-      }
+  const handleTimerToggle = () => {
+    if (isTimerRunning) {
+      clearInterval(timerRef.current!);
+      setIsTimerRunning(false);
+      handleCalculate(timer);
+    } else {
+      setTimer(0);
+      setResult(null);
+      setIsTimerRunning(true);
+      timerRef.current = setInterval(() => {
+        setTimer(prev => prev + 0.1);
+      }, 100);
     }
-  }, []);
+  };
 
-  const handleCalculate = useCallback(() => {
-    const d = parseFloat(dose);
-    const y = parseFloat(yieldWeight);
-    const t = parseFloat(time);
-    const tMin = parseFloat(targetMin);
-    const tMax = parseFloat(targetMax);
-    if (Number.isNaN(d) || Number.isNaN(y) || Number.isNaN(t) || Number.isNaN(tMin) || Number.isNaN(tMax)) return;
-    const res = calculateDialIn(d, y, t, tMin, tMax);
-    setResult(res ?? null);
-    if (res) {
-      addDialInRecord({
-        dose: d,
-        yield: y,
-        time: t,
-        ratio: res.ratio,
+  const handleCalculate = useCallback((finalTime: number) => {
+    if (!drinkType || roastLevel === 0) return;
+    const res = calculateSmartDialIn(drinkType, roastLevel, finalTime);
+    setResult(res);
+    addDialInRecord({
+        drinkType,
+        roastLevel,
+        time: finalTime,
+        targetTime: res.targetTime,
         feedback: res.feedback,
-      });
-    }
-  }, [dose, yieldWeight, time, targetMin, targetMax]);
+        advice: res.advice,
+    });
+  }, [drinkType, roastLevel]);
 
   const handleSaveToLibrary = () => {
-    if (!grindSetting.trim()) {
-      return; 
-    }
-    
-    let beanData: Partial<SavedBean> = { grindSetting };
-    if (activeBean) {
-      // Create a template from the active bean, but without its ID
-      // so the dialog opens in "add" mode instead of "edit".
-      const { id, ...beanTemplate } = activeBean;
-      beanData = { ...beanTemplate, grindSetting };
-    }
-
+    let beanData: Partial<SavedBean> = { roastLevel: roastLevel as RoastLevel };
     setBeanForDialog(beanData);
     setAddBeanOpen(true);
   };
@@ -90,138 +79,67 @@ export function SmartDialIn() {
   const handleDialogClose = () => {
     setAddBeanOpen(false);
     setBeanForDialog(null);
-    // The main page reload on settings save will refresh the active bean info
   };
 
-  const isValid = dose && yieldWeight && time && targetMin && targetMax && grindSetting.trim();
-
+  const isReady = drinkType && roastLevel > 0;
+  
   return (
     <>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-[#E6D2B5]">
             <Calculator className="h-5 w-5 text-[#C67C4E]" />
-            מחשבון כיול
+            כיול חכם
           </CardTitle>
           <CardDescription>
-            הזן את נתוני הקפה (In), האספרסו (Out) והזמן כדי לקבל משוב לכיול.
+            בחר סוג משקה ודרגת קלייה, מדוד את זמן החילוץ וקבל המלצה מדויקת.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>טווח זמן משוער (שניות)</Label>
-            <p className="text-sm text-[#EAE0D5]/70 mb-2">הגדר את טווח הזמן שבמבחינתך הוא תקין לכיול טוב</p>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <Label htmlFor="targetMin" className="text-sm">מינימום</Label>
-                <Input
-                  id="targetMin"
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={targetMin}
-                  onChange={(e) => setTargetMin(e.target.value)}
-                  placeholder="25"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="targetMax" className="text-sm">מקסימום</Label>
-                <Input
-                  id="targetMax"
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={targetMax}
-                  onChange={(e) => setTargetMax(e.target.value)}
-                  placeholder="30"
-                />
-              </div>
+        <CardContent className="space-y-6">
+          <div>
+            <Label className="mb-3 block">1. בחר סוג משקה</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {drinkOptions.map(({ type, label, ratio, Icon }) => (
+                <Button key={type} variant={drinkType === type ? "default" : "outline"} onClick={() => setDrinkType(type)} className="flex-col h-32">
+                  <Icon className="h-12 w-12 mb-1" />
+                  <span className="font-semibold">{label}</span>
+                  <span className="text-xs opacity-80">{ratio}</span>
+                </Button>
+              ))}
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="grind">דרגת טחינה</Label>
-            <Input
-              id="grind"
-              type="text"
-              inputMode="numeric"
-              value={grindSetting}
-              onChange={(e) => setGrindSetting(e.target.value)}
-              placeholder={activeBean?.grindSetting ? `מומלץ: ${activeBean.grindSetting}` : ""}
-            />
+
+          <div>
+            <Label className="mb-3 block">2. דרגת קלייה</Label>
+            <RoastRatingInput rating={roastLevel} onRatingChange={setRoastLevel} />
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="dose">קפה נכנס (In)</Label>
-              <Input
-                id="dose"
-                type="number"
-                min="0"
-                step="0.1"
-                value={dose}
-                onChange={(e) => setDose(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="yield">אספרסו יצא (Out)</Label>
-              <Input
-                id="yield"
-                type="number"
-                min="0"
-                step="0.1"
-                value={yieldWeight}
-                onChange={(e) => setYieldWeight(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="time">זמן (שניות)</Label>
-              <Input
-                id="time"
-                type="number"
-                min="0"
-                step="0.5"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-              />
-            </div>
+          
+          <div className="text-center space-y-4">
+            <Button onClick={handleTimerToggle} disabled={!isReady} size="lg" className="h-24 w-24 rounded-full flex-col gap-1 shadow-lg">
+              {isTimerRunning ? <Square className="h-8 w-8" /> : <Timer className="h-8 w-8" />}
+              <span>{isTimerRunning ? 'עצור' : 'התחל'}</span>
+            </Button>
+            <p className="text-5xl font-mono font-bold text-center text-white">{timer.toFixed(1)}s</p>
           </div>
-          <Button
-            onClick={handleCalculate}
-            disabled={!isValid}
-            className="w-full sm:w-auto"
-          >
-            <Target className="h-4 w-4 ml-2" />
-            חשב
-          </Button>
 
           {result && (
-            <div
-              className={cn(
-                "rounded-lg border p-4 space-y-2",
-                feedbackStyles[result.feedback]
-              )}
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-semibold">{result.message}</span>
-              </div>
-
-              {result.advice && (
-                  <p className="text-xl font-bold text-center py-2">{result.advice}</p>
-              )}
-
-              <p className="text-sm opacity-90">
-                יחס: <strong>1:{result.ratio.toFixed(2)}</strong> · חלון יעד:{" "}
-                {result.targetMin}-{result.targetMax} שניות
+            <div className={cn("rounded-lg border p-4 space-y-2", feedbackStyles[result.feedback])}>
+              <p className="font-semibold text-center">{result.message}</p>
+              {result.advice && <p className="text-xl font-bold text-center py-2">{result.advice}</p>}
+              <p className="text-sm opacity-90 text-center">
+                זמן יעד: <strong>{result.targetTime.toFixed(1)}s</strong> · בפועל: <strong>{result.actualTime.toFixed(1)}s</strong>
               </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-3 border-[#C67C4E]/50 text-[#EAE0D5] hover:bg-[#2a1d18]"
-                onClick={handleSaveToLibrary}
-                disabled={!dose || !yieldWeight || !time || !targetMin || !targetMax || !grindSetting.trim()}
-              >
-                <BookMarked className="h-4 w-4 ml-2" />
-                שמור הגדרה לספרייה
-              </Button>
+              <div className="flex justify-center pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-[#C67C4E]/50 text-[#EAE0D5] hover:bg-[#2a1d18]"
+                  onClick={handleSaveToLibrary}
+                >
+                  <BookMarked className="h-4 w-4 ml-2" />
+                  שמור הגדרה לספרייה
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>

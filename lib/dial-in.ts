@@ -1,53 +1,58 @@
 
-/**
- * Smart Dial-In logic:
- * - Ratio = Yield / Dose (display only)
- * - Target window is user-defined (min-max time range)
- */
-
-export type DialInFeedback = "perfect" | "too_fast" | "too_slow";
+export type DialInFeedback = "perfect" | "good" | "bad";
+export type DrinkType = "ristretto" | "espresso" | "lungo";
 
 export interface DialInResult {
-  ratio: number;
-  targetMin: number;
-  targetMax: number;
+  targetTime: number;
+  actualTime: number;
   feedback: DialInFeedback;
   message: string;
   advice: string;
 }
 
-export function calculateDialIn(
-  dose: number,
-  yieldWeight: number,
-  time: number,
-  targetMin: number,
-  targetMax: number
-): DialInResult | null {
-  if (dose <= 0 || time <= 0 || targetMin <= 0 || targetMax <= 0) return null;
-  const ratio = yieldWeight / dose;
+const baseTimes: Record<DrinkType, number> = {
+  ristretto: 22,
+  espresso: 28,
+  lungo: 34,
+};
+
+export function calculateSmartDialIn(
+  drinkType: DrinkType,
+  roastLevel: number, // Assuming 1-5 scale
+  time: number
+): DialInResult {
+  const targetTime = baseTimes[drinkType] + (3 - roastLevel) * 2;
+  const deviation = Math.abs(time - targetTime);
+  const deviationPercent = (deviation / targetTime) * 100;
 
   let feedback: DialInFeedback;
   let message: string;
-  let advice: string;
+  let advice = "";
 
-  if (time < targetMin) {
-    feedback = "too_fast";
-    message = "מהיר מדי! (חוסר חילוץ)";
-    advice = "טחן דק יותר ⬆️";
-  } else if (time > targetMax) {
-    feedback = "too_slow";
-    message = "איטי מדי! (חילוץ יתר)";
-    advice = "טחן גס יותר ⬇️";
-  } else {
+  if (deviationPercent <= 8) {
     feedback = "perfect";
-    message = "שוט מושלם! 🎯";
-    advice = "";
+    message = "חילוץ מעולה! הטעמים מאוזנים.";
+  } else if (deviationPercent <= 15) {
+    feedback = "good";
+    message = "כמעט שם. נסה תיקון קל בטחינה לדיוק מקסימלי.";
+    if (time < targetTime) {
+      advice = "טחן דק יותר ⬆️";
+    } else {
+      advice = "טחן גס יותר ⬇️";
+    }
+  } else {
+    feedback = "bad";
+    message = "החילוץ רחוק מהיעד. יש לשנות את רמת הטחינה באופן משמעותי.";
+    if (time < targetTime) {
+      advice = "טחן דק יותר ⬆️";
+    } else {
+      advice = "טחן גס יותר ⬇️";
+    }
   }
 
   return {
-    ratio,
-    targetMin,
-    targetMax,
+    targetTime,
+    actualTime: time,
     feedback,
     message,
     advice,

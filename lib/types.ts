@@ -1,4 +1,6 @@
 
+import { DialInFeedback, DrinkType } from "./dial-in";
+
 export type RoastLevel = 1 | 2 | 3 | 4 | 5;
 
 export interface Roastery {
@@ -8,12 +10,14 @@ export interface Roastery {
 }
 
 export interface DialInRecord {
-  id: string;
-  dose: number;
-  yield: number;
+  drinkType: DrinkType;
+  roastLevel: number;
   time: number;
-  ratio: number;
-  feedback: "perfect" | "too_fast" | "too_slow";
+  targetTime: number;
+  feedback: DialInFeedback;
+  advice: string;
+  grindSetting?: string;
+  dose?: number;
   createdAt: string;
 }
 
@@ -30,6 +34,7 @@ export interface SavedBean {
   bagWeightGrams?: number;
   createdAt: string;
   openedDate?: string;
+  dose?: number;
 }
 
 export interface MaintenanceDates {
@@ -41,8 +46,6 @@ export interface MaintenanceDates {
 
 export interface GeneralSettings {
   machineName?: string;
-  defaultDose?: number;
-  targetRatio?: number;
   activeBeanId?: string | null;
   activeBeanOpenedDate?: string;
 }

@@ -1,7 +1,7 @@
 
 import { auth, db } from "@/firebase-config";
 import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, setDoc } from "firebase/firestore";
-import type { SavedBean, MaintenanceDates, GeneralSettings } from "./types";
+import type { SavedBean, MaintenanceDates, GeneralSettings, DialInRecord } from "./types";
 
 const getBeansCollection = () => {
     const user = auth.currentUser;
@@ -47,4 +47,15 @@ export const updateGeneralSettings = async (updates: Partial<GeneralSettings>) =
     if (!user) throw new Error("User not authenticated");
     const settingsRef = doc(db, 'users', user.uid, 'settings', 'general');
     return await setDoc(settingsRef, updates, { merge: true });
+};
+
+// Add a dial-in record
+export const addDialInRecord = async (record: Omit<DialInRecord, 'createdAt'>) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("User not authenticated");
+    const logsCollection = collection(db, "users", user.uid, "logs");
+    return await addDoc(logsCollection, {
+        ...record,
+        createdAt: serverTimestamp()
+    });
 };

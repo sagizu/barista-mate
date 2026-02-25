@@ -1,40 +1,11 @@
 "use client";
 
-import type { DialInRecord, SavedBean } from "./types";
+import type { SavedBean } from "./types";
 
-const DIAL_IN_HISTORY_KEY = "barista-mate-dial-in-history";
 const SAVED_BEANS_KEY = "barista-mate-saved-beans";
 const MACHINE_NAME_KEY = "barista-mate-machine-name";
 export const ACTIVE_BEAN_ID_KEY = "barista-mate-active-bean-id";
 
-
-export function getStoredDialInHistory(): DialInRecord[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(DIAL_IN_HISTORY_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw);
-  } catch {
-    return [];
-  }
-}
-
-export function setStoredDialInHistory(records: DialInRecord[]) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(DIAL_IN_HISTORY_KEY, JSON.stringify(records));
-}
-
-export function addDialInRecord(record: Omit<DialInRecord, "id" | "createdAt">) {
-  const history = getStoredDialInHistory();
-  const newRecord: DialInRecord = {
-    ...record,
-    id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
-  };
-  const next = [newRecord, ...history].slice(0, 50);
-  setStoredDialInHistory(next);
-  return newRecord;
-}
 
 export function getStoredBeans(): SavedBean[] {
   if (typeof window === "undefined") return [];
@@ -156,35 +127,4 @@ export function markMaintenanceDone(
   };
   setMaintenanceDates(next);
   return next;
-}
-
-// --- General Settings ---
-export interface GeneralSettings {
-    defaultDose: number;
-    targetRatio: number;
-}
-
-const GENERAL_SETTINGS_KEY = "barista-mate-general-settings";
-
-const defaultGeneralSettings = (): GeneralSettings => ({
-    defaultDose: 18,
-    targetRatio: 2,
-});
-
-export function getGeneralSettings(): GeneralSettings {
-    if (typeof window === "undefined") return defaultGeneralSettings();
-    try {
-        const raw = localStorage.getItem(GENERAL_SETTINGS_KEY);
-        if (!raw) return defaultGeneralSettings();
-        const parsed = JSON.parse(raw) as Partial<GeneralSettings>;
-        return { ...defaultGeneralSettings(), ...parsed };
-    } catch {
-        return defaultGeneralSettings();
-    }
-}
-
-export function setGeneralSettings(settings: Partial<GeneralSettings>) {
-    if (typeof window === "undefined") return;
-    const current = getGeneralSettings();
-    localStorage.setItem(GENERAL_SETTINGS_KEY, JSON.stringify({ ...current, ...settings }));
 }

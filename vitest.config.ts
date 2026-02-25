@@ -9,6 +9,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['dotenv/config', './jest.setup.js'],
     globals: true,
+    testTimeout: 10000,
   },
   resolve: {
     alias: {

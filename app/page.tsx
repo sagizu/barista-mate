@@ -77,8 +77,6 @@ export default function Home() {
   const openSettings = () => {
     setSettingsInput({
       machineName: settings.machineName || "",
-      defaultDose: settings.defaultDose || 18,
-      targetRatio: settings.targetRatio || 2,
       activeBeanId: settings.activeBeanId || null,
       activeBeanOpenedDate: settings.activeBeanOpenedDate || "",
     });
@@ -236,29 +234,6 @@ export default function Home() {
                     היום
                   </Button>
                 </div>
-              </div>
-              <div>
-                <Label htmlFor="defaultDose">משקל קפה מועדף (גרם)</Label>
-                <Input
-                  id="defaultDose"
-                  type="number"
-                  value={settingsInput.defaultDose}
-                  onChange={(e) =>
-                    handleSettingChange("defaultDose", parseFloat(e.target.value))
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="targetRatio">יחס חילוץ מועדף</Label>
-                <Input
-                  id="targetRatio"
-                  type="number"
-                  step="0.1"
-                  value={settingsInput.targetRatio}
-                  onChange={(e) =>
-                    handleSettingChange("targetRatio", parseFloat(e.target.value))
-                  }
-                />
               </div>
             </div>
             <DialogFooter>
