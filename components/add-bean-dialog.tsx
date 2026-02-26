@@ -26,7 +26,25 @@ interface AddBeanDialogProps {
   onDialogClose: () => void;
 }
 
-const flavorTagsOptions = ["שוקולדי", "אגוזי", "פירותי", "פרחוני", "מתוק", "חמצמץ"];
+const flavorTagsOptions = [
+  "שוקולדי",
+  "אגוזי",
+  "פירותי",
+  "הדרים",
+  "פרחוני",
+  "מתוק",
+  "חמצמץ",
+  "קרמל",
+  "מתובל",
+  "פירות יער",
+  "דבש",
+  "וניל",
+  "פירות גלעין",
+  "פירות טרופיים",
+  "תה",
+  "יין",
+  "טופי",
+];
 
 export function AddBeanDialog({
   open,

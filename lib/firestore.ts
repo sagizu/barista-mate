@@ -1,6 +1,6 @@
 
 import { auth, db } from "@/firebase-config";
-import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, setDoc, getDoc, arrayUnion, query, where, getDocs, arrayRemove } from "firebase/firestore";
 import type { SavedBean, MaintenanceDates, GeneralSettings, DialInRecord } from "./types";
 
 const getBeansCollection = () => {
@@ -8,6 +8,12 @@ const getBeansCollection = () => {
     if (!user) throw new Error("User not authenticated");
     return collection(db, "users", user.uid, "beans");
 }
+
+const getPrivateRoastersDocRef = () => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("User not authenticated");
+    return doc(db, "users", user.uid, "roasters", "private");
+};
 
 // Add a new bean
 export const addBean = async (beanData: Omit<SavedBean, 'id' | 'createdAt'>) => {
@@ -57,5 +63,40 @@ export const addDialInRecord = async (record: Omit<DialInRecord, 'createdAt'>) =
     return await addDoc(logsCollection, {
         ...record,
         createdAt: serverTimestamp()
+    });
+};
+
+export const addPrivateRoaster = async (roasterName: string) => {
+    const privateRoastersDocRef = getPrivateRoastersDocRef();
+    return await setDoc(privateRoastersDocRef, {
+        names: arrayUnion(roasterName)
+    }, { merge: true });
+};
+
+export const getPrivateRoasters = async (): Promise<string[]> => {
+    const privateRoastersDocRef = getPrivateRoastersDocRef();
+    const docSnap = await getDoc(privateRoastersDocRef);
+    if (docSnap.exists()) {
+        return docSnap.data().names || [];
+    }
+    return [];
+};
+
+export const getBeansByRoaster = async (roasterName: string): Promise<SavedBean[]> => {
+    const beansCollection = getBeansCollection();
+    const q = query(beansCollection, where("roasterName", "==", roasterName));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SavedBean));
+}
+
+export const deletePrivateRoaster = async (roasterName: string) => {
+    const beans = await getBeansByRoaster(roasterName);
+    if (beans.length > 0) {
+        throw new Error(`לא ניתן למחוק את בית הקלייה "${roasterName}" מאחר ויש לו פולים משויכים.`);
+    }
+
+    const privateRoastersDocRef = getPrivateRoastersDocRef();
+    return await updateDoc(privateRoastersDocRef, {
+        names: arrayRemove(roasterName)
     });
 };

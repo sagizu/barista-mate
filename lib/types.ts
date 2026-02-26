@@ -49,15 +49,3 @@ export interface GeneralSettings {
   activeBeanId?: string | null;
   activeBeanOpenedDate?: string;
 }
-
-/** Pre-defined flavor tags for beans */
-export const FLAVOR_TAGS = [
-  "שוקולדי",
-  "אגוזי",
-  "פירותי",
-  "הדרים",
-  "פרחוני",
-  "קרמל",
-  "מתובל",
-  "פירות יער",
-] as const;

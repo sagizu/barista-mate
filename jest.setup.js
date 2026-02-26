@@ -1,6 +1,7 @@
 // Mock Firestore with in-memory beans for integration tests
 let beansStore = [];
 let snapshotCallbacks = [];
+let privateRoastersStore = ['Private Roaster 1'];
 
 vi.mock('firebase/firestore', () => ({
 	collection: vi.fn(() => ({})),
@@ -34,13 +35,24 @@ vi.mock('@/lib/firestore', () => ({
 			snapshotCallbacks.forEach(cb => cb({ docs: beansStore.map((b) => ({ id: b.id, data: () => b })) }));
 		}, 0);
 	}),
+    getPrivateRoasters: vi.fn(async () => privateRoastersStore),
+    addPrivateRoaster: vi.fn(async (name) => {
+        privateRoastersStore.push(name);
+    }),
+    deletePrivateRoaster: vi.fn(async (name) => {
+        privateRoastersStore = privateRoastersStore.filter(r => r !== name);
+    }),
+    getBeansByRoaster: vi.fn(async (name) => {
+        return beansStore.filter(b => b.roasterName === name);
+    }),
 }));
 
 export function setupMocks() {
 	beansStore = [];
 	snapshotCallbacks = [];
+    privateRoastersStore = ['Private Roaster 1'];
 }
-// (Removed duplicate Firestore mock here; only the async in-memory mock above is used)
+
 import '@testing-library/jest-dom';
 import 'dotenv/config';
 require('whatwg-fetch');
@@ -56,12 +68,18 @@ vi.stubGlobal('ResizeObserver', ResizeObserver);
 // Mock scrollIntoView for Vitest/JSDOM
 window.HTMLElement.prototype.scrollIntoView = vi.fn();
 
-// Mock firebase-config.ts for all tests
+// Mock auth hook
+vi.mock('react-firebase-hooks/auth', () => ({
+    useAuthState: vi.fn(() => [{ uid: 'test-user' }, false, undefined]),
+}));
+
+// Mock firebase-config to provide auth object for firestore calls
 vi.mock('@/firebase-config', () => ({
 	app: {},
 	auth: { currentUser: { uid: 'test-user' } },
 	db: {},
 }));
+
 
 export const mockActiveBean = {
   id: 'active-bean-id',

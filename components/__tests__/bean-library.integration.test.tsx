@@ -39,7 +39,7 @@ describe('BeanLibrary', () => {
     expect(within(dialog).getByText(/הוסף פול חדש/i)).toBeInTheDocument();
 
     await user.click(within(dialog).getByRole('combobox', { name: /שם בית הקלייה/i }));
-    await user.click(await screen.findByText("ג'רה – JERA"));
+    await user.click(await screen.findByText("בראשית"));
     await user.type(within(dialog).getByLabelText(/שם הפול/i), 'קולומביה');
     await user.type(within(dialog).getByLabelText(/דרגת טחינה/i), '4.2');
     await user.click(within(dialog).getByRole('radio', { name: 'דרגת קלייה 4 מתוך 5' }));
@@ -54,7 +54,7 @@ describe('BeanLibrary', () => {
 
     // Verify bean was added and displays correctly
     const roasteryTitle = await waitFor(() => screen.getByTestId("roastery-title"));
-    expect(roasteryTitle).toHaveTextContent("ג'רה – JERA");
+    expect(roasteryTitle).toHaveTextContent("בראשית");
     expect(screen.getByText('קולומביה')).toBeInTheDocument();
     expect(screen.getByText(/טחינה: 4.2/i)).toBeInTheDocument();
     expect(screen.getByText(/320.00₪/i)).toBeInTheDocument();
@@ -90,7 +90,7 @@ describe('BeanLibrary', () => {
 
     await flushTimers();
     await waitFor(() => {
-      expect(screen.queryByText(/ג'רה – JERA/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/בראשית/i)).not.toBeInTheDocument();
       expect(screen.getByText(/אין פולים בספרייה/i)).toBeInTheDocument();
     });
   });
