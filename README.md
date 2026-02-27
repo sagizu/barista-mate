@@ -24,7 +24,6 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 - **Active Bean Selection**: Easily set a currently active bean from your library through the main settings panel.
 - **Freshness Tracking**: The app automatically logs the "bag opened" date when a bean is first activated. This date can also be edited manually.
 - **Quick Date Entry**: A "Today" button in the settings allows for one-click entry of the current date for the opened bag.
-- **Header Display**: The active bean and its opened date are conveniently displayed in the header for quick reference, so you always know what you're working with.
 - **Comprehensive Bean Library**: Maintain a detailed library of your coffee beans, including roaster name, bean name, grind setting, roast level (visual 1-5 rating), price paid, bag weight, and flavor notes.
 - **Dial-In Integration**: Save dial-in settings (grind size, dose, and roast level) directly from the Smart Dial-In Calculator to your bean library as a default for future shots.
 

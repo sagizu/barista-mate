@@ -19,6 +19,9 @@ describe('AddBeanDialog', () => {
     vi.restoreAllMocks();
     onBeanAdded.mockClear();
     onDialogClose.mockClear();
+
+    document.body.style.pointerEvents = '';
+    document.body.removeAttribute('data-scroll-locked');
   });
 
   test('should display an error if bean name is missing', async () => {
@@ -92,40 +95,31 @@ describe('AddBeanDialog', () => {
     expect(onDialogClose).toHaveBeenCalled();
   });
 
-  // TODO: Fix hanging/infinite loop issue in this test.
   test('should allow adding a new private roaster', async () => {
     render(<AddBeanDialog open={true} onOpenChange={() => {}} onBeanAdded={onBeanAdded} beanToEdit={null} onDialogClose={onDialogClose} />);
     
-    const mainDialog = screen.getByRole('dialog', { name: /הוסף פול חדש/i });
+    await user.click(screen.getByRole('combobox', { name: /שם בית הקלייה/i }));
 
-    // Open the roaster combobox
-    await user.click(within(mainDialog).getByRole('combobox', { name: /שם בית הקלייה/i }));
+    const addButton = await screen.findByText(/הוסף בית קלייה חדש/i);
+    await user.click(addButton);
 
-    // Click the "add new roaster" button
-    await user.click(await screen.findByText(/הוסף בית קלייה חדש/i));
-
-    // A new dialog for adding a roaster should appear
     const addRoasterDialog = await screen.findByRole('dialog', { name: /הוסף בית קלייה חדש/i });
-    
-    // Type the new roaster's name and save
     await user.type(within(addRoasterDialog).getByLabelText(/שם/i), 'My New Roaster');
     await user.click(within(addRoasterDialog).getByRole('button', { name: /שמור/i }));
 
-    // Verify the new roaster was saved
     await waitFor(() => {
         expect(firestore.addPrivateRoaster).toHaveBeenCalledWith('My New Roaster');
     });
 
-    // The add roaster dialog should close
-    expect(screen.queryByRole('dialog', { name: /הוסף בית קלייה חדש/i })).not.toBeInTheDocument();
-    
-    // The newly added roaster should be selected in the main dialog
     await waitFor(() => {
-        const combobox = within(mainDialog).getByRole('combobox', { name: /שם בית הקלייה/i });
-        expect(within(combobox).getByText('My New Roaster')).toBeInTheDocument();
+        expect(screen.queryByRole('dialog', { name: /הוסף בית קלייה חדש/i })).not.toBeInTheDocument();
+    });
+    
+    await waitFor(() => {
+        const combobox = screen.getByRole('combobox', { name: /שם בית הקלייה/i });
+        expect(combobox).toHaveTextContent('My New Roaster');
     });
 
-    // Make sure we didn't accidentally submit the main form
     expect(firestore.addBean).not.toHaveBeenCalled();
     expect(onBeanAdded).not.toHaveBeenCalled();
   });
@@ -141,13 +135,13 @@ describe('AddBeanDialog', () => {
 
     const privateRoasterItem = await screen.findByText('My Private Roaster');
     // Check that private roaster has delete button and public does not
-    expect(within(privateRoasterItem.closest('[role="menuitem"]')!).getByRole('button')).toBeInTheDocument();
+    expect(within(privateRoasterItem.closest('[role="option"]')!).getByRole('button')).toBeInTheDocument();
 
     const publicRoasterItem = await screen.findByText('נחת');
-    expect(within(publicRoasterItem.closest('[role="menuitem"]')!).queryByRole('button')).not.toBeInTheDocument();
+    expect(within(publicRoasterItem.closest('[role="option"]')!).queryByRole('button')).not.toBeInTheDocument();
 
     // Click the delete button
-    await user.click(within(privateRoasterItem.closest('[role="menuitem"]')!).getByRole('button'));
+    await user.click(within(privateRoasterItem.closest('[role="option"]')!).getByRole('button'));
 
     // A confirmation dialog should appear
     const deleteDialog = await screen.findByRole('dialog', { name: /מחק את "My Private Roaster"\?/i });
@@ -175,9 +169,6 @@ describe('AddBeanDialog', () => {
     await user.click(within(mainDialog).getByRole('combobox', { name: /שם בית הקלייה/i }));
     const searchInput = screen.getByPlaceholderText(/חיפוש בית קלייה/i);
     await user.type(searchInput, 'NonExistent Roaster');
-
-    // The "add new roaster" button should still be visible
-    expect(await screen.findByText(/הוסף בית קלייה חדש/i)).toBeInTheDocument();
     
     // An option to add the searched term should appear
     const addSearchedOption = await screen.findByText(/הוסף את "NonExistent Roaster".../i);

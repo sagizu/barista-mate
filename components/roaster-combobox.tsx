@@ -150,7 +150,7 @@ export function RoasterCombobox({ value, onChange, "aria-labelledby": ariaLabell
       }
     }
     fetchPrivateRoasters();
-  }, [user]);
+  }, [user?.uid]);
 
   const roastersList = React.useMemo(() => {
     const combined = [...roasteries, ...privateRoasters];
