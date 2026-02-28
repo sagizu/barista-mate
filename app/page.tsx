@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Coffee, Settings, User, LogOut } from "lucide-react";
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '../firebase-config';
+import { useAuth } from "@/lib/auth-context";
+import { db } from '../firebase-config';
 import { signOut } from 'firebase/auth';
 import { doc, onSnapshot, collection, query, orderBy } from 'firebase/firestore';
 import { updateGeneralSettings } from "@/lib/firestore";
@@ -31,9 +31,10 @@ import { SmartDialIn } from "@/components/smart-dial-in";
 import { BeanLibrary } from "@/components/bean-library";
 import { MaintenanceLog } from "@/components/maintenance-log";
 import type { SavedBean, GeneralSettings } from "@/lib/types";
+import { auth } from "@/firebase-config";
 
 export default function Home() {
-  const [user] = useAuthState(auth);
+  const { user } = useAuth();
   const [tab, setTab] = useState("beans");
   const [settingsOpen, setSettingsOpen] = useState(false);
   

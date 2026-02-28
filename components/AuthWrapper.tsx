@@ -3,16 +3,14 @@
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../firebase-config';
 import Auth from './Auth';
+import { AuthSplashScreen } from './AuthSplashScreen';
+import { AuthContext } from '@/lib/auth-context';
 
 const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
   const [user, loading, error] = useAuthState(auth);
 
   if (loading) {
-    return (
-        <div className="flex items-center justify-center h-screen bg-[#0f0a08]">
-            <p className="text-lg text-white">טוען...</p>
-        </div>
-    );
+    return <AuthSplashScreen />;
   }
 
   if (error) {
@@ -24,7 +22,11 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (user) {
-    return <>{children}</>;
+    return (
+      <AuthContext.Provider value={{ user }}>
+        {children}
+      </AuthContext.Provider>
+    );
   }
 
   return (

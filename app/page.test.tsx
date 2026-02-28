@@ -2,18 +2,20 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Home from '@/app/page';
 import * as firestore from '@/lib/firestore';
-import * as auth from 'react-firebase-hooks/auth';
 import * as fs from 'firebase/firestore';
+import { AuthContext } from '@/lib/auth-context';
 import type { SavedBean, GeneralSettings } from '@/lib/types';
+import type { User } from 'firebase/auth';
 
-// Mock dependencies
-vi.mock('firebase/firestore');
-vi.mock('@/lib/firestore');
-vi.mock('react-firebase-hooks/auth');
+// Mock child components
 vi.mock('@/components/bean-library', () => ({ BeanLibrary: () => <div>Bean Library</div> }));
 vi.mock('@/components/smart-dial-in', () => ({ SmartDialIn: () => <div>Smart Dial-In</div> }));
 vi.mock('@/components/maintenance-log', () => ({ MaintenanceLog: () => <div>Maintenance Log</div> }));
 vi.mock('@/components/people-orders', () => ({ PeopleOrders: () => <div>People Orders</div> }));
+
+// Mock dependencies
+vi.mock('firebase/firestore');
+vi.mock('@/lib/firestore');
 
 const mockBeans: SavedBean[] = [
   { id: '1', beanName: 'Espresso Blend', roasterName: 'Roastery A', createdAt: new Date().toISOString() },
@@ -33,7 +35,18 @@ const mockUser = {
   uid: 'test-user-id',
   displayName: 'Test User',
   email: 'test@example.com',
+} as User;
+
+// Custom render function to wrap component with AuthContext
+const renderWithAuth = (ui: React.ReactElement, { user = mockUser, ...options } = {}) => {
+  return render(
+    <AuthContext.Provider value={{ user }}>
+      {ui}
+    </AuthContext.Provider>,
+    options
+  );
 };
+
 
 describe('Home Page and Settings Dialog with Firestore', () => {
   let user: ReturnType<typeof userEvent.setup>;
@@ -41,9 +54,6 @@ describe('Home Page and Settings Dialog with Firestore', () => {
 
   beforeEach(() => {
     user = userEvent.setup();
-
-    // Mock useAuthState to return a logged-in user
-    vi.spyOn(auth, 'useAuthState').mockReturnValue([mockUser as any, false, undefined]);
 
     // Mock Firestore `doc`, `collection`, and `query` to return typed identifiers
     vi.spyOn(fs, 'doc').mockImplementation(() => ({ type: 'document' }) as any);
@@ -75,7 +85,7 @@ describe('Home Page and Settings Dialog with Firestore', () => {
   });
 
   async function openSettingsDialog() {
-    render(<Home />);
+    renderWithAuth(<Home />);
     await user.click(screen.getByRole('button', { name: /הגדרות/i }));
     return screen.findByRole('dialog');
   }
