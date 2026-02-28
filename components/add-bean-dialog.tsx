@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -55,6 +56,7 @@ export function AddBeanDialog({
 }: AddBeanDialogProps) {
   const [bean, setBean] = useState<Partial<SavedBean>>({});
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -79,6 +81,7 @@ export function AddBeanDialog({
       return;
     }
 
+    setIsSaving(true);
     try {
       if (bean.id) {
         await updateBean(bean.id, bean);
@@ -112,6 +115,8 @@ export function AddBeanDialog({
     } catch (err) {
       console.error('Error saving bean:', err);
       setError("שגיאה בשמירת הפול. נסה שוב.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -200,7 +205,16 @@ export function AddBeanDialog({
             {error && <p className="text-sm text-red-500 text-right">{error}</p>}
             <div className="flex gap-2 ml-auto">
               <Button variant="outline" onClick={handleClose}>ביטול</Button>
-              <Button onClick={handleSave}>{bean.id ? "שמור שינויים" : "הוסף פול"}</Button>
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    טוען...
+                  </>
+                ) : (
+                  bean.id ? "שמור שינויים" : "הוסף פול"
+                )}
+              </Button>
             </div>
         </DialogFooter>
       </DialogContent>

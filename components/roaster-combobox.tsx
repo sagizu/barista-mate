@@ -135,6 +135,7 @@ export function RoasterCombobox({ value, onChange, "aria-labelledby": ariaLabell
   const [open, setOpen] = React.useState(false)
   const [user] = useAuthState(auth);
   const [privateRoasters, setPrivateRoasters] = React.useState<string[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [isAddRoasterOpen, setAddRoasterOpen] = React.useState(false);
   const [isDeleteRoasterOpen, setDeleteRoasterOpen] = React.useState(false);
   const [roasterToDelete, setRoasterToDelete] = React.useState("");
@@ -145,11 +146,22 @@ export function RoasterCombobox({ value, onChange, "aria-labelledby": ariaLabell
   React.useEffect(() => {
     async function fetchPrivateRoasters() {
       if (user) {
-        const roasters = await getPrivateRoasters();
-        setPrivateRoasters(roasters);
+        setIsLoading(true);
+        try {
+          const roasters = await getPrivateRoasters();
+          setPrivateRoasters(roasters);
+        } catch (error) {
+          console.error("Failed to fetch private roasters:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setIsLoading(false);
       }
     }
     fetchPrivateRoasters();
+  // CRITICAL: Always use user?.uid here. Using the full 'user' object 
+  // causes infinite render loops in Vitest due to reference changes.
   }, [user?.uid]);
 
   const roastersList = React.useMemo(() => {
@@ -211,14 +223,16 @@ export function RoasterCombobox({ value, onChange, "aria-labelledby": ariaLabell
             />
             <CommandList>
               <CommandEmpty>
-                <div className="py-4 text-center text-sm">
-                    לא נמצא בית קלייה.
-                    {searchQuery && (
-                        <Button variant="link" className="p-0 h-auto" onClick={() => openAddDialog(searchQuery)}>
-                            הוסף את "{searchQuery}"...
-                        </Button>
-                    )}
-                </div>
+                {!isLoading && (
+                  <div className="py-4 text-center text-sm">
+                      לא נמצא בית קלייה.
+                      {searchQuery && (
+                          <Button variant="link" className="p-0 h-auto" onClick={() => openAddDialog(searchQuery)}>
+                              הוסף את "{searchQuery}"...
+                          </Button>
+                      )}
+                  </div>
+                )}
               </CommandEmpty>
               <CommandGroup>
                 <CommandItem
@@ -232,7 +246,8 @@ export function RoasterCombobox({ value, onChange, "aria-labelledby": ariaLabell
               </CommandGroup>
               <CommandSeparator />
               <CommandGroup>
-                {roastersList.map((roaster) => {
+                {isLoading && <CommandItem disabled>טוען בתי קלייה...</CommandItem>}
+                {!isLoading && roastersList.map((roaster) => {
                     const isPrivate = !roasteries.includes(roaster.value);
                     return (
                         <CommandItem
