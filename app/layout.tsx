@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Heebo } from "next/font/google";
 import "./globals.css";
 import AuthWrapper from "@/components/AuthWrapper";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { NetworkStatusIndicator } from "@/components/NetworkStatusIndicator";
 
 const heebo = Heebo({
   subsets: ["hebrew", "latin"],
@@ -29,7 +31,10 @@ export default function RootLayout({
   return (
     <html lang="he" dir="rtl">
       <body className={`${heebo.variable} font-hebrew min-h-screen text-[#EAE0D5] bg-[#0f0a08]`}>
-        <AuthWrapper>{children}</AuthWrapper>
+        <NetworkStatusIndicator />
+        <ErrorBoundary>
+          <AuthWrapper>{children}</AuthWrapper>
+        </ErrorBoundary>
       </body>
     </html>
   );
