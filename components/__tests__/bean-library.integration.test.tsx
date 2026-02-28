@@ -34,7 +34,8 @@ describe('BeanLibrary', () => {
   test('should add, edit, and delete a bean, and display info correctly', async () => {
     render(<BeanLibrary />);
 
-    await user.click(screen.getByRole('button', { name: /הוסף פול/i }));
+    // In the initial empty state, the user must click the "Add first bean" button.
+    await user.click(screen.getByRole('button', { name: /הוסף פול ראשון/i }));
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText(/הוסף פול חדש/i)).toBeInTheDocument();
 
@@ -91,7 +92,8 @@ describe('BeanLibrary', () => {
     await flushTimers();
     await waitFor(() => {
       expect(screen.queryByText(/בראשית/i)).not.toBeInTheDocument();
-      expect(screen.getByText(/אין פולים בספרייה/i)).toBeInTheDocument();
+      // After deleting the only bean, we should see the EmptyState component's title.
+      expect(screen.getByText(/הספרייה שלך מחכה לפולים הראשונים/i)).toBeInTheDocument();
     });
   });
 });

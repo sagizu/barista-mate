@@ -67,6 +67,8 @@ describe('MaintenanceLog Component', () => {
 
   test('"Done Today" button calls updateMaintenanceDates with the current date', async () => {
     render(<MaintenanceLog />);
+    // First, click the button in the empty state to reveal the dashboard
+    await user.click(screen.getByRole('button', { name: /התחל לתעד/i }));
 
     const groupHeadCard = screen.getByText(/ניקוי ראש/i).parentElement?.parentElement;
     const doneTodayButton = groupHeadCard?.querySelector('button');
@@ -84,6 +86,8 @@ describe('MaintenanceLog Component', () => {
 
   test('changing a date manually calls updateMaintenanceDates', async () => {
     render(<MaintenanceLog />);
+    // First, click the button in the empty state to reveal the dashboard
+    await user.click(screen.getByRole('button', { name: /התחל לתעד/i }));
 
     const filterCard = screen.getByText(/החלפת פילטר מים/i).parentElement?.parentElement;
     const dateInput = filterCard?.querySelector('input');

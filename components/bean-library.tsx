@@ -1,8 +1,7 @@
 
 "use client";
 
-// ...existing code...
-import { BookOpen, Trash2, PlusCircle, Pencil } from "lucide-react";
+import { BookOpen, Trash2, PlusCircle, Pencil, Coffee } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +14,7 @@ import type { SavedBean } from "@/lib/types";
 import { AddBeanDialog } from "@/components/add-bean-dialog";
 import { RoastRatingInput } from "./roast-rating-input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "./EmptyState";
 
 function BeanLibrarySkeleton() {
   return (
@@ -102,13 +102,17 @@ export function BeanLibrary() {
 
     if (beans.length === 0) {
       return (
-        <div className="rounded-xl border border-[#3E2C22] bg-[#1F1712]/80 backdrop-blur-sm p-8 text-center shadow-lg">
-           <BookOpen className="mx-auto h-12 w-12 text-[#EAE0D5]/50 mb-3" />
-           <p className="text-[#E6D2B5] font-medium">אין פולים בספרייה</p>
-           <p className="text-sm text-[#EAE0D5]/70 mt-1">
-           שמור הגדרת כיול מוצלחת מהמחשבון כדי לזכור את דרגת הטחינה לכל פול
-           </p>
-       </div>
+        <EmptyState
+          icon={Coffee}
+          title="הספרייה שלך מחכה לפולים הראשונים"
+          description="כאן תוכל לנהל את כל סוגי הקפה שלך, ולשמור פרופילי טעם."
+          action={
+            <Button onClick={() => setAddBeanOpen(true)} className="bg-[#C67C4E] text-white hover:bg-[#C67C4E]/90">
+              <PlusCircle className="h-4 w-4 ml-2" />
+              הוסף פול ראשון
+            </Button>
+          }
+        />
       );
     }
     

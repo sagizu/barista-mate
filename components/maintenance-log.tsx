@@ -10,6 +10,9 @@ import { auth, db } from '@/firebase-config';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { updateMaintenanceDates } from '@/lib/firestore';
 import type { MaintenanceDates } from '@/lib/types';
+import { Skeleton } from './ui/skeleton';
+import { EmptyState } from './EmptyState';
+import { Wrench, PlusCircle } from 'lucide-react';
 
 const MAINTENANCE_TASKS: { key: keyof MaintenanceDates; label: string }[] = [
   { key: 'lastGroupHeadCleaning', label: 'ניקוי ראש' },
@@ -18,13 +21,37 @@ const MAINTENANCE_TASKS: { key: keyof MaintenanceDates; label: string }[] = [
   { key: 'waterFilterLastChanged', label: 'החלפת פילטר מים' },
 ];
 
+function MaintenanceLogSkeleton() {
+    return (
+        <div className="grid gap-4 md:grid-cols-2">
+            {[...Array(4)].map((_, i) => (
+                <Card key={i}>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-2/3" />
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Skeleton className="h-4 w-1/3" />
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                        <Skeleton className="h-12 w-full" />
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+    );
+}
+
+
 export function MaintenanceLog() {
   const [dates, setDates] = useState<MaintenanceDates>({});
+  const [loading, setLoading] = useState(true);
+  const [showDashboard, setShowDashboard] = useState(false);
 
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) {
-        // Handle case where user is not logged in, maybe show a message
+        setLoading(false);
         setDates({});
         return;
     };
@@ -34,9 +61,9 @@ export function MaintenanceLog() {
         if (snapshot.exists()) {
             setDates(snapshot.data() as MaintenanceDates);
         } else {
-            // Document doesn't exist yet, so we have no dates.
             setDates({});
         }
+        setLoading(false);
     });
 
     return () => unsubscribe();
@@ -53,6 +80,27 @@ export function MaintenanceLog() {
   };
 
   const isFilterOverdue = dates.waterFilterLastChanged && differenceInDays(new Date(), parseISO(dates.waterFilterLastChanged)) > 90;
+  const isEmpty = !Object.values(dates).some(Boolean);
+
+  if (loading) {
+      return <MaintenanceLogSkeleton />;
+  }
+
+  if (isEmpty && !showDashboard) {
+      return (
+          <EmptyState
+              icon={Wrench}
+              title="שמור על התחזוקה של המכונה שלך"
+              description="כאן תוכל לתעד ניקיונות, החלפת פילטרים ותחזוקה שוטפת כדי להבטיח קפה מעולה בכל פעם."
+              action={
+                  <Button onClick={() => setShowDashboard(true)} className="bg-[#C67C4E] text-white hover:bg-[#C67C4E]/90">
+                      <PlusCircle className="h-4 w-4 ml-2" />
+                      התחל לתעד
+                  </Button>
+              }
+          />
+      );
+  }
 
   return (
     <div className="space-y-6">
