@@ -30,6 +30,7 @@ import {
 import { SmartDialIn } from "@/components/smart-dial-in";
 import { BeanLibrary } from "@/components/bean-library";
 import { MaintenanceLog } from "@/components/maintenance-log";
+import UserSettingsDialog from "@/components/user-settings-dialog";
 import type { SavedBean, GeneralSettings } from "@/lib/types";
 import { auth } from "@/firebase-config";
 
@@ -152,6 +153,12 @@ export default function Home() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-[#3E2C22]" />
+                  <UserSettingsDialog>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer focus:bg-[#3E2C22] focus:text-[#EAE0D5]">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>הגדרות חשבון</span>
+                    </DropdownMenuItem>
+                  </UserSettingsDialog>
                   <DropdownMenuItem
                     onClick={handleSignOut}
                     className="cursor-pointer focus:bg-[#3E2C22] focus:text-[#EAE0D5]"

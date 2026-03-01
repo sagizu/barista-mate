@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { 
+  signInAnonymously,
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
   signInWithPopup,
@@ -65,6 +66,16 @@ const Auth = () => {
     }
   };
 
+  const handleAnonymousSignIn = async () => {
+    setError('');
+    try {
+      await signInAnonymously(auth);
+    } catch (err) {
+      setError("התחברות כאורח נכשלה. נסה שוב.");
+      console.error(err);
+    }
+  };
+
   return (
     <Card className="w-[350px] bg-[#1F1712] border-[#3E2C22] text-[#EAE0D5]">
       <CardHeader>
@@ -115,6 +126,9 @@ const Auth = () => {
             
             <Button variant="outline" onClick={handleGoogleSignIn} className="w-full">
                 Google
+            </Button>
+            <Button variant="link" onClick={handleAnonymousSignIn} className="w-full text-[#C67C4E] hover:text-[#E6D2B5]">
+                המשך כאורח
             </Button>
         </div>
 

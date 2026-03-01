@@ -6,12 +6,24 @@ let privateRoastersStore = ['Private Roaster 1'];
 vi.mock('firebase/firestore', () => ({
 	collection: vi.fn(() => ({})),
 	query: vi.fn((ref) => ref),
+    where: vi.fn(),
 	orderBy: vi.fn(() => {}),
 	onSnapshot: vi.fn((q, cb) => {
 		snapshotCallbacks.push(cb);
 		cb({ docs: beansStore.map((bean) => ({ id: bean.id, data: () => bean })) });
 		return () => {};
 	}),
+    getDocs: vi.fn(() => Promise.resolve({ docs: [] })),
+    writeBatch: vi.fn(() => ({
+        update: vi.fn(),
+        delete: vi.fn(),
+        commit: vi.fn().mockResolvedValue(undefined),
+    })),
+    doc: vi.fn(),
+}));
+
+vi.mock('firebase/auth', () => ({
+    updateProfile: vi.fn(),
 }));
 
 vi.mock('@/lib/firestore', () => ({
