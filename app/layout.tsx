@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Heebo } from "next/font/google";
 import "./globals.css";
-import AuthWrapper from "@/components/AuthWrapper";
-import ErrorBoundary from "@/components/ErrorBoundary";
-import { NetworkStatusIndicator } from "@/components/NetworkStatusIndicator";
+import AuthWrapper from "@/components/auth-wrapper";
+import ErrorBoundary from "@/components/error-boundary";
+import { NetworkStatusIndicator } from "@/components/network-status-indicator";
 
 const heebo = Heebo({
   subsets: ["hebrew", "latin"],

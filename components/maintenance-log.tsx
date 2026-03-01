@@ -11,7 +11,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { updateMaintenanceDates } from '@/lib/firestore';
 import type { MaintenanceDates } from '@/lib/types';
 import { Skeleton } from './ui/skeleton';
-import { EmptyState } from './EmptyState';
+import { EmptyState } from './empty-state';
 import { Wrench, PlusCircle } from 'lucide-react';
 
 const MAINTENANCE_TASKS: { key: keyof MaintenanceDates; label: string }[] = [

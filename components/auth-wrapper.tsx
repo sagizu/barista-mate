@@ -2,8 +2,8 @@
 
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../firebase-config';
-import Auth from './Auth';
-import { AuthSplashScreen } from './AuthSplashScreen';
+import Auth from './auth';
+import { AuthSplashScreen } from './auth-splash-screen';
 import { AuthContext } from '@/lib/auth-context';
 
 const AuthWrapper = ({ children }: { children: React.ReactNode }) => {

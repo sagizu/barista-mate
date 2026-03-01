@@ -14,7 +14,7 @@ import type { SavedBean } from "@/lib/types";
 import { AddBeanDialog } from "@/components/add-bean-dialog";
 import { RoastRatingInput } from "./roast-rating-input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "./EmptyState";
+import { EmptyState } from "./empty-state";
 
 function BeanLibrarySkeleton() {
   return (
