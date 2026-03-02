@@ -128,7 +128,8 @@ export function MaintenanceLog() {
                   type="date"
                   value={(dates[key] && format(parseISO(dates[key] as string), 'yyyy-MM-dd')) || ''}
                   onChange={(e) => handleDateChange(key, e.target.value)}
-                  className="text-lg p-4"
+                  className="text-lg p-4 w-full"
+                  style={{ WebkitAppearance: 'none' }}
                 />
               </div>
               <Button onClick={() => handleMarkDone(key)} className="w-full text-lg p-6">בוצע היום</Button>
