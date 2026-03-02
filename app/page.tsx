@@ -294,7 +294,7 @@ export default function Home() {
 
       <footer className="border-t border-[#3E2C22] py-4 mt-12">
         <p className="text-center text-sm text-[#EAE0D5]/70">
-          Barista Mate · Built with ❤️
+          ❤️ Barista Mate · Built with
         </p>
       </footer>
     </div>

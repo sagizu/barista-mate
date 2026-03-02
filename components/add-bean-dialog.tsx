@@ -62,9 +62,9 @@ export function AddBeanDialog({
     if (open) {
       if (beanToEdit && beanToEdit.id) { // Check for a full bean to edit
         setBean(beanToEdit);
-      } else if (beanToEdit && beanToEdit.grindSetting) { // Partial bean with grind setting from dial-in
-        setBean({ ...beanToEdit, flavorTags: [], roastLevel: undefined });
-      } else { // For new beans, or partial beans without ID
+      } else if (beanToEdit) { // Partial bean
+        setBean({ ...beanToEdit, flavorTags: beanToEdit.flavorTags || []});
+      } else { // For new beans
         setBean({ flavorTags: [], roastLevel: undefined });
       }
     }
