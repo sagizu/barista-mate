@@ -33,7 +33,7 @@ Barista Mate is a Next.js PWA for managing espresso shots, beans, and custom dri
         -   `users/{userId}/beans/{beanId}`
         -   `users/{userId}/maintenance/log`
         -   `users/{userId}/settings/general`
-    -   **Access**: All database operations should go through the helper functions in `lib/firestore.ts`.
+    -   **Access**: Most database operations go through `lib/firestore.ts`. User lifecycle management (deletion) is handled in `lib/user-service.ts`.
 -   **State Management**: Primarily managed by React component state (`useState`, `useEffect`). Real-time data synchronization is achieved using `onSnapshot` listeners from Firestore.
 
 ## 4. Developer Workflows & Conventions
@@ -50,7 +50,8 @@ Barista Mate is a Next.js PWA for managing espresso shots, beans, and custom dri
 
 -   `app/page.tsx`: The main page component, containing the layout and settings dialog logic.
 -   `components/`: Contains all major feature components.
--   `lib/firestore.ts`: The **only** place where Firestore read/write logic should be defined.
+-   `lib/firestore.ts`: The primary place where Firestore read/write logic should be defined.
+-   `lib/user-service.ts`: Handles user-specific operations like account and data deletion.
 -   `lib/types.ts`: Contains all TypeScript type definitions for the application's data model.
 -   `firebase-config.ts`: Firebase project configuration.
 -   `vitest.config.ts`: Configuration for the Vitest test runner.

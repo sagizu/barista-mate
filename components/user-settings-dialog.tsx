@@ -27,8 +27,9 @@ import {
   } from "@/components/ui/alert-dialog";
   
 import { updateProfile } from 'firebase/auth';
-import { doc, writeBatch, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, writeBatch } from 'firebase/firestore';
 import { auth, db } from '../firebase-config';
+import { deleteUserData } from '@/lib/user-service';
 
 interface UserSettingsDialogProps {
   children: React.ReactNode;
@@ -67,18 +68,7 @@ const UserSettingsDialog = ({ children }: UserSettingsDialogProps) => {
     setError('');
     try {
         // Delete all data in firestore
-        const batch = writeBatch(db);
-        const collectionsToDelete = ['beans', 'dialIns', 'maintenance'];
-        for (const coll of collectionsToDelete) {
-            const q = query(collection(db, coll), where('userId', '==', user.uid));
-            const querySnapshot = await getDocs(q);
-            querySnapshot.forEach((doc) => {
-                batch.delete(doc.ref);
-            });
-        }
-        const userDocRef = doc(db, 'users', user.uid);
-        batch.delete(userDocRef);
-        await batch.commit();
+        await deleteUserData(user.uid);
 
         // Delete user from auth
         await user.delete();

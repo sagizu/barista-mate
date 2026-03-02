@@ -9,7 +9,7 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 
 ### 1. User Authentication
 - **Secure Sign-Up & Sign-In**: A unified and secure authentication screen allows users to create an account or log in.
-- **Anonymous/Guest Mode**: Try the app without creating an account. All data is stored locally and can be migrated to a permanent account later.
+- **Anonymous/Guest Mode**: Try the app without creating an account. Data is synced to a temporary cloud account. **Note:** Logging out as a guest will permanently delete your data.
 - **Cloud-Synced Data**: All your data, including beans, orders, and settings, is securely tied to your user account and synced with the cloud.
 
 ### 2. Account Settings
@@ -48,7 +48,7 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 - **Integration Tests**: Full workflow testing for critical features like the Bean Library (add, edit, delete beans with Firestore mocking).
 - **Smart Dial-In Tests**: Comprehensive tests covering dial-in calculation accuracy, feedback logic, and UI state management.
 - **Run Tests**: `npm test`
-- **All tests pass** with 35 passing tests covering core functionality.
+- **All tests pass** with 36 passing tests covering core functionality.
 
 ##  Roadmap
 1.  **Full User Authentication**: **✓ Done!** Google sign-in and anonymous login are now implemented.

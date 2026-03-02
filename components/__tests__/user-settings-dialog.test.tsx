@@ -4,10 +4,15 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import UserSettingsDialog from '../user-settings-dialog';
 import { useAuth } from '../../lib/auth-context';
 import { updateProfile } from 'firebase/auth';
+import { deleteUserData } from '@/lib/user-service';
 
 // Mocks
 vi.mock('../../lib/auth-context');
 const mockUseAuth = useAuth as vi.Mock;
+
+vi.mock('@/lib/user-service', () => ({
+    deleteUserData: vi.fn(),
+}));
 
 // 1. Mock the specific Auth function
 vi.mock('firebase/auth', () => ({
@@ -128,8 +133,7 @@ describe('UserSettingsDialog', () => {
         fireEvent.click(screen.getByText('מחק חשבון'));
         
         await waitFor(() => {
-            expect(mockWriteBatch.delete).toHaveBeenCalled();
-            expect(mockWriteBatch.commit).toHaveBeenCalled();
+            expect(deleteUserData).toHaveBeenCalledWith(mockUser.uid);
             expect(mockUser.delete).toHaveBeenCalled();
         });
     });

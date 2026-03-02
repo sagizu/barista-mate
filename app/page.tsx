@@ -33,6 +33,7 @@ import { MaintenanceLog } from "@/components/maintenance-log";
 import UserSettingsDialog from "@/components/user-settings-dialog";
 import type { SavedBean, GeneralSettings } from "@/lib/types";
 import { auth } from "@/firebase-config";
+import { deleteUserData } from '@/lib/user-service';
 
 export default function Home() {
   const { user } = useAuth();
@@ -99,7 +100,22 @@ export default function Home() {
   };
   
   const handleSignOut = async () => {
-    await signOut(auth);
+    if (user?.isAnonymous) {
+      if (window.confirm("אתה מחובר כאורח. הנתונים שלך יימחקו לצמיתות אם תתנתק. האם להמשיך?")) {
+        try {
+          // Delete data from Firestore
+          await deleteUserData(user.uid);
+          // Delete anonymous user from Auth
+          await user.delete();
+        } catch (error) {
+          console.error("Error deleting anonymous user:", error);
+          // In case of error, perform regular sign out to avoid sticking the user
+          await signOut(auth);
+        }
+      }
+    } else {
+      await signOut(auth);
+    }
   };
 
   return (

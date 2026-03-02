@@ -6,6 +6,8 @@ import * as fs from 'firebase/firestore';
 import { AuthContext } from '@/lib/auth-context';
 import type { SavedBean, GeneralSettings } from '@/lib/types';
 import type { User } from 'firebase/auth';
+import { deleteUserData } from '@/lib/user-service';
+import { signOut } from 'firebase/auth';
 
 // Mock child components
 vi.mock('@/components/bean-library', () => ({ BeanLibrary: () => <div>Bean Library</div> }));
@@ -16,6 +18,14 @@ vi.mock('@/components/people-orders', () => ({ PeopleOrders: () => <div>People O
 // Mock dependencies
 vi.mock('firebase/firestore');
 vi.mock('@/lib/firestore');
+vi.mock('@/lib/user-service', () => ({
+  deleteUserData: vi.fn(),
+}));
+
+vi.mock('firebase/auth', () => ({
+  signOut: vi.fn(),
+  getAuth: vi.fn(),
+}));
 
 const mockBeans: SavedBean[] = [
   { id: '1', beanName: 'Espresso Blend', roasterName: 'Roastery A', createdAt: new Date().toISOString() },
@@ -140,5 +150,33 @@ describe('Home Page and Settings Dialog with Firestore', () => {
     
     // Check that the dialog is closed
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  test('anonymous user sign out triggers confirmation and data deletion', async () => {
+    const deleteUserMock = vi.fn().mockResolvedValue(undefined);
+    const anonymousUser = {
+      ...mockUser,
+      isAnonymous: true,
+      delete: deleteUserMock,
+    } as unknown as User;
+
+    // Mock window.confirm to return true
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    renderWithAuth(<Home />, { user: anonymousUser });
+
+    // Open user menu
+    const userMenuBtn = screen.getByLabelText('תפריט משתמש');
+    await user.click(userMenuBtn);
+
+    // Click logout
+    const logoutBtn = screen.getByText('התנתק');
+    await user.click(logoutBtn);
+
+    await waitFor(() => {
+      expect(window.confirm).toHaveBeenCalled();
+      expect(deleteUserData).toHaveBeenCalledWith(anonymousUser.uid);
+      expect(deleteUserMock).toHaveBeenCalled();
+    });
   });
 });
