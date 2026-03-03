@@ -48,7 +48,7 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 - **Integration Tests**: Full workflow testing for critical features like the Bean Library (add, edit, delete beans with Firestore mocking).
 - **Smart Dial-In Tests**: Comprehensive tests covering dial-in calculation accuracy, feedback logic, and UI state management.
 - **Run Tests**: `npm test`
-- **All tests pass** with 36 passing tests covering core functionality.
+- **All tests pass** with 37 passing tests covering core functionality.
 
 ##  Roadmap
 1.  **Full User Authentication**: **✓ Done!** Google sign-in and anonymous login are now implemented.

@@ -35,6 +35,16 @@ import type { SavedBean, GeneralSettings } from "@/lib/types";
 import { auth } from "@/firebase-config";
 import { deleteUserData } from '@/lib/user-service';
 
+const formatDateToDDMMYYYY = (dateString: string | null | undefined): string => {
+  if (!dateString) return "";
+  const parts = dateString.split('-');
+  if (parts.length === 3) {
+    const [year, month, day] = parts;
+    return `${day}/${month}/${year}`;
+  }
+  return dateString;
+};
+
 export default function Home() {
   const { user } = useAuth();
   const [tab, setTab] = useState("beans");
@@ -258,6 +268,11 @@ export default function Home() {
                     היום
                   </Button>
                 </div>
+                {settingsInput?.activeBeanOpenedDate && (
+                  <p className="text-xs text-muted-foreground pt-1" dir="ltr">
+                    {formatDateToDDMMYYYY(settingsInput.activeBeanOpenedDate)}
+                  </p>
+                )}
               </div>
             </div>
             <DialogFooter>

@@ -179,4 +179,24 @@ describe('Home Page and Settings Dialog with Firestore', () => {
       expect(deleteUserMock).toHaveBeenCalled();
     });
   });
+
+  test('clicking "Today" button sets date and shows formatted date', async () => {
+    const dialog = await openSettingsDialog();
+    
+    // Enable date input by selecting a bean
+    await user.selectOptions(within(dialog).getByLabelText(/פולים פעילים/i), '1');
+    
+    const todayButton = within(dialog).getByRole('button', { name: /היום/i });
+    await user.click(todayButton);
+
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+    const formattedDate = `${day}/${month}/${year}`;
+
+    await waitFor(() => {
+        expect(screen.getByText(formattedDate)).toBeInTheDocument();
+    });
+  });
 });
