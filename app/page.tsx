@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { db } from '../firebase-config';
 import { signOut } from 'firebase/auth';
 import { doc, onSnapshot, collection, query, orderBy } from 'firebase/firestore';
-import { updateGeneralSettings } from "@/lib/firestore";
+import { updateGeneralSettings, updateMaintenanceFrequencies } from "@/lib/firestore";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -53,6 +53,11 @@ export default function Home() {
   const [beans, setBeans] = useState<SavedBean[]>([]);
   const [settings, setSettings] = useState<GeneralSettings>({});
   const [settingsInput, setSettingsInput] = useState<GeneralSettings | null>(null);
+  const [maintenanceFrequencies, setMaintenanceFrequencies] = useState<{[key: string]: number | ''}>({
+    lastDescaling: 180,
+    waterFilterLastChanged: 60,
+    lastBackflush: 60,
+  });
 
   useEffect(() => {
     if (!user) {
@@ -61,10 +66,15 @@ export default function Home() {
       return;
     }
 
-    // Listener for general settings
-    const settingsRef = doc(db, 'users', user.uid, 'settings', 'general');
-    const unsubscribeSettings = onSnapshot(settingsRef, (snapshot) => {
-      setSettings(snapshot.data() as GeneralSettings || {});
+    const userRef = doc(db, 'users', user.uid);
+    const unsubscribeUser = onSnapshot(userRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const userData = snapshot.data();
+            setSettings(userData.settings?.general || {});
+            if (userData.preferences?.maintenanceFrequencies) {
+                setMaintenanceFrequencies(userData.preferences.maintenanceFrequencies);
+            }
+        }
     });
 
     // Listener for beans
@@ -76,7 +86,7 @@ export default function Home() {
     });
 
     return () => {
-      unsubscribeSettings();
+      unsubscribeUser();
       unsubscribeBeans();
     };
   }, [user]);
@@ -102,9 +112,20 @@ export default function Home() {
     }
   };
 
+  const handleFrequencyChange = (task: keyof typeof maintenanceFrequencies, value: number | '') => {
+    setMaintenanceFrequencies(prev => ({...prev, [task]: value}));
+  };
+  
   const saveSettings = async () => {
     if (!settingsInput) return;
+  
+    const finalFrequencies = Object.fromEntries(
+      Object.entries(maintenanceFrequencies).filter(([, value]) => value !== '').map(([key, value]) => [key, Number(value)])
+    );
+    
     await updateGeneralSettings(settingsInput);
+    await updateMaintenanceFrequencies(finalFrequencies);
+    
     setSettingsOpen(false);
     setSettingsInput(null);
   };
@@ -201,7 +222,7 @@ export default function Home() {
 
       {settingsInput && (
         <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-          <DialogContent className="bg-[#1F1712] border-[#3E2C22]">
+          <DialogContent className="bg-[#1F1712] border-[#3E2C22] max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>הגדרות</DialogTitle>
             </DialogHeader>
@@ -267,6 +288,39 @@ export default function Home() {
                   >
                     היום
                   </Button>
+                </div>
+              </div>
+              <div className="space-y-4 pt-4 border-t border-[#3E2C22]">
+                <h3 className="font-medium text-lg text-[#EAE0D5]">הגדרות תחזוקה</h3>
+                <div className="space-y-2">
+                    <Label htmlFor="descaling-frequency">תדירות ניקוי אבנית (בימים)</Label>
+                    <Input
+                        id="descaling-frequency"
+                        type="number"
+                        value={maintenanceFrequencies.lastDescaling}
+                        onChange={(e) => handleFrequencyChange('lastDescaling', e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                        className="appearance-none"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="filter-frequency">תדירות החלפת פילטר (בימים)</Label>
+                    <Input
+                        id="filter-frequency"
+                        type="number"
+                        value={maintenanceFrequencies.waterFilterLastChanged}
+                        onChange={(e) => handleFrequencyChange('waterFilterLastChanged', e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                        className="appearance-none"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="backflush-frequency">תדירות ניקוי ראש (בימים)</Label>
+                    <Input
+                        id="backflush-frequency"
+                        type="number"
+                        value={maintenanceFrequencies.lastBackflush}
+                        onChange={(e) => handleFrequencyChange('lastBackflush', e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                        className="appearance-none"
+                    />
                 </div>
               </div>
             </div>

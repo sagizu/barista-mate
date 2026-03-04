@@ -33,6 +33,13 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 - **Comprehensive Bean Library**: Maintain a detailed library of your coffee beans, including roaster name, bean name, grind setting, roast level (visual 1-5 rating), price paid, bag weight, and flavor notes.
 - **Dial-In Integration**: Save dial-in settings (grind size, dose, and roast level) directly from the Smart Dial-In Calculator to your bean library as a default for future shots.
 
+### 5. Maintenance Log
+- **Task Tracking**: Log important maintenance tasks like descaling, water filter changes, and backflushing to keep your machine in top condition.
+- **Default Frequencies**: The app comes with sensible default time intervals (in days) for each maintenance task.
+- **Customizable Frequencies**: In the main settings, you can override the defaults and set your own preferred frequencies for each task.
+- **Overdue Notifications**: When a task is overdue based on your custom (or default) frequency, it will be highlighted with an orange border and a "Time to do it!" badge, making it easy to see what needs attention.
+- **Cloud-Synced**: Your maintenance log and custom frequencies are saved to your account and synced across devices.
+
 ## 🛠️ Tech Stack
 - **Framework**: Next.js
 - **Language**: TypeScript
@@ -47,6 +54,7 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 - **Unit Tests**: Quick validation of individual components (e.g., AddBeanDialog).
 - **Integration Tests**: Full workflow testing for critical features like the Bean Library (add, edit, delete beans with Firestore mocking).
 - **Smart Dial-In Tests**: Comprehensive tests covering dial-in calculation accuracy, feedback logic, and UI state management.
+- **Maintenance Log Tests**: Tests for rendering tasks, handling overdue status, and user-configurable frequencies.
 - **Run Tests**: `npm test`
 - **All tests pass** with 36 passing tests covering core functionality.
 
@@ -55,6 +63,7 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 2.  **Account Management**: **✓ Done!** Users can now update their display name and delete their account.
 3.  **Firestore Integration for Beans**: **✓ Done!** Beans now sync across devices.
 4.  **Custom Dial-In Range**: **✓ Done!** Users can now set their own target extraction time.
-5.  **Bean Library V2**: Add sharing capabilities and user ratings for beans.
-6.  **Community Features**: Create a social feed to see what beans friends are using.
-7.  **PWA & Native**: Enhance PWA capabilities and wrap the app for native mobile stores.
+5.  **Maintenance Log**: **✓ Done!** Track and get reminders for machine maintenance.
+6.  **Bean Library V2**: Add sharing capabilities and user ratings for beans.
+7.  **Community Features**: Create a social feed to see what beans friends are using.
+8.  **PWA & Native**: Enhance PWA capabilities and wrap the app for native mobile stores.

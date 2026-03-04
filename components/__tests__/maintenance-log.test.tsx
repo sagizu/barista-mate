@@ -28,13 +28,25 @@ describe('MaintenanceLog Component', () => {
     user = userEvent.setup();
 
     vi.spyOn(auth, 'useAuthState').mockReturnValue([mockUser as any, false, undefined]);
-    vi.spyOn(fs, 'doc').mockReturnValue({ type: 'document' } as any);
+    vi.spyOn(fs, 'doc').mockImplementation((...args) => {
+        // Based on call, return a specific mock
+        if (args[1] === 'users' && args[3] === 'maintenance') {
+            return { type: 'document', path: 'maintenance' } as any;
+        }
+        // Default mock for user preferences
+        return { type: 'document', path: 'user' } as any;
+    });
+
     mockUpdateMaintenanceDates = vi.spyOn(firestore, 'updateMaintenanceDates').mockResolvedValue();
 
-    vi.spyOn(fs, 'onSnapshot').mockImplementation((ref, callback) => {
-      onSnapshotCallback = callback;
-      // Immediately call with empty data to simulate initial state
-      callback({ exists: () => false, data: () => ({}) });
+    // This mock will now handle both maintenance and user preference snapshots
+    vi.spyOn(fs, 'onSnapshot').mockImplementation((ref: any, callback) => {
+        if (ref.path === 'maintenance') {
+            onSnapshotCallback = callback;
+            callback({ exists: () => false, data: () => ({}) });
+        } else { // For user preferences
+            callback({ exists: () => true, data: () => ({ preferences: { maintenanceFrequencies: {} } }) });
+        }
       return () => {}; // Return an unsubscribe function
     });
   });
@@ -55,23 +67,16 @@ describe('MaintenanceLog Component', () => {
       onSnapshotCallback({ exists: () => true, data: () => mockData });
     });
 
-    const backflushCard = screen.getByText(/ניקוי "עיוור"/i).parentElement?.parentElement;
-    const descalingCard = screen.getByText(/ניקוי אבנית/i).parentElement?.parentElement;
-
-    const backflushInput = backflushCard?.querySelector('input');
-    const descalingInput = descalingCard?.querySelector('input');
-
-    expect(backflushInput).toHaveValue('2026-02-20');
-    expect(descalingInput).toHaveValue('2026-01-15');
+    expect(screen.getByLabelText(/תאריך אחרון/i, { selector: 'input[id="date-lastBackflush"]' })).toHaveValue('2026-02-20');
+    expect(screen.getByLabelText(/תאריך אחרון/i, { selector: 'input[id="date-lastDescaling"]' })).toHaveValue('2026-01-15');
   });
 
   test('"Done Today" button calls updateMaintenanceDates with the current date', async () => {
     render(<MaintenanceLog />);
-    // First, click the button in the empty state to reveal the dashboard
     await user.click(screen.getByRole('button', { name: /התחל לתעד/i }));
 
-    const groupHeadCard = screen.getByText(/ניקוי ראש/i).parentElement?.parentElement;
-    const doneTodayButton = groupHeadCard?.querySelector('button');
+    const backflushCard = screen.getByText(/ניקוי ראש עם טבליה \(Backflush\)/i).closest('div.rounded-xl');
+    const doneTodayButton = backflushCard?.querySelector('button');
 
     expect(doneTodayButton).not.toBeNull();
     if(doneTodayButton) {
@@ -80,16 +85,15 @@ describe('MaintenanceLog Component', () => {
     
     const today = format(new Date(), 'yyyy-MM-dd');
     await waitFor(() => {
-      expect(mockUpdateMaintenanceDates).toHaveBeenCalledWith({ lastGroupHeadCleaning: today });
+      expect(mockUpdateMaintenanceDates).toHaveBeenCalledWith({ lastBackflush: today });
     });
   });
 
   test('changing a date manually calls updateMaintenanceDates', async () => {
     render(<MaintenanceLog />);
-    // First, click the button in the empty state to reveal the dashboard
     await user.click(screen.getByRole('button', { name: /התחל לתעד/i }));
 
-    const filterCard = screen.getByText(/החלפת פילטר מים/i).parentElement?.parentElement;
+    const filterCard = screen.getByText(/החלפת פילטר מים/i).closest('div.rounded-xl');
     const dateInput = filterCard?.querySelector('input');
     
     expect(dateInput).not.toBeNull();
@@ -103,31 +107,32 @@ describe('MaintenanceLog Component', () => {
     });
   });
 
-  test('displays overdue filter warning if date is > 90 days ago', async () => {
+  test('displays "Time to do it!" badge for overdue tasks', async () => {
     render(<MaintenanceLog />);
     
-    const ninetyOneDaysAgo = format(subDays(new Date(), 91), 'yyyy-MM-dd');
-    const mockData = { waterFilterLastChanged: ninetyOneDaysAgo };
+    const sixtyOneDaysAgo = format(subDays(new Date(), 61), 'yyyy-MM-dd');
+    const mockData = { waterFilterLastChanged: sixtyOneDaysAgo };
     
     await act(async () => {
       onSnapshotCallback({ exists: () => true, data: () => mockData });
     });
 
-    const warning = await screen.findByText(/אזהרה: החלף פילטר מים/i);
-    expect(warning).toBeInTheDocument();
+    const badge = await screen.findByText(/הגיע הזמן!/i);
+    expect(badge).toBeInTheDocument();
+    // Check for the orange border
+    expect(badge.closest('div.rounded-xl')).toHaveClass('border-[#C67C4E]');
   });
   
-  test('does not display overdue filter warning if date is < 90 days ago', async () => {
+  test('does not display overdue badge if date is recent', async () => {
     render(<MaintenanceLog />);
     
-    const eightyNineDaysAgo = format(subDays(new Date(), 89), 'yyyy-MM-dd');
-    const mockData = { waterFilterLastChanged: eightyNineDaysAgo };
+    const fiftyNineDaysAgo = format(subDays(new Date(), 59), 'yyyy-MM-dd');
+    const mockData = { waterFilterLastChanged: fiftyNineDaysAgo };
     
     await act(async () => {
       onSnapshotCallback({ exists: () => true, data: () => mockData });
     });
 
-    // The queryBy* is used because it returns null if not found, instead of throwing an error.
-    expect(screen.queryByText(/אזהרה: החלף פילטר מים/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/הגיע הזמן!/i)).not.toBeInTheDocument();
   });
 });

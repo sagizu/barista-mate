@@ -61,33 +61,28 @@ const renderWithAuth = (ui: React.ReactElement, { user = mockUser, ...options } 
 describe('Home Page and Settings Dialog with Firestore', () => {
   let user: ReturnType<typeof userEvent.setup>;
   let mockUpdateGeneralSettings: any;
+  let mockUpdateMaintenanceFrequencies: any;
 
   beforeEach(() => {
     user = userEvent.setup();
 
-    // Mock Firestore `doc`, `collection`, and `query` to return typed identifiers
     vi.spyOn(fs, 'doc').mockImplementation(() => ({ type: 'document' }) as any);
     vi.spyOn(fs, 'collection').mockImplementation(() => ({ type: 'collection' }) as any);
     vi.spyOn(fs, 'query').mockImplementation(() => ({ type: 'query' }) as any);
     vi.spyOn(fs, 'orderBy').mockImplementation(() => 'orderBy' as any);
 
-    // Mock `onSnapshot` to provide data based on the ref type
-    vi.spyOn(fs, 'onSnapshot').mockImplementation((ref: any, callback: (snapshot: any) => void) => {
-      if (ref.type === 'document') { // This will be the settings listener
-        callback({
-          exists: () => true,
-          data: () => mockSettings,
-        });
-      } else if (ref.type === 'query') { // This will be the beans listener
-        callback({
-          docs: mockBeans.map(bean => ({ id: bean.id, data: () => bean })),
-        });
-      }
-      return () => {}; // Return an unsubscribe function
-    });
-    
-    // Mock the update function to verify it's called
     mockUpdateGeneralSettings = vi.spyOn(firestore, 'updateGeneralSettings').mockResolvedValue();
+    mockUpdateMaintenanceFrequencies = vi.spyOn(firestore, 'updateMaintenanceFrequencies').mockResolvedValue();
+    
+    // Default mock for onSnapshot, can be overridden in tests
+    vi.spyOn(fs, 'onSnapshot').mockImplementation((ref: any, callback: (snapshot: any) => void) => {
+        if (ref.type === 'document') {
+            callback({ exists: () => true, data: () => ({ settings: { general: mockSettings }, preferences: {} }) });
+        } else if (ref.type === 'query') {
+            callback({ docs: mockBeans.map(bean => ({ id: bean.id, data: () => bean })) });
+        }
+        return () => {}; // Return an unsubscribe function
+    });
   });
 
   afterEach(() => {
@@ -103,10 +98,10 @@ describe('Home Page and Settings Dialog with Firestore', () => {
   test('settings dialog opens and displays data from Firestore', async () => {
     const dialog = await openSettingsDialog();
 
-    // Check machine name
-    expect(within(dialog).getByLabelText(/שם המכונה שלי/i)).toHaveValue(mockSettings.machineName);
+    await waitFor(() => {
+        expect(within(dialog).getByLabelText(/שם המכונה שלי/i)).toHaveValue(mockSettings.machineName);
+    });
 
-    // Check that all 3 beans + the "None" option are present
     const options = await within(dialog).findAllByRole('option');
     expect(options).toHaveLength(4);
     expect(screen.getByRole('option', { name: 'Espresso Blend (Roastery A)' })).toBeInTheDocument();
@@ -128,7 +123,7 @@ describe('Home Page and Settings Dialog with Firestore', () => {
     expect(dateInput).toBeEnabled();
   });
 
-  test('saving settings calls updateGeneralSettings with the new values', async () => {
+  test('saving settings calls updateGeneralSettings and updateMaintenanceFrequencies with new values', async () => {
     const dialog = await openSettingsDialog();
 
     const newMachineName = 'New Machine Name';
@@ -138,17 +133,22 @@ describe('Home Page and Settings Dialog with Firestore', () => {
     
     await user.selectOptions(within(dialog).getByLabelText(/פולים פעילים/i), '3');
     
+    const descalingInput = within(dialog).getByLabelText(/תדירות ניקוי אבנית/i);
+    await user.clear(descalingInput);
+    await user.type(descalingInput, '200');
+
     await user.click(within(dialog).getByRole('button', { name: /שמור/i }));
 
     await waitFor(() => {
-      expect(mockUpdateGeneralSettings).toHaveBeenCalledTimes(1);
       expect(mockUpdateGeneralSettings).toHaveBeenCalledWith(expect.objectContaining({
         machineName: newMachineName,
         activeBeanId: '3',
       }));
+      expect(mockUpdateMaintenanceFrequencies).toHaveBeenCalledWith(expect.objectContaining({
+        lastDescaling: 200,
+      }));
     });
     
-    // Check that the dialog is closed
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
@@ -160,16 +160,13 @@ describe('Home Page and Settings Dialog with Firestore', () => {
       delete: deleteUserMock,
     } as unknown as User;
 
-    // Mock window.confirm to return true
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     renderWithAuth(<Home />, { user: anonymousUser });
 
-    // Open user menu
     const userMenuBtn = screen.getByLabelText('תפריט משתמש');
     await user.click(userMenuBtn);
 
-    // Click logout
     const logoutBtn = screen.getByText('התנתק');
     await user.click(logoutBtn);
 

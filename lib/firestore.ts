@@ -82,6 +82,18 @@ export const updateGeneralSettings = async (updates: Partial<GeneralSettings>) =
     }
 };
 
+// Update maintenance frequencies
+export const updateMaintenanceFrequencies = async (frequencies: {[key: string]: number}) => {
+    try {
+        const user = auth.currentUser;
+        if (!user) throw new Error("User not authenticated");
+        const userRef = doc(db, 'users', user.uid);
+        return await updateDoc(userRef, { 'preferences.maintenanceFrequencies': frequencies });
+    } catch (error) {
+        handleError(error, 'updateMaintenanceFrequencies');
+    }
+};
+
 // Add a dial-in record
 export const addDialInRecord = async (record: Omit<DialInRecord, 'createdAt'>) => {
     try {
