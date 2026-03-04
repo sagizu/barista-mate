@@ -1,5 +1,5 @@
 
-import { calculateSmartDialIn, DrinkType } from "./dial-in";
+import { calculateSmartDialIn, DrinkType } from "../dial-in";
 
 describe("calculateSmartDialIn", () => {
   // Test cases for Ristretto
