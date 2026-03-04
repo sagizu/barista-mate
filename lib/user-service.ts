@@ -1,5 +1,23 @@
 import { db } from '@/firebase-config';
-import { doc, writeBatch, collection, getDocs } from 'firebase/firestore';
+import { doc, writeBatch, collection, getDocs, setDoc, serverTimestamp } from 'firebase/firestore';
+import type { User } from 'firebase/auth';
+
+export const createUserDocument = async (user: User) => {
+    const userDocRef = doc(db, 'users', user.uid);
+    
+    const userData = {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        createdAt: serverTimestamp(),
+    };
+
+    try {
+        await setDoc(userDocRef, userData, { merge: true });
+    } catch (error) {
+        console.error("Error creating user document:", error);
+    }
+};
 
 export const deleteUserData = async (userId: string) => {
     const batch = writeBatch(db);

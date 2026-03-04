@@ -52,7 +52,9 @@ const UserSettingsDialog = ({ children }: UserSettingsDialogProps) => {
             await updateProfile(auth.currentUser, { displayName });
         }
         const userDocRef = doc(db, 'users', user.uid);
-        await writeBatch(db).update(userDocRef, { displayName }).commit();
+        const batch = writeBatch(db);
+        batch.update(userDocRef, { displayName });
+        await batch.commit();
     } catch (err) {
       setError('Failed to update display name.');
       console.error(err);

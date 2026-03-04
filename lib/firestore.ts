@@ -75,8 +75,8 @@ export const updateGeneralSettings = async (updates: Partial<GeneralSettings>) =
     try {
         const user = auth.currentUser;
         if (!user) throw new Error("User not authenticated");
-        const settingsRef = doc(db, 'users', user.uid, 'settings', 'general');
-        return await setDoc(settingsRef, updates, { merge: true });
+        const userRef = doc(db, 'users', user.uid);
+        return await setDoc(userRef, { settings: { general: updates } }, { merge: true });
     } catch (error) {
         handleError(error, 'updateGeneralSettings');
     }
@@ -88,7 +88,7 @@ export const updateMaintenanceFrequencies = async (frequencies: {[key: string]: 
         const user = auth.currentUser;
         if (!user) throw new Error("User not authenticated");
         const userRef = doc(db, 'users', user.uid);
-        return await updateDoc(userRef, { 'preferences.maintenanceFrequencies': frequencies });
+        return await setDoc(userRef, { preferences: { maintenanceFrequencies: frequencies } }, { merge: true });
     } catch (error) {
         handleError(error, 'updateMaintenanceFrequencies');
     }

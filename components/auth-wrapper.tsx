@@ -1,13 +1,21 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../firebase-config';
 import Auth from './auth';
 import { AuthSplashScreen } from './auth-splash-screen';
 import { AuthContext } from '@/lib/auth-context';
+import { createUserDocument } from '@/lib/user-service';
 
 const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
   const [user, loading, error] = useAuthState(auth);
+
+  useEffect(() => {
+    if (user) {
+      createUserDocument(user);
+    }
+  }, [user]);
 
   if (loading) {
     return <AuthSplashScreen />;
