@@ -6,7 +6,9 @@ import { Calculator, BookMarked, Timer, Play, Square } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { calculateSmartDialIn, type DialInResult, type DrinkType } from "@/lib/dial-in";
-import { addDialInRecord } from "@/lib/firestore";
+import { saveLastShot } from "@/lib/firestore";
+import { db, auth } from "@/firebase-config";
+import { doc, getDoc } from "firebase/firestore";
 import { AddBeanDialog } from "@/components/add-bean-dialog";
 import { RoastRatingInput } from "@/components/roast-rating-input";
 import { cn } from "@/lib/utils";
@@ -29,6 +31,19 @@ const drinkOptions: { type: DrinkType, label: string, ratio: string, Icon: React
     { type: 'lungo', label: 'לונגו', ratio: '1:3', Icon: LungoIcon },
 ];
 
+const translateDrinkType = (type: DrinkType) => {
+    switch (type) {
+        case 'ristretto':
+            return 'ריסטרטו';
+        case 'espresso':
+            return 'אספרסו';
+        case 'lungo':
+            return 'לונגו';
+        default:
+            return type;
+    }
+};
+
 export function SmartDialIn() {
     const [drinkType, setDrinkType] = useState<DrinkType | null>(null);
     const [roastLevel, setRoastLevel] = useState<number>(0);
@@ -40,6 +55,20 @@ export function SmartDialIn() {
     const [result, setResult] = useState<DialInResult | null>(null);
     const [addBeanOpen, setAddBeanOpen] = useState(false);
     const [beanForDialog, setBeanForDialog] = useState<Partial<SavedBean> | null>(null);
+    const [lastShot, setLastShot] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchLastShot = async () => {
+            if (auth.currentUser) {
+                const lastShotRef = doc(db, 'users', auth.currentUser.uid, 'lastShot', 'current');
+                const docSnap = await getDoc(lastShotRef);
+                if (docSnap.exists()) {
+                    setLastShot(docSnap.data());
+                }
+            }
+        };
+        fetchLastShot();
+    }, []);
 
   const handleTimerToggle = () => {
     if (isTimerRunning) {
@@ -60,14 +89,16 @@ export function SmartDialIn() {
     if (!drinkType || roastLevel === 0) return;
     const res = calculateSmartDialIn(drinkType, roastLevel, finalTime);
     setResult(res);
-    addDialInRecord({
+    const newShot = {
         drinkType,
         roastLevel,
         time: finalTime,
         targetTime: res.targetTime,
         feedback: res.feedback,
         advice: res.advice,
-    });
+    };
+    saveLastShot(newShot);
+    setLastShot(newShot);
   }, [drinkType, roastLevel]);
 
   const handleSaveToLibrary = () => {
@@ -96,6 +127,11 @@ export function SmartDialIn() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {lastShot && (
+            <div className="text-sm text-gray-500 text-center">
+                חישוב אחרון: {translateDrinkType(lastShot.drinkType)} | קלייה: {lastShot.roastLevel} | {lastShot.time.toFixed(1)}ש
+            </div>
+          )}
           <div>
             <Label className="mb-3 block">1. בחר סוג משקה</Label>
             <div className="grid grid-cols-3 gap-2">

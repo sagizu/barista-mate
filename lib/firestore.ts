@@ -94,18 +94,20 @@ export const updateMaintenanceFrequencies = async (frequencies: {[key: string]: 
     }
 };
 
-// Add a dial-in record
-export const addDialInRecord = async (record: Omit<DialInRecord, 'createdAt'>) => {
+
+
+// Save the last shot record
+export const saveLastShot = async (record: Omit<DialInRecord, 'createdAt'>) => {
     try {
         const user = auth.currentUser;
         if (!user) throw new Error("User not authenticated");
-        const logsCollection = collection(db, "users", user.uid, "logs");
-        return await addDoc(logsCollection, {
+        const lastShotRef = doc(db, 'users', user.uid, 'lastShot', 'current');
+        return await setDoc(lastShotRef, {
             ...record,
             createdAt: serverTimestamp()
         });
     } catch (error) {
-        handleError(error, 'addDialInRecord');
+        handleError(error, 'saveLastShot');
     }
 };
 

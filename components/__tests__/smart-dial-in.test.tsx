@@ -5,17 +5,32 @@ import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { SmartDialIn } from '@/components/smart-dial-in';
 import * as dialIn from '@/lib/dial-in';
 import * as firestore from '@/lib/firestore';
+import { getDoc } from 'firebase/firestore';
 import { AddBeanDialog } from '@/components/add-bean-dialog';
 
 vi.mock('@/lib/firestore', () => ({
-  addDialInRecord: vi.fn(),
+  saveLastShot: vi.fn(),
 }));
+
+vi.mock('firebase/firestore', async () => {
+    const original = await vi.importActual('firebase/firestore');
+    return {
+        ...original,
+        getDoc: vi.fn(),
+        doc: vi.fn(),
+    };
+});
 
 vi.mock('@/components/add-bean-dialog', () => ({
   AddBeanDialog: vi.fn(() => null),
 }));
 
 describe('SmartDialIn', () => {
+
+  beforeEach(() => {
+    // @ts-ignore
+    getDoc.mockResolvedValue({ exists: () => false });
+  });
 
   afterEach(() => {
     vi.restoreAllMocks();
@@ -74,8 +89,8 @@ describe('SmartDialIn', () => {
       actualTime: 27.8,
     };
     vi.spyOn(dialIn, 'calculateSmartDialIn').mockReturnValue(mockResult);
-    const addRecordSpy = vi.spyOn(firestore, 'addDialInRecord');
-
+    const saveLastShotSpy = vi.spyOn(firestore, 'saveLastShot');
+    
     render(<SmartDialIn />);
 
     await user.click(screen.getByRole('button', { name: /אספרסו/i }));
@@ -91,9 +106,57 @@ describe('SmartDialIn', () => {
       expect(screen.getByText((content, element) => content.startsWith('זמן יעד:'))).toBeInTheDocument();
     });
 
-    expect(addRecordSpy).toHaveBeenCalledWith(expect.any(Object));
+    expect(saveLastShotSpy).toHaveBeenCalledWith(expect.any(Object));
   });
 
+  test('displays last shot on initial render and updates after calculation', async () => {
+    const lastShotData = {
+        time: 25.5,
+        drinkType: 'espresso',
+        roastLevel: 3,
+    };
+    // @ts-ignore
+    getDoc.mockResolvedValue({ 
+        exists: () => true,
+        data: () => lastShotData 
+    });
+
+    render(<SmartDialIn />);
+
+    await waitFor(() => {
+        const lastShotContainer = screen.getByText(/חישוב אחרון:/);
+        expect(lastShotContainer).toBeInTheDocument();
+        expect(lastShotContainer).toHaveTextContent(/אספרסו/);
+        expect(lastShotContainer).toHaveTextContent(/קלייה: 3/);
+        expect(lastShotContainer).toHaveTextContent(/25.5ש/);
+    });
+
+    const user = userEvent.setup();
+    vi.spyOn(dialIn, 'calculateSmartDialIn').mockReturnValue({
+        feedback: 'good',
+        message: 'כמעט שם.',
+        advice: 'טחן דק יותר ⬆️',
+        targetTime: 26,
+        actualTime: 22,
+    });
+    
+    await user.click(screen.getByRole('button', { name: /ריסטרטו/i }));
+    const roastStars = screen.getAllByRole('radio');
+    await user.click(roastStars[4]);
+
+    await user.click(screen.getByRole('button', { name: /התחל/i }));
+    await new Promise(r => setTimeout(r, 200));
+    await user.click(screen.getByRole('button', { name: /עצור/i }));
+    
+    await waitFor(() => {
+        const lastShotContainer = screen.getByText(/חישוב אחרון:/);
+        expect(lastShotContainer).toBeInTheDocument();
+        expect(lastShotContainer).toHaveTextContent(/ריסטרטו/);
+        expect(lastShotContainer).toHaveTextContent(/קלייה: 5/);
+        expect(lastShotContainer).toHaveTextContent(/0.2ש/);
+    });
+  });
+  
   test('opens save dialog with correct data', async () => {
     const user = userEvent.setup();
     vi.spyOn(dialIn, 'calculateSmartDialIn').mockReturnValue({

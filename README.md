@@ -23,7 +23,7 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 - **Smart Stopwatch**: A simple one-click stopwatch to time your extraction. The calculation is automatically triggered when you stop the timer.
 - **Traffic Light Feedback**: Get instant, color-coded feedback (Perfect, Good, Bad) on your shot's accuracy.
 - **Grind Adjustment Guidance**: The app suggests whether to grind finer or coarser based on the shot time vs. the target.
-- **Bean Integration**: Dial-in results are automatically linked to your beans. Save successful dial-in settings directly to your bean library for future reference.
+- **Last Shot Display**: The calculator now displays the details of the last shot, providing a quick reference for your previous extraction.
 
 ### 4. Bean & Roast Management
 - **Cross-Device Sync**: All beans are stored in Firestore, so your bean library syncs seamlessly across multiple devices when logged into the same account.
@@ -56,7 +56,7 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 - **Smart Dial-In Tests**: Comprehensive tests covering dial-in calculation accuracy, feedback logic, and UI state management.
 - **Maintenance Log Tests**: Tests for rendering tasks, handling overdue status, and user-configurable frequencies.
 - **Run Tests**: `npm test`
-- **All tests pass** with 36 passing tests covering core functionality.
+- **All tests pass** with 37 passing tests covering core functionality.
 
 ##  Roadmap
 1.  **Full User Authentication**: **✓ Done!** Google sign-in and anonymous login are now implemented.
