@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { format, parseISO, differenceInDays } from 'date-fns';
+import { format, parseISO, differenceInDays, parse } from 'date-fns';
 import { auth, db } from '@/firebase-config';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { updateMaintenanceDates } from '@/lib/firestore';
@@ -36,6 +36,94 @@ const MAINTENANCE_TASKS: {
     defaultFrequency: 60,
   },
 ];
+
+// Sub-component for each maintenance task input to manage its own state
+function MaintenanceTaskInput({
+  id,
+  dateValue,
+  onDateChange,
+}: {
+  id: string;
+  dateValue?: string;
+  onDateChange: (newDate: string) => void;
+}) {
+  const [inputValue, setInputValue] = useState('');
+
+  useEffect(() => {
+    try {
+      if (dateValue) {
+        setInputValue(format(parseISO(dateValue), 'dd/MM/yyyy'));
+      } else {
+        setInputValue('');
+      }
+    } catch (e) {
+      setInputValue('');
+    }
+  }, [dateValue]);
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const textValue = e.target.value;
+    // Also validate on blur if date is incomplete, e.g. "28/03/20"
+    if (textValue.length > 0 && textValue.length < 10) {
+      // Revert if not a full date
+      try {
+        if (dateValue) {
+          setInputValue(format(parseISO(dateValue), 'dd/MM/yyyy'));
+        } else {
+          setInputValue('');
+        }
+      } catch (e) {
+        setInputValue('');
+      }
+      return;
+    }
+
+    if (textValue === '') {
+      onDateChange('');
+      return;
+    }
+    const date = parse(textValue, 'dd/MM/yyyy', new Date());
+    if (date instanceof Date && !isNaN(date.getTime())) {
+      onDateChange(format(date, 'yyyy-MM-dd'));
+    } else {
+      // Revert to original value on invalid input
+      try {
+        if (dateValue) {
+          setInputValue(format(parseISO(dateValue), 'dd/MM/yyyy'));
+        } else {
+          setInputValue('');
+        }
+      } catch (e) {
+        setInputValue('');
+      }
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // remove all non-digit characters
+    const digits = e.target.value.replace(/\D/g, '');
+    let formatted = digits;
+    if (digits.length > 2) {
+      formatted = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    }
+    if (digits.length > 4) {
+      formatted = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
+    }
+    setInputValue(formatted);
+  };
+
+  return (
+    <Input
+      id={id}
+      type="text"
+      placeholder="dd/MM/yyyy"
+      value={inputValue}
+      onChange={handleInputChange}
+      onBlur={handleBlur}
+      className="text-lg p-4 w-full"
+    />
+  );
+}
 
 function MaintenanceLogSkeleton() {
   return (
@@ -76,9 +164,9 @@ export function MaintenanceLog() {
     const maintenanceRef = doc(db, 'users', user.uid, 'maintenance', 'log');
 
     const unsubUser = onSnapshot(userRef, (snapshot) => {
-        if (snapshot.exists()) {
-            setUserPreferences(snapshot.data().preferences || {});
-        }
+      if (snapshot.exists()) {
+        setUserPreferences(snapshot.data().preferences || {});
+      }
     });
 
     const unsubMaintenance = onSnapshot(maintenanceRef, (snapshot) => {
@@ -91,8 +179,8 @@ export function MaintenanceLog() {
     });
 
     return () => {
-        unsubUser();
-        unsubMaintenance();
+      unsubUser();
+      unsubMaintenance();
     };
   }, []);
 
@@ -105,11 +193,20 @@ export function MaintenanceLog() {
     const today = format(new Date(), 'yyyy-MM-dd');
     handleDateChange(key, today);
   };
-  
-  const isOverdue = (taskKey: keyof MaintenanceDates, lastDate: string | undefined, taskDefaultFrequency: number) => {
+
+  const isOverdue = (
+    taskKey: keyof MaintenanceDates,
+    lastDate: string | undefined,
+    taskDefaultFrequency: number
+  ) => {
     if (!lastDate) return false;
-    const frequency = userPreferences?.maintenanceFrequencies?.[taskKey] ?? taskDefaultFrequency;
-    return differenceInDays(new Date(), parseISO(lastDate)) > frequency;
+    const frequency =
+      userPreferences?.maintenanceFrequencies?.[taskKey] ?? taskDefaultFrequency;
+    try {
+      return differenceInDays(new Date(), parseISO(lastDate)) > frequency;
+    } catch (e) {
+      return false;
+    }
   };
 
   const isEmpty = !Object.values(dates).some(Boolean);
@@ -141,40 +238,35 @@ export function MaintenanceLog() {
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2">
         {MAINTENANCE_TASKS.map(({ key, label, defaultFrequency }) => {
-            const overdue = isOverdue(key, dates[key], defaultFrequency);
-            return (
-          <Card key={key} className={overdue ? 'border-[#C67C4E]' : ''}>
-            <CardHeader>
-              <CardTitle className="flex justify-between items-center">
-                {label}
-                {overdue && <Badge className="bg-[#C67C4E]">הגיע הזמן!</Badge>}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor={`date-${key}`}>תאריך אחרון</Label>
-                <Input
-                  id={`date-${key}`}
-                  type="date"
-                  value={
-                    (dates[key] &&
-                      format(parseISO(dates[key] as string), 'yyyy-MM-dd')) ||
-                    ''
-                  }
-                  onChange={(e) => handleDateChange(key, e.target.value)}
-                  className="text-lg p-4 w-full"
-                  style={{ WebkitAppearance: 'none' }}
-                />
-              </div>
-              <Button
-                onClick={() => handleMarkDone(key)}
-                className="w-full text-lg p-6"
-              >
-                בוצע היום
-              </Button>
-            </CardContent>
-          </Card>
-        )})}
+          const overdue = isOverdue(key, dates[key], defaultFrequency);
+          const inputId = `date-${key}`;
+          return (
+            <Card key={key} className={overdue ? 'border-[#C67C4E]' : ''}>
+              <CardHeader>
+                <CardTitle className="flex justify-between items-center">
+                  {label}
+                  {overdue && <Badge className="bg-[#C67C4E]">הגיע הזמן!</Badge>}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor={inputId}>תאריך אחרון</Label>
+                  <MaintenanceTaskInput
+                    id={inputId}
+                    dateValue={dates[key]}
+                    onDateChange={(newValue) => handleDateChange(key, newValue)}
+                  />
+                </div>
+                <Button
+                  onClick={() => handleMarkDone(key)}
+                  className="w-full text-lg p-6"
+                >
+                  בוצע היום
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

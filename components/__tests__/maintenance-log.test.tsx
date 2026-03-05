@@ -1,5 +1,5 @@
 
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor, act, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MaintenanceLog } from '@/components/maintenance-log';
 import * as firestore from '@/lib/firestore';
@@ -67,8 +67,8 @@ describe('MaintenanceLog Component', () => {
       onSnapshotCallback({ exists: () => true, data: () => mockData });
     });
 
-    expect(screen.getByLabelText(/תאריך אחרון/i, { selector: 'input[id="date-lastBackflush"]' })).toHaveValue('2026-02-20');
-    expect(screen.getByLabelText(/תאריך אחרון/i, { selector: 'input[id="date-lastDescaling"]' })).toHaveValue('2026-01-15');
+    expect(screen.getByLabelText(/תאריך אחרון/i, { selector: 'input[id="date-lastBackflush"]' })).toHaveValue('20/02/2026');
+    expect(screen.getByLabelText(/תאריך אחרון/i, { selector: 'input[id="date-lastDescaling"]' })).toHaveValue('15/01/2026');
   });
 
   test('"Done Today" button calls updateMaintenanceDates with the current date', async () => {
@@ -93,13 +93,15 @@ describe('MaintenanceLog Component', () => {
     render(<MaintenanceLog />);
     await user.click(screen.getByRole('button', { name: /התחל לתעד/i }));
 
-    const filterCard = screen.getByText(/החלפת פילטר מים/i).closest('div.rounded-xl');
-    const dateInput = filterCard?.querySelector('input');
+    const filterCard = screen.getByText(/החלפת פילטר מים/i).closest('div.rounded-xl') as HTMLElement;
+    const dateInput = within(filterCard).getByLabelText(/תאריך אחרון/i);
     
     expect(dateInput).not.toBeNull();
     if(dateInput) {
         await user.clear(dateInput);
-        await user.type(dateInput, '2026-02-23');
+        await user.type(dateInput, '23022026');
+        expect(dateInput).toHaveValue('23/02/2026');
+        await user.tab(); // Trigger blur
     }
 
     await waitFor(() => {
