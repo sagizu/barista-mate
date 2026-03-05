@@ -149,76 +149,77 @@ export default function Home() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#2a1d18] via-[#1a110e] to-[#0f0a08]">
-      <header className="sticky top-0 z-40 border-b border-[#3E2C22] bg-[#1F1712]/90 backdrop-blur supports-[backdrop-filter]:bg-[#1F1712]/80">
-        <div className="container mx-auto flex h-14 items-center justify-between gap-4 px-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="flex items-center gap-2 text-[#E6D2B5] shrink-0">
-              <Coffee className="h-7 w-7" />
-              <span className="font-semibold text-lg">Barista Mate</span>
+return (
+<div className="min-h-screen flex flex-col bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#2a1d18] via-[#1a110e] to-[#0f0a08]">
+      <header className="sticky top-0 z-40 w-full border-b border-[#3E2C22] bg-[#1F1712]/90 backdrop-blur supports-[backdrop-filter]:bg-[#1F1712]/80">
+        <div className="container mx-auto flex h-14 items-center justify-between gap-4 px-4">            
+          {/* Left side: Logo and Info */}
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="flex items-center gap-2 text-[#E6D2B5] shrink-0">
+                <Coffee className="h-7 w-7" />
+                <span className="font-semibold text-lg">Barista Mate</span>
+              </div>
+              <div className="text-[#C67C4E] text-sm font-medium truncate hidden sm:inline-flex items-center space-x-2">
+                {settings.machineName && <span title={settings.machineName}>· {settings.machineName}</span>}
+                {activeBean && (
+                  <span title={activeBean.beanName} className="inline-flex items-baseline gap-1">
+                    <span>· {activeBean.beanName}</span>
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="text-[#C67C4E] text-sm font-medium truncate hidden sm:inline-flex items-center space-x-2">
-              {settings.machineName && <span title={settings.machineName}>· {settings.machineName}</span>}
-              {activeBean && (
-                <span title={activeBean.beanName} className="inline-flex items-baseline gap-1">
-                  <span>· {activeBean.beanName}</span>
-                </span>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={openSettings}
-              aria-label="הגדרות"
-            >
-              <Settings className="h-5 w-5 text-[#E6D2B5]" />
-            </Button>
-
-            {user && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="תפריט משתמש"
-                  >
-                    <User className="h-5 w-5 text-[#E6D2B5]" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-[#1F1712] border-[#3E2C22] text-[#EAE0D5]">
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        שלום, {user.displayName || 'משתמש'}
-                      </p>
-                      <p className="text-xs leading-none text-muted-foreground text-[#EAE0D5]/70">
-                        {user.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-[#3E2C22]" />
-                  <UserSettingsDialog>
-                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer focus:bg-[#3E2C22] focus:text-[#EAE0D5]">
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>הגדרות חשבון</span>
+            {/* Right side: Actions and User Menu */}
+            <div className="flex items-center gap-1 shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={openSettings}
+                aria-label="הגדרות"
+              >
+                <Settings className="h-5 w-5 text-[#E6D2B5]" />
+              </Button>
+              {user && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="תפריט משתמש"
+                    >
+                      <User className="h-5 w-5 text-[#E6D2B5]" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-[#1F1712] border-[#3E2C22] text-[#EAE0D5]">
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          שלום, {user.displayName || 'משתמש'}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground text-[#EAE0D5]/70">
+                          {user.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-[#3E2C22]" />
+                    <UserSettingsDialog>
+                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer focus:bg-[#3E2C22] focus:text-[#EAE0D5]">
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>הגדרות חשבון</span>
+                      </DropdownMenuItem>
+                    </UserSettingsDialog>
+                    <DropdownMenuItem
+                      onClick={handleSignOut}
+                      className="cursor-pointer focus:bg-[#3E2C22] focus:text-[#EAE0D5]"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>התנתק</span>
                     </DropdownMenuItem>
-                  </UserSettingsDialog>
-                  <DropdownMenuItem
-                    onClick={handleSignOut}
-                    className="cursor-pointer focus:bg-[#3E2C22] focus:text-[#EAE0D5]"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>התנתק</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>            
           </div>
-        </div>
-      </header>
+        </header>
 
       {settingsInput && (
         <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
@@ -337,26 +338,26 @@ export default function Home() {
         </Dialog>
       )}
 
-      <main className="container mx-auto max-w-4xl px-4 py-8">
-        <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className="grid w-full h-auto grid-cols-3 gap-2 sm:h-10 max-w-xl">
+      <main className="flex-1 w-full container mx-auto px-4 py-8 max-w-7xl">
+        <Tabs value={tab} onValueChange={setTab} className="w-full flex flex-col items-center">
+          <TabsList className="grid w-full h-auto grid-cols-3 gap-2 sm:h-10 max-w-xl mb-6">
             <TabsTrigger value="beans">ספריית פולים</TabsTrigger>
             <TabsTrigger value="dial-in">כיול</TabsTrigger>
             <TabsTrigger value="maintenance">תחזוקה</TabsTrigger>
           </TabsList>
-          <TabsContent value="beans" className="mt-6 overflow-y-auto">
+          <TabsContent value="beans" className="w-full mt-0 overflow-y-auto">
             <BeanLibrary />
           </TabsContent>
-          <TabsContent value="dial-in" className="mt-6">
+          <TabsContent value="dial-in" className="w-full mt-0">
             <SmartDialIn />
           </TabsContent>
-          <TabsContent value="maintenance" className="mt-6">
+          <TabsContent value="maintenance" className="w-full mt-0">
             <MaintenanceLog />
           </TabsContent>
         </Tabs>
       </main>
 
-      <footer className="border-t border-[#3E2C22] py-4 mt-12">
+      <footer className="w-full border-t border-[#3E2C22] py-6 mt-auto bg-[#0f0a08]/80">
         <p className="text-center text-sm text-[#EAE0D5]/70">
           ❤️ Barista Mate · Built with
         </p>

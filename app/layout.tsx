@@ -40,18 +40,19 @@ export const metadata: Metadata = {
   icons: {
     icon: '/icon.svg',
     shortcut: '/icon.svg',
-    apple: '/icon.svg',
+    apple: '/icon-192.png',
   },
   manifest: '/manifest.json',
 };
 
 export const viewport: Viewport = {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    themeColor: "#0f0a08",
-}
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#0f0a08",
+  viewportFit: 'cover',
+};
 
 export default function RootLayout({
   children,
