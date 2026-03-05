@@ -12,8 +12,37 @@ const heebo = Heebo({
 });
 
 export const metadata: Metadata = {
-  title: "Barista Mate | העוזר האישי לקפה",
-  description: "Smart Dial-In Assistant & People & Orders Manager",
+  title: "Barista Mate",
+  description: "The ultimate tool for home baristas: track beans, dial-ins and manage espresso machine maintenance.",
+  metadataBase: new URL('https://barista-mate.vercel.app'),
+  openGraph: {
+    title: "Barista Mate",
+    description: "The ultimate tool for home baristas: track beans, dial-ins and manage espresso machine maintenance.",
+    url: "https://barista-mate.vercel.app",
+    siteName: "Barista Mate",
+    images: [
+      {
+        url: '/icon.svg',
+        width: 800,
+        height: 800,
+        alt: 'Barista Mate Logo',
+      },
+    ],
+    locale: 'he_IL',
+    type: 'website',
+  },
+  twitter: {
+    card: "summary",
+    title: "Barista Mate",
+    description: "The ultimate tool for home baristas: track beans, dial-ins and manage espresso machine maintenance.",
+    images: ['/icon.svg'],
+  },
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
+  manifest: '/manifest.json',
 };
 
 export const viewport: Viewport = {
@@ -21,6 +50,7 @@ export const viewport: Viewport = {
     initialScale: 1,
     maximumScale: 1,
     userScalable: false,
+    themeColor: "#0f0a08",
 }
 
 export default function RootLayout({
