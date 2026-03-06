@@ -37,7 +37,7 @@ const MAINTENANCE_TASKS: {
   },
 ];
 
-// Sub-component for each maintenance task input to manage its own state
+// Sub-component for each maintenance task input using native date picker
 function MaintenanceTaskInput({
   id,
   dateValue,
@@ -47,80 +47,21 @@ function MaintenanceTaskInput({
   dateValue?: string;
   onDateChange: (newDate: string) => void;
 }) {
-  const [inputValue, setInputValue] = useState('');
-
-  useEffect(() => {
-    try {
-      if (dateValue) {
-        setInputValue(format(parseISO(dateValue), 'dd/MM/yyyy'));
-      } else {
-        setInputValue('');
-      }
-    } catch (e) {
-      setInputValue('');
-    }
-  }, [dateValue]);
-
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const textValue = e.target.value;
-    // Also validate on blur if date is incomplete, e.g. "28/03/20"
-    if (textValue.length > 0 && textValue.length < 10) {
-      // Revert if not a full date
-      try {
-        if (dateValue) {
-          setInputValue(format(parseISO(dateValue), 'dd/MM/yyyy'));
-        } else {
-          setInputValue('');
-        }
-      } catch (e) {
-        setInputValue('');
-      }
-      return;
-    }
-
-    if (textValue === '') {
-      onDateChange('');
-      return;
-    }
-    const date = parse(textValue, 'dd/MM/yyyy', new Date());
-    if (date instanceof Date && !isNaN(date.getTime())) {
-      onDateChange(format(date, 'yyyy-MM-dd'));
-    } else {
-      // Revert to original value on invalid input
-      try {
-        if (dateValue) {
-          setInputValue(format(parseISO(dateValue), 'dd/MM/yyyy'));
-        } else {
-          setInputValue('');
-        }
-      } catch (e) {
-        setInputValue('');
-      }
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // remove all non-digit characters
-    const digits = e.target.value.replace(/\D/g, '');
-    let formatted = digits;
-    if (digits.length > 2) {
-      formatted = `${digits.slice(0, 2)}/${digits.slice(2)}`;
-    }
-    if (digits.length > 4) {
-      formatted = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
-    }
-    setInputValue(formatted);
-  };
-
   return (
     <Input
       id={id}
-      type="text"
-      placeholder="dd/MM/yyyy"
-      value={inputValue}
-      onChange={handleInputChange}
-      onBlur={handleBlur}
-      className="text-lg p-4 w-full"
+      type="date"
+      value={dateValue || ''}
+      onChange={(e) => onDateChange(e.target.value)}
+      onClick={(e) => {
+        try {
+          if ('showPicker' in HTMLInputElement.prototype) {
+            (e.target as HTMLInputElement).showPicker();
+          }
+        } catch (err) {}
+      }}
+      className="text-lg p-4 w-full block cursor-pointer text-center sm:text-right"
+      dir="ltr" 
     />
   );
 }
