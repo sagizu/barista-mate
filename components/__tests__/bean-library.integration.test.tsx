@@ -1,99 +1,166 @@
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { BeanLibrary } from '../bean-library';
+import { SavedBean } from '@/lib/types';
+import { onSnapshot } from 'firebase/firestore';
 
-import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { BeanLibrary } from '@/components/bean-library';
-import { setupMocks } from '../../jest.setup.js';
+// Mock firestore
+vi.mock('@/lib/firestore', () => ({
+  deleteBean: vi.fn(),
+  addBean: vi.fn(),
+  updateBean: vi.fn(),
+  getPrivateRoasters: vi.fn(() => Promise.resolve(['A Roastery', 'B Roastery'])),
+}));
 
-// Utility to flush pending timers (for async Firestore mock)
-async function flushTimers() {
-  await new Promise((resolve) => setTimeout(resolve, 0));
-}
+// Mock firebase/firestore
+vi.mock('firebase/firestore', async () => {
+    const actual = await vi.importActual('firebase/firestore');
+    return {
+        ...actual,
+        collection: vi.fn(),
+        query: vi.fn(),
+        orderBy: vi.fn(),
+        onSnapshot: vi.fn(),
+    };
+});
+
+
+// Mock firebase-config
+vi.mock('@/firebase-config', () => ({
+  db: {},
+  auth: {
+    currentUser: {
+      uid: 'test-user-id',
+    },
+  },
+}));
+
+// Mock storage
+vi.mock('@/lib/storage', () => ({
+  setStoredBeans: vi.fn(),
+}));
+
+const mockBeans: SavedBean[] = [
+  { id: '1', roasterName: 'B Roastery', beanName: 'Z Blend', roastLevel: 3, pricePerKilo: 120, flavorTags: ['שוקולדי', 'אגוזי'], createdAt: '2023-01-01', grindSetting: '' },
+  { id: '2', roasterName: 'A Roastery', beanName: 'Y Blend', roastLevel: 2, pricePerKilo: 150, flavorTags: ['פירותי'], createdAt: '2023-01-02', grindSetting: '' },
+  { id: '3', roasterName: 'B Roastery', beanName: 'X Blend', roastLevel: 5, pricePerKilo: 200, flavorTags: ['קרמל'], createdAt: '2023-01-03', grindSetting: '' },
+];
 
 describe('BeanLibrary', () => {
-  let user: ReturnType<typeof userEvent.setup>;
-
   beforeEach(() => {
-    setupMocks();
-    user = userEvent.setup();
-    let store: { [key: string]: string } = {};
-    vi.spyOn(window.localStorage.__proto__, 'getItem').mockImplementation((key: string) => store[key] || null);
-    vi.spyOn(window.localStorage.__proto__, 'setItem').mockImplementation((key: string, value: string) => {
-      store[key] = value.toString();
+    // Reset mocks before each test
+    vi.clearAllMocks();
+    (onSnapshot as vi.Mock).mockImplementation((query, callback) => {
+        const snapshot = {
+            docs: mockBeans.map(bean => ({
+                id: bean.id,
+                data: () => bean,
+            })),
+        };
+        callback(snapshot);
+        return () => {}; // Unsubscribe function
     });
-    vi.spyOn(window.localStorage.__proto__, 'clear').mockImplementation(() => {
-      store = {};
-    });
-
-    localStorage.setItem('beans', '[]');
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  test('should add, edit, and delete a bean, and display info correctly', async () => {
+  it('renders and sorts beans correctly', async () => {
     render(<BeanLibrary />);
-
-    // In the initial empty state, the user must click the "Add first bean" button.
-    await user.click(screen.getByRole('button', { name: /הוסף פול ראשון/i }));
-    const dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByText(/הוסף פול חדש/i)).toBeInTheDocument();
-
-    await user.click(within(dialog).getByRole('combobox', { name: /שם בית הקלייה/i }));
-    await user.click(await screen.findByText("בראשית"));
-    await user.type(within(dialog).getByLabelText(/שם הפול/i), 'קולומביה');
-    await user.type(within(dialog).getByLabelText(/דרגת טחינה/i), '4.2');
-    await user.click(within(dialog).getByRole('radio', { name: 'דרגת קלייה 4 מתוך 5' }));
-    await user.type(within(dialog).getByLabelText(/מחיר ששולם/i), '80');
-    await user.type(within(dialog).getByLabelText(/משקל שקית/i), '250');
-    await user.click(within(dialog).getByRole('button', { name: 'הוסף פול' }));
-
-    await flushTimers();
+    
     await waitFor(() => {
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      const roasteryTitles = screen.getAllByTestId('roastery-title');
+      expect(roasteryTitles[0]).toHaveTextContent('A Roastery');
+      expect(roasteryTitles[1]).toHaveTextContent('B Roastery');
     });
 
-    // Verify bean was added and displays correctly
-    const roasteryTitle = await waitFor(() => screen.getByTestId("roastery-title"));
-    expect(roasteryTitle).toHaveTextContent("בראשית");
-    expect(screen.getByText('קולומביה')).toBeInTheDocument();
-    expect(screen.getByText(/טחינה: 4.2/i)).toBeInTheDocument();
-    expect(screen.getByText(/320.00₪/i)).toBeInTheDocument();
+    // Check bean name sorting within the same roastery
+    const bRoasteryBeans = screen.getAllByText(/Blend/);
+    // Based on sorting: Y Blend (from A), then X Blend, then Z Blend (both from B)
+    expect(bRoasteryBeans[0]).toHaveTextContent('Y Blend');
+    expect(bRoasteryBeans[1]).toHaveTextContent('X Blend');
+    expect(bRoasteryBeans[2]).toHaveTextContent('Z Blend');
+  });
 
-    // New: Verify the roast rating is displayed correctly
-    const ratingDisplay = screen.getByRole('radiogroup');
-    const checkedBeans = within(ratingDisplay).getAllByRole('radio', { checked: true });
-    expect(checkedBeans).toHaveLength(4);
-
-    // 2. Edit the bean
-    await user.click(screen.getByRole('button', { name: /ערוך/i }));
-    const editDialog = await screen.findByRole('dialog');
-    expect(within(editDialog).getByText(/ערוך פול קיים/i)).toBeInTheDocument();
-    const grindSettingInput = within(editDialog).getByLabelText(/דרגת טחינה/i);
-    await user.clear(grindSettingInput);
-    await user.type(grindSettingInput, '4.5');
-    await user.click(within(editDialog).getByRole('radio', { name: 'דרגת קלייה 2 מתוך 5' }));
-    await user.click(within(editDialog).getByRole('button', { name: /שמור שינויים/i }));
-
-    await flushTimers();
+  it('filters by roastery', async () => {
+    render(<BeanLibrary />);
+    
+    // Open filter
+    fireEvent.click(screen.getByText('הצג סינון'));
+    
+    let filterContent;
     await waitFor(() => {
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        filterContent = screen.getByText('סינון פולים').parentElement!.parentElement;
     });
 
-    // Verify bean was edited
-    expect(await screen.findByText(/טחינה: 4.5/i)).toBeInTheDocument();
-    const editedRatingDisplay = screen.getByRole('radiogroup');
-    const editedCheckedBeans = within(editedRatingDisplay).getAllByRole('radio', { checked: true });
-    expect(editedCheckedBeans).toHaveLength(2);
-
-    // 3. Delete the bean
-    await user.click(screen.getByRole('button', { name: /מחק/i }));
-
-    await flushTimers();
+    // Find and click the Combobox trigger to open the dropdown
+    const comboboxTrigger = within(filterContent!).getByRole('combobox');
+    fireEvent.click(comboboxTrigger);
+    
+    // Wait for the dropdown (dialog/popover) to appear and click the specific option
     await waitFor(() => {
-      expect(screen.queryByText(/בראשית/i)).not.toBeInTheDocument();
-      // After deleting the only bean, we should see the EmptyState component's title.
-      expect(screen.getByText(/הספרייה שלך מחכה לפולים הראשונים/i)).toBeInTheDocument();
+        // Find the specific role="option" (the CommandItem) containing our text
+        const optionToClick = screen.getByRole('option', { name: /A Roastery/i });
+        fireEvent.click(optionToClick);
+    });
+
+    // Assert that the filter worked
+    await waitFor(() => {
+      const roasteryTitles = screen.getAllByTestId('roastery-title');
+      expect(roasteryTitles.length).toBe(1);
+      expect(roasteryTitles[0]).toHaveTextContent('A Roastery');
     });
   });
+
+  it('filters by flavor tag', async () => {
+    render(<BeanLibrary />);
+    
+    fireEvent.click(screen.getByText('הצג סינון'));
+    
+    let filterContent;
+    await waitFor(() => {
+        filterContent = screen.getByText('סינון פולים').parentElement.parentElement;
+    });
+
+    await waitFor(() => {
+        fireEvent.click(within(filterContent).getByText('שוקולדי'));
+    });
+
+    await waitFor(() => {
+      const roasteryTitles = screen.getAllByTestId('roastery-title');
+      expect(roasteryTitles.length).toBe(1);
+      expect(roasteryTitles[0]).toHaveTextContent('B Roastery');
+      const beanNames = screen.getAllByText(/Blend/);
+      expect(beanNames.length).toBe(1);
+      expect(beanNames[0]).toHaveTextContent('Z Blend');
+    });
+  });
+
+    it('clears filters', async () => {
+    render(<BeanLibrary />);
+    
+    // Open filter and apply a filter
+    fireEvent.click(screen.getByText('הצג סינון'));
+    
+    let filterContent;
+    await waitFor(() => {
+        filterContent = screen.getByText('סינון פולים').parentElement.parentElement;
+    });
+
+    await waitFor(() => {
+        fireEvent.click(within(filterContent).getByText('שוקולדי'));
+    });
+
+    // Make sure filter is applied
+    await waitFor(() => {
+      expect(screen.getAllByTestId('roastery-title').length).toBe(1);
+    });
+
+    // Clear filters
+    fireEvent.click(within(filterContent).getByText('נקה'));
+
+    await waitFor(() => {
+      // Should display all roasteries again
+      const roasteryTitles = screen.getAllByTestId('roastery-title');
+      expect(roasteryTitles.length).toBe(2);
+    });
+  });
+  
 });

@@ -83,31 +83,15 @@ export function AddBeanDialog({
 
     setIsSaving(true);
     try {
+      const beanToSave: Partial<SavedBean> = { ...bean };
+
+      if (beanToSave.pricePaid && beanToSave.bagWeightGrams) {
+        beanToSave.pricePerKilo = (beanToSave.pricePaid / beanToSave.bagWeightGrams) * 1000;
+      }
+
       if (bean.id) {
-        await updateBean(bean.id, bean);
+        await updateBean(bean.id, beanToSave);
       } else {
-        // Build bean object without undefined fields
-        const beanToSave: any = {
-          roasterName: bean.roasterName,
-          beanName: bean.beanName,
-          grindSetting: bean.grindSetting || '',
-          flavorTags: bean.flavorTags || [],
-        };
-        
-        // Only add optional fields if they have values
-        if (bean.roastLevel !== undefined) {
-          beanToSave.roastLevel = bean.roastLevel;
-        }
-        if (bean.beanDescription) {
-          beanToSave.beanDescription = bean.beanDescription;
-        }
-        if (bean.pricePaid !== undefined) {
-          beanToSave.pricePaid = bean.pricePaid;
-        }
-        if (bean.bagWeightGrams !== undefined) {
-          beanToSave.bagWeightGrams = bean.bagWeightGrams;
-        }
-        
         await addBean(beanToSave);
       }
       setBean({}); // Reset form

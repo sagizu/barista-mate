@@ -32,6 +32,7 @@ export interface SavedBean {
   flavorTags?: string[];
   pricePaid?: number;
   bagWeightGrams?: number;
+  pricePerKilo?: number;
   createdAt: string;
   openedDate?: string;
   dose?: number;

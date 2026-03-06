@@ -28,9 +28,9 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 ### 4. Bean & Roast Management
 - **Cross-Device Sync**: All beans are stored in Firestore, so your bean library syncs seamlessly across multiple devices when logged into the same account.
 - **Active Bean Selection**: Easily set a currently active bean from your library through the main settings panel.
-- **Freshness Tracking**: The app automatically logs the "bag opened" date when a bean is first activated. This date can also be edited manually.
 - **Quick Date Entry**: A "Today" button in the settings allows for one-click entry of the current date for the opened bag.
 - **Comprehensive Bean Library**: Maintain a detailed library of your coffee beans, including roaster name, bean name, grind setting, roast level (visual 1-5 rating), price paid, bag weight, and flavor notes.
+- **Smart Filtering & Sorting**: Organize your library by roastery, and instantly filter your collection by flavor profile, exact roast level range, and price per kilo.
 - **Dial-In Integration**: Save dial-in settings (grind size, dose, and roast level) directly from the Smart Dial-In Calculator to your bean library as a default for future shots.
 
 ### 5. Maintenance Log
@@ -56,7 +56,7 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 - **Smart Dial-In Tests**: Comprehensive tests covering dial-in calculation accuracy, feedback logic, and UI state management.
 - **Maintenance Log Tests**: Tests for rendering tasks, handling overdue status, and user-configurable frequencies.
 - **Run Tests**: `npm test`
-- **All tests pass** with 37 passing tests covering core functionality.
+- **All tests pass** with 40 passing tests covering core functionality.
 
 ##  Roadmap
 1.  **Full User Authentication**: **✓ Done!** Google sign-in and anonymous login are now implemented.
