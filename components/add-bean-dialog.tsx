@@ -89,10 +89,14 @@ export function AddBeanDialog({
         beanToSave.pricePerKilo = (beanToSave.pricePaid / beanToSave.bagWeightGrams) * 1000;
       }
 
+      const cleanBeanToSave = Object.fromEntries(
+        Object.entries(beanToSave).filter(([_, value]) => value !== undefined)
+      ) as Omit<SavedBean, "id" | "createdAt">;
+
       if (bean.id) {
-        await updateBean(bean.id, beanToSave);
+        await updateBean(bean.id, cleanBeanToSave);
       } else {
-        await addBean(beanToSave);
+        await addBean(cleanBeanToSave);
       }
       setBean({}); // Reset form
       onBeanAdded();

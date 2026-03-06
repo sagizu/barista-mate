@@ -96,10 +96,9 @@ export function BeanLibrary() {
 
     if (filterPricePerKilo[0] !== 0 || filterPricePerKilo[1] !== 500) {
         newFilteredBeans = newFilteredBeans.filter(bean => {
-            if (bean.pricePerKilo) {
-                return bean.pricePerKilo >= filterPricePerKilo[0] && bean.pricePerKilo <= filterPricePerKilo[1];
-            }
-            return true; // Keep beans without a price
+            if (!bean.pricePerKilo) return false;
+            
+            return bean.pricePerKilo >= filterPricePerKilo[0] && bean.pricePerKilo <= filterPricePerKilo[1];
         });
     }
 
