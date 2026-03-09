@@ -31,19 +31,10 @@ import { SmartDialIn } from "@/components/smart-dial-in";
 import { BeanLibrary } from "@/components/bean-library";
 import { MaintenanceLog } from "@/components/maintenance-log";
 import UserSettingsDialog from "@/components/user-settings-dialog";
+import { HybridDateInput } from "@/components/hybrid-date-input";
 import type { SavedBean, GeneralSettings } from "@/lib/types";
 import { auth } from "@/firebase-config";
 import { deleteUserData } from '@/lib/user-service';
-
-const formatDateToDDMMYYYY = (dateString: string | null | undefined): string => {
-  if (!dateString) return "";
-  const parts = dateString.split('-');
-  if (parts.length === 3) {
-    const [year, month, day] = parts;
-    return `${day}/${month}/${year}`;
-  }
-  return dateString;
-};
 
 export default function Home() {
   const { user } = useAuth();
@@ -259,19 +250,20 @@ return (
               <div>
                 <Label htmlFor="opened-date">תאריך פתיחת שקית</Label>
                 <div className="flex items-center gap-2">
-                  <Input
-                    id="opened-date"
-                    type="date"
-                    value={settingsInput.activeBeanOpenedDate}
-                    onChange={(e) =>
-                      handleSettingChange("activeBeanOpenedDate", e.target.value)
-                    }
-                    disabled={
-                      !settingsInput.activeBeanId ||
-                      settingsInput.activeBeanId === "-"
-                    }
-                    className="flex-grow"
-                  />
+                  <div className="flex-grow">
+                    <HybridDateInput
+                      id="opened-date"
+                      value={settingsInput.activeBeanOpenedDate}
+                      onChange={(newValue) =>
+                        handleSettingChange("activeBeanOpenedDate", newValue)
+                      }
+                      disabled={
+                        !settingsInput.activeBeanId ||
+                        settingsInput.activeBeanId === "-"
+                      }
+                      className="!h-10 !py-2 !px-3 !text-sm"
+                    />
+                  </div>
                   <Button
                     type="button"
                     variant="outline"

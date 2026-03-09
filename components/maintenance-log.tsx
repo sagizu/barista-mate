@@ -4,9 +4,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { format, parseISO, differenceInDays, parse } from 'date-fns';
+import { format, parseISO, differenceInDays } from 'date-fns';
 import { auth, db } from '@/firebase-config';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { updateMaintenanceDates } from '@/lib/firestore';
@@ -14,6 +13,7 @@ import type { MaintenanceDates } from '@/lib/types';
 import { Skeleton } from './ui/skeleton';
 import { EmptyState } from './empty-state';
 import { Wrench, PlusCircle } from 'lucide-react';
+import { HybridDateInput } from './hybrid-date-input';
 
 const MAINTENANCE_TASKS: {
   key: keyof MaintenanceDates;
@@ -36,35 +36,6 @@ const MAINTENANCE_TASKS: {
     defaultFrequency: 60,
   },
 ];
-
-// Sub-component for each maintenance task input using native date picker
-function MaintenanceTaskInput({
-  id,
-  dateValue,
-  onDateChange,
-}: {
-  id: string;
-  dateValue?: string;
-  onDateChange: (newDate: string) => void;
-}) {
-  return (
-    <Input
-      id={id}
-      type="date"
-      value={dateValue || ''}
-      onChange={(e) => onDateChange(e.target.value)}
-      onClick={(e) => {
-        try {
-          if ('showPicker' in HTMLInputElement.prototype) {
-            (e.target as HTMLInputElement).showPicker();
-          }
-        } catch (err) {}
-      }}
-      className="text-lg p-4 w-full block cursor-pointer text-center sm:text-right"
-      dir="ltr" 
-    />
-  );
-}
 
 function MaintenanceLogSkeleton() {
   return (
@@ -192,10 +163,10 @@ export function MaintenanceLog() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor={inputId}>תאריך אחרון</Label>
-                  <MaintenanceTaskInput
+                  <HybridDateInput
                     id={inputId}
-                    dateValue={dates[key]}
-                    onDateChange={(newValue) => handleDateChange(key, newValue)}
+                    value={dates[key]}
+                    onChange={(newValue) => handleDateChange(key, newValue)}
                   />
                 </div>
                 <Button

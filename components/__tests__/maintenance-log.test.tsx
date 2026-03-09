@@ -66,8 +66,13 @@ describe('MaintenanceLog Component', () => {
       onSnapshotCallback({ exists: () => true, data: () => mockData });
     });
 
-    expect(screen.getByLabelText(/תאריך אחרון/i, { selector: 'input[id="date-lastBackflush"]' })).toHaveValue('2026-02-20');
-    expect(screen.getByLabelText(/תאריך אחרון/i, { selector: 'input[id="date-lastDescaling"]' })).toHaveValue('2026-01-15'); 
+    // Check visible inputs for formatted dates
+    expect(screen.getByLabelText(/תאריך אחרון/i, { selector: 'input[id="date-lastBackflush"]' })).toHaveValue('20/02/2026');
+    expect(screen.getByLabelText(/תאריך אחרון/i, { selector: 'input[id="date-lastDescaling"]' })).toHaveValue('15/01/2026');
+    
+    // Also check hidden inputs for raw dates
+    expect(screen.getByTestId('hidden-date-input-date-lastBackflush')).toHaveValue('2026-02-20');
+    expect(screen.getByTestId('hidden-date-input-date-lastDescaling')).toHaveValue('2026-01-15');
   });
 
   test('"Done Today" button calls updateMaintenanceDates with the current date', async () => {
@@ -93,13 +98,17 @@ describe('MaintenanceLog Component', () => {
     await user.click(screen.getByRole('button', { name: /התחל לתעד/i }));
 
     const filterCard = screen.getByText(/החלפת פילטר מים/i).closest('div.rounded-xl') as HTMLElement;
-    const dateInput = within(filterCard).getByLabelText(/תאריך אחרון/i);
+    const visibleInput = within(filterCard).getByLabelText(/תאריך אחרון/i);
+    const hiddenInput = screen.getByTestId(`hidden-date-input-${visibleInput.id}`);
     
-    expect(dateInput).not.toBeNull();
-    if(dateInput) {
-        fireEvent.change(dateInput, { target: { value: '2026-02-23' } });
-        expect(dateInput).toHaveValue('2026-02-23');
-    }
+    expect(hiddenInput).toBeInTheDocument();
+
+    fireEvent.change(hiddenInput, { target: { value: '2026-02-23' } });
+
+    await waitFor(() => {
+        expect(hiddenInput).toHaveValue('2026-02-23');
+        expect(visibleInput).toHaveValue('23/02/2026');
+    });
 
     await waitFor(() => {
       expect(mockUpdateMaintenanceDates).toHaveBeenCalledWith({ waterFilterLastChanged: '2026-02-23' });
