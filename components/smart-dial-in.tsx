@@ -129,7 +129,7 @@ export function SmartDialIn() {
         <CardContent className="space-y-6">
           {lastShot && (
             <div className="text-sm text-gray-500 text-center">
-                חישוב אחרון: {translateDrinkType(lastShot.drinkType)} | קלייה: {lastShot.roastLevel} | {lastShot.time.toFixed(1)}ש
+                חישוב אחרון: {translateDrinkType(lastShot.drinkType)} | קלייה: {lastShot.roastLevel} | {lastShot.time.toFixed(1)} שניות
             </div>
           )}
           <div>

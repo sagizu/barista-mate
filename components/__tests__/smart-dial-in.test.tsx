@@ -128,7 +128,7 @@ describe('SmartDialIn', () => {
         expect(lastShotContainer).toBeInTheDocument();
         expect(lastShotContainer).toHaveTextContent(/אספרסו/);
         expect(lastShotContainer).toHaveTextContent(/קלייה: 3/);
-        expect(lastShotContainer).toHaveTextContent(/25.5ש/);
+        expect(lastShotContainer).toHaveTextContent(/25.5 שניות/);
     });
 
     const user = userEvent.setup();
@@ -153,7 +153,8 @@ describe('SmartDialIn', () => {
         expect(lastShotContainer).toBeInTheDocument();
         expect(lastShotContainer).toHaveTextContent(/ריסטרטו/);
         expect(lastShotContainer).toHaveTextContent(/קלייה: 5/);
-        expect(lastShotContainer).toHaveTextContent(/0.2ש/);
+        // The timer runs for 200ms, so it will be 0.2s
+        expect(lastShotContainer).toHaveTextContent(/0.2 שניות/);
     });
   });
   
