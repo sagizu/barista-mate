@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Heebo } from "next/font/google";
 import "./globals.css";
 import AuthWrapper from "@/components/auth-wrapper";
+import { AuthProvider } from "@/lib/auth-context";
 import ErrorBoundary from "@/components/error-boundary";
 import { NetworkStatusIndicator } from "@/components/network-status-indicator";
 
@@ -64,7 +65,9 @@ export default function RootLayout({
       <body className={`${heebo.variable} font-hebrew min-h-screen text-[#EAE0D5] bg-[#0f0a08]`}>
         <NetworkStatusIndicator />
         <ErrorBoundary>
-          <AuthWrapper>{children}</AuthWrapper>
+          <AuthProvider>
+            <AuthWrapper>{children}</AuthWrapper>
+          </AuthProvider>
         </ErrorBoundary>
       </body>
     </html>
