@@ -27,8 +27,13 @@ const handleError = (error: any, operation: string) => {
 export const addBean = async (beanData: Omit<SavedBean, 'id' | 'createdAt'>) => {
     try {
         const beansCollection = getBeansCollection();
-        return await addDoc(beansCollection, {
+        const sanitizedBeanData = {
             ...beanData,
+            beanName: beanData.beanName?.trim(),
+            roasterName: beanData.roasterName?.trim(),
+        };
+        return await addDoc(beansCollection, {
+            ...sanitizedBeanData,
             createdAt: serverTimestamp()
         });
     } catch (error) {
@@ -40,8 +45,15 @@ export const addBean = async (beanData: Omit<SavedBean, 'id' | 'createdAt'>) => 
 export const updateBean = async (id: string, updates: Partial<Omit<SavedBean, 'id'>>) => {
     try {
         const beansCollection = getBeansCollection();
+        const sanitizedUpdates = { ...updates };
+        if (sanitizedUpdates.beanName) {
+            sanitizedUpdates.beanName = sanitizedUpdates.beanName.trim();
+        }
+        if (sanitizedUpdates.roasterName) {
+            sanitizedUpdates.roasterName = sanitizedUpdates.roasterName.trim();
+        }
         const beanRef = doc(beansCollection, id);
-        return await updateDoc(beanRef, updates);
+        return await updateDoc(beanRef, sanitizedUpdates);
     } catch (error) {
         handleError(error, 'updateBean');
     }
@@ -170,7 +182,7 @@ export const submitFeedback = async (message: string) => {
         const userContext = user ? user.email : "anonymous";
         const feedbackCollection = collection(db, "feedback");
         return await addDoc(feedbackCollection, {
-            message,
+            message: message.trim(),
             timestamp: serverTimestamp(),
             userContext,
         });
