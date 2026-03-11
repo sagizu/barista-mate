@@ -49,6 +49,21 @@ const mockUser = {
   email: 'test@example.com',
 } as User;
 
+beforeEach(() => {
+  vi.spyOn(fs, 'onSnapshot').mockImplementation((ref: any, callback: (snapshot: any) => void) => {
+    if (ref.type === 'document') {
+        callback({ exists: () => true, data: () => ({ settings: { general: mockSettings }, preferences: {} }) });
+    } else if (ref.type === 'query') {
+        callback({ docs: mockBeans.map(bean => ({ id: bean.id, data: () => bean })) });
+    }
+    return () => {}; // Return an unsubscribe function
+  });
+  vi.spyOn(fs, 'doc').mockImplementation(() => ({ type: 'document' }) as any);
+  vi.spyOn(fs, 'collection').mockImplementation(() => ({ type: 'collection' }) as any);
+  vi.spyOn(fs, 'query').mockImplementation(() => ({ type: 'query' }) as any);
+  vi.spyOn(fs, 'orderBy').mockImplementation(() => 'orderBy' as any);
+});
+
 describe('Dashboard', () => {
   let user: ReturnType<typeof userEvent.setup>;
   let mockUpdateGeneralSettings: any;
@@ -58,28 +73,15 @@ describe('Dashboard', () => {
     user = userEvent.setup();
 
     vi.spyOn(AuthContext, 'useAuth').mockReturnValue({ user: mockUser, loading: false });
-    vi.spyOn(fs, 'doc').mockImplementation(() => ({ type: 'document' }) as any);
-    vi.spyOn(fs, 'collection').mockImplementation(() => ({ type: 'collection' }) as any);
-    vi.spyOn(fs, 'query').mockImplementation(() => ({ type: 'query' }) as any);
-    vi.spyOn(fs, 'orderBy').mockImplementation(() => 'orderBy' as any);
 
     mockUpdateGeneralSettings = vi.spyOn(firestore, 'updateGeneralSettings').mockResolvedValue();
     mockUpdateMaintenanceFrequencies = vi.spyOn(firestore, 'updateMaintenanceFrequencies').mockResolvedValue();
-    
-    vi.spyOn(fs, 'onSnapshot').mockImplementation((ref: any, callback: (snapshot: any) => void) => {
-        if (ref.type === 'document') {
-            callback({ exists: () => true, data: () => ({ settings: { general: mockSettings }, preferences: {} }) });
-        } else if (ref.type === 'query') {
-            callback({ docs: mockBeans.map(bean => ({ id: bean.id, data: () => bean })) });
-        }
-        return () => {}; // Return an unsubscribe function
-    });
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
-
+  
   async function openSettingsDialog() {
     render(<Dashboard />);
     await user.click(screen.getByRole('button', { name: /הגדרות/i }));
@@ -167,5 +169,62 @@ describe('Dashboard', () => {
       expect(deleteUserData).toHaveBeenCalledWith(anonymousUser.uid);
       expect(deleteUserMock).toHaveBeenCalled();
     });
+  });
+});
+
+describe('Feedback Form', () => {
+  let user: ReturnType<typeof userEvent.setup>;
+  let mockSubmitFeedback: any;
+
+  beforeEach(() => {
+    user = userEvent.setup();
+    vi.spyOn(AuthContext, 'useAuth').mockReturnValue({ user: mockUser, loading: false });
+    mockSubmitFeedback = vi.spyOn(firestore, 'submitFeedback').mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  async function openFeedbackDialog() {
+    render(<Dashboard />);
+    await user.click(screen.getByRole('button', { name: /פידבק/i }));
+    return screen.findByRole('dialog');
+  }
+
+  test('feedback dialog opens when feedback button is clicked', async () => {
+    const dialog = await openFeedbackDialog();
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByRole('heading', { name: 'פידבק' })).toBeInTheDocument();
+  });
+
+  test('send button is disabled when message is empty', async () => {
+    const dialog = await openFeedbackDialog();
+    const sendButton = within(dialog).getByRole('button', { name: /שלח פידבק/i });
+    expect(sendButton).toBeDisabled();
+  });
+
+  test('send button is enabled when message is not empty', async () => {
+    const dialog = await openFeedbackDialog();
+    const messageInput = within(dialog).getByPlaceholderText(/יש לך הצעה/i);
+    await user.type(messageInput, 'This is a test feedback message.');
+    const sendButton = within(dialog).getByRole('button', { name: /שלח פידבק/i });
+    expect(sendButton).toBeEnabled();
+  });
+
+  test('character counter updates as user types', async () => {
+    const dialog = await openFeedbackDialog();
+    const messageInput = within(dialog).getByPlaceholderText(/יש לך הצעה/i);
+    await user.type(messageInput, 'Hello');
+    expect(within(dialog).getByText('5/500')).toBeInTheDocument();
+  });
+
+  test('character counter turns red when character limit is reached', async () => {
+    const dialog = await openFeedbackDialog();
+    const messageInput = within(dialog).getByPlaceholderText(/יש לך הצעה/i);
+    const longMessage = 'a'.repeat(500);
+    await user.type(messageInput, longMessage);
+    const charCounter = within(dialog).getByText('500/500');
+    expect(charCounter).toHaveClass('text-red-500');
   });
 });

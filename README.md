@@ -56,7 +56,7 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 - **Smart Dial-In Tests**: Comprehensive tests covering dial-in calculation accuracy, feedback logic, and UI state management.
 - **Maintenance Log Tests**: Tests for rendering tasks, handling overdue status, and user-configurable frequencies.
 - **Run Tests**: `npm test`
-- **All tests pass** with 42 passing tests covering core functionality.
+- **All tests pass** with 47 passing tests covering core functionality.
 
 ##  Roadmap
 1.  **Full User Authentication**: **✓ Done!** Google sign-in and anonymous login are now implemented.

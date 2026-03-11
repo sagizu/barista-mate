@@ -13,9 +13,10 @@ export function FeedbackForm() {
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const maxLength = 500;
 
   const handleSubmit = async () => {
-    if (!message.trim()) return;
+    if (!message.trim() || message.length > maxLength) return;
 
     setIsSending(true);
     setIsSuccess(false);
@@ -32,19 +33,27 @@ export function FeedbackForm() {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 rounded-lg bg-zinc-900 border border-zinc-800" dir="rtl">
+    <div className="flex flex-col gap-2 p-4 rounded-lg bg-zinc-900 border border-zinc-800" dir="rtl">
       <h3 className="text-lg font-semibold text-right text-white">שלח לנו פידבק</h3>
       <Textarea
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         placeholder="יש לך הצעה, רעיון לשיפור או שנתקלת בתקלה? ספר לנו..."
         className="bg-zinc-800 border-zinc-700 text-white"
+        maxLength={maxLength}
       />
+      <div
+        className={`text-sm text-left ${
+          message.length >= maxLength ? "text-red-500" : "text-zinc-400"
+        }`}
+      >
+        {message.length}/{maxLength}
+      </div>
       <div className="flex justify-between items-center">
         {isSuccess && <p className="text-green-500 text-sm">תודה! הפידבק נשלח בהצלחה.</p>}
         <Button
           onClick={handleSubmit}
-          disabled={!message.trim() || isSending}
+          disabled={!message.trim() || isSending || message.length > maxLength}
           className="bg-[#C67C4E] text-white hover:bg-[#C67C4E]/90"
         >
           {isSending ? (
