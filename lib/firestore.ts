@@ -163,3 +163,18 @@ export const deletePrivateRoaster = async (roasterName: string) => {
         handleError(error, 'deletePrivateRoaster');
     }
 };
+
+export const submitFeedback = async (message: string) => {
+    try {
+        const user = auth.currentUser;
+        const userContext = user ? user.email : "anonymous";
+        const feedbackCollection = collection(db, "feedback");
+        return await addDoc(feedbackCollection, {
+            message,
+            timestamp: serverTimestamp(),
+            userContext,
+        });
+    } catch (error) {
+        handleError(error, "submitFeedback");
+    }
+};

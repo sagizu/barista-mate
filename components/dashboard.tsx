@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from "react";
-import { Coffee, Settings, User, LogOut } from "lucide-react";
+import { Coffee, Settings, User, LogOut, MessageSquare } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { db } from '../firebase-config';
 import { signOut } from 'firebase/auth';
@@ -35,11 +35,14 @@ import { HybridDateInput } from "@/components/hybrid-date-input";
 import type { SavedBean, GeneralSettings } from "@/lib/types";
 import { auth } from "@/firebase-config";
 import { deleteUserData } from '@/lib/user-service';
+import { FeedbackForm } from "./feedback-form";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [tab, setTab] = useState("beans");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+
   
   const [beans, setBeans] = useState<SavedBean[]>([]);
   const [settings, setSettings] = useState<GeneralSettings>({});
@@ -164,6 +167,14 @@ return (
               <Button
                 variant="ghost"
                 size="icon"
+                onClick={() => setFeedbackOpen(true)}
+                aria-label="פידבק"
+              >
+                <MessageSquare className="h-5 w-5 text-[#E6D2B5]" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={openSettings}
                 aria-label="הגדרות"
               >
@@ -212,6 +223,20 @@ return (
           </div>
         </header>
 
+      <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
+        <DialogContent className="bg-[#1F1712] border-[#3E2C22]">
+          <DialogHeader>
+            <DialogTitle>פידבק</DialogTitle>
+          </DialogHeader>
+          <FeedbackForm />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFeedbackOpen(false)}>
+              סגור
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       {settingsInput && (
         <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
           <DialogContent className="bg-[#1F1712] border-[#3E2C22] max-h-[80vh] overflow-y-auto">
