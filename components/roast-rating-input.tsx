@@ -7,9 +7,10 @@ interface RoastRatingInputProps {
   rating: number;
   onRatingChange: (rating: number) => void;
   disabled?: boolean;
+  size?: 'sm' | 'default';
 }
 
-export const RoastRatingInput = ({ rating, onRatingChange, disabled = false }: RoastRatingInputProps) => {
+export const RoastRatingInput = ({ rating, onRatingChange, disabled = false, size = 'default' }: RoastRatingInputProps) => {
   const [hoverRating, setHoverRating] = useState(0);
 
   const handleClick = (newRating: number) => {
@@ -63,7 +64,7 @@ export const RoastRatingInput = ({ rating, onRatingChange, disabled = false }: R
               }
             )}
           >
-            <Coffee className="h-6 w-6" fill={isFilled ? 'currentColor' : 'none'} />
+            <Coffee className={cn(size === 'sm' ? "h-4 w-4" : "h-6 w-6")} fill={isFilled ? 'currentColor' : 'none'} />
           </div>
         );
       })}

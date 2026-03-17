@@ -23,6 +23,7 @@ import {
 import { RoasterCombobox } from "./roaster-combobox";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
+import { CommunitySpotlight } from "./community-spotlight";
 
 const flavorTagsOptions = [
   "שוקולדי", "אגוזי", "פירותי", "הדרים", "פרחוני", "מתוק", "חמצמץ", 
@@ -372,6 +373,7 @@ export function BeanLibrary() {
             </Button>
         </div>
         {renderContent()}
+        <CommunitySpotlight />
       </div>
 
       <AddBeanDialog

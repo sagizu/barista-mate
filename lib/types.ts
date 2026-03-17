@@ -25,6 +25,7 @@ export interface SavedBean {
   id: string;
   roasterName: string;
   beanName: string;
+  isTestData?: boolean;
   grindSetting: string;
   roastLevel?: RoastLevel;
   beanDescription?: string;

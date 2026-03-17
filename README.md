@@ -30,6 +30,7 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 - **Active Bean Selection**: Easily set a currently active bean from your library through the main settings panel.
 - **Quick Date Entry**: A "Today" button in the settings allows for one-click entry of the current date for the opened bag.
 - **Comprehensive Bean Library**: Maintain a detailed library of your coffee beans, including roaster name, bean name, grind setting, roast level (visual 1-5 rating), price paid, bag weight, and flavor notes.
+- **Community Spotlight**: Discover what the community is brewing with a dynamic, randomized showcase of high-quality beans shared by other users in your Bean Library.
 - **Smart Filtering & Sorting**: Organize your library by roastery, and instantly filter your collection by flavor profile, exact roast level range, and price per kilo.
 - **Dial-In Integration**: Save dial-in settings (grind size, dose, and roast level) directly from the Smart Dial-In Calculator to your bean library as a default for future shots.
 
@@ -65,5 +66,5 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 4.  **Custom Dial-In Range**: **✓ Done!** Users can now set their own target extraction time.
 5.  **Maintenance Log**: **✓ Done!** Track and get reminders for machine maintenance.
 6.  **Bean Library V2**: Add sharing capabilities and user ratings for beans.
-7.  **Community Features**: Create a social feed to see what beans friends are using.
+7.  **Community Features**: **✓ Done (Initial implementation)** Added Community Spotlight to see top beans from other users.
 8.  **PWA & Native**: Enhance PWA capabilities and wrap the app for native mobile stores.

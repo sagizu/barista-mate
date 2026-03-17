@@ -32,8 +32,12 @@ export const addBean = async (beanData: Omit<SavedBean, 'id' | 'createdAt'>) => 
             beanName: beanData.beanName?.trim(),
             roasterName: beanData.roasterName?.trim(),
         };
+        const isTestData = process.env.NODE_ENV === 'development' || 
+                           process.env.NODE_ENV === 'test' || 
+                           process.env.VITEST != null;
         return await addDoc(beansCollection, {
             ...sanitizedBeanData,
+            isTestData,
             createdAt: serverTimestamp()
         });
     } catch (error) {

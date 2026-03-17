@@ -54,6 +54,7 @@ describe('AddBeanDialog', () => {
         roasterName: 'נחת',
         flavorTags: [],
         roastLevel: 4,
+        isTestData: true,
       }));
     });
     await waitFor(() => {
