@@ -161,7 +161,7 @@ export function BeanLibrary() {
   };
 
   const handleShare = async (bean: SavedBean) => {
-    const shareText = `המלצת קפה מהספרייה שלי ב-Barista Mate ☕:\n${bean.roasterName} - ${bean.beanName}\nטעמים: ${bean.flavorTags?.join(', ') || 'אין טעמים מוגדרים'}\n\nלניהול ספריית הפולים האישית שלכם: https://barista-mate.co.il`;
+    const shareText = `המלצת קפה מהספרייה שלי ב-Barista Mate ☕:\n${bean.roasterName} - ${bean.beanName}\nטעמים: ${bean.flavorTags?.join(', ') || 'אין טעמים מוגדרים'}\n\nלניהול ספריית הפולים האישית שלכם: https://barista-mate.vercel.app/`;
     
     if (navigator.share) {
       try {
