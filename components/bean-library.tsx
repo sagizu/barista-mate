@@ -1,7 +1,7 @@
 
 "use client";
 
-import { BookOpen, Trash2, PlusCircle, Pencil, Coffee, Filter, X } from "lucide-react";
+import { BookOpen, Trash2, PlusCircle, Pencil, Coffee, Filter, X, Share2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -160,6 +160,28 @@ export function BeanLibrary() {
     setEditingBean(null);
   };
 
+  const handleShare = async (bean: SavedBean) => {
+    const shareText = `המלצת קפה מהספרייה שלי ב-Barista Mate ☕:\n${bean.roasterName} - ${bean.beanName}\nטעמים: ${bean.flavorTags?.join(', ') || 'אין טעמים מוגדרים'}\n\nלניהול ספריית הפולים האישית שלכם: https://barista-mate.co.il`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'המלצת קפה - Barista Mate',
+          text: shareText,
+        });
+      } catch (error) {
+        console.error("Error sharing:", error);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareText);
+        alert("הטקסט הועתק ללוח!");
+      } catch (err) {
+        console.error('Failed to copy text: ', err);
+      }
+    }
+  };
+
   const groupedBeans = filteredBeans.reduce((acc, bean) => {
     const roasteryName = bean.roasterName || "בתי קלייה לא ידועים";
     if (!acc[roasteryName]) {
@@ -240,6 +262,15 @@ export function BeanLibrary() {
                                 </div>
                             </div>
                             <div className="flex gap-1 flex-shrink-0">
+                                <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 shrink-0 text-[#EAE0D5]/60 hover:text-[#C67C4E]"
+                                onClick={() => handleShare(bean)}
+                                aria-label="שתף"
+                                >
+                                <Share2 className="h-4 w-4" />
+                                </Button>
                                 <Button
                                 variant="ghost"
                                 size="icon"
