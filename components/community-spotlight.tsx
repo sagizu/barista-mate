@@ -14,13 +14,23 @@ export function CommunitySpotlight() {
   const [spotlightBeans, setSpotlightBeans] = useState<(SavedBean & { userId: string })[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const shuffleAndSet = (beans: (SavedBean & { userId: string })[]) => {
+    if (beans.length === 0) return;
+    const beansToShuffle = [...beans];
+    for (let i = beansToShuffle.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [beansToShuffle[i], beansToShuffle[j]] = [beansToShuffle[j], beansToShuffle[i]];
+    }
+    setSpotlightBeans(beansToShuffle.slice(0, 3));
+  };
+
   useEffect(() => {
     async function fetchSpotlight() {
       try {
         const beansQuery = query(
           collectionGroup(db, 'beans'),
           orderBy('createdAt', 'desc'),
-          limit(50)
+          limit(150)
         );
 
         const snapshot = await getDocs(beansQuery);
@@ -38,7 +48,7 @@ export function CommunitySpotlight() {
           if (userId === currentUserId) continue;
           if (data.isTestData === true) continue;
           if (!data.flavorTags || data.flavorTags.length === 0) continue;
-          if (!data.pricePerKilo || data.pricePerKilo <= 0) continue;
+          if (!data.roastLevel) continue;
 
           const uniqueKey = `${data.roasterName}-${data.beanName}`.toLowerCase();
           if (seenBeans.has(uniqueKey)) continue;
@@ -48,8 +58,11 @@ export function CommunitySpotlight() {
         }
         
         setAllValidBeans(validBeans);
-      } catch (error) {
-        console.error("Error fetching community spotlight:", error);
+        shuffleAndSet(validBeans);
+      } catch (error: any) {
+        if (error?.code !== 'permission-denied') {
+          console.error("Error fetching community spotlight:", error);
+        }
       } finally {
         setLoading(false);
       }
@@ -59,18 +72,20 @@ export function CommunitySpotlight() {
   }, []);
 
   useEffect(() => {
-    if (allValidBeans.length === 0) return;
-
-    // Create a copy to shuffle
-    const beansToShuffle = [...allValidBeans];
-
-    // Fisher-Yates Shuffle
-    for (let i = beansToShuffle.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [beansToShuffle[i], beansToShuffle[j]] = [beansToShuffle[j], beansToShuffle[i]];
-    }
-
-    setSpotlightBeans(beansToShuffle.slice(0, 3));
+    const handleFocus = () => shuffleAndSet(allValidBeans);
+    window.addEventListener("focus", handleFocus);
+    // Also re-shuffle if visibility changes to 'visible' (simulates tab-switching)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        shuffleAndSet(allValidBeans);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [allValidBeans]);
 
   if (loading) {
@@ -98,35 +113,31 @@ export function CommunitySpotlight() {
       <div className="grid gap-4 md:grid-cols-3">
         {spotlightBeans.map((bean) => (
           <Card key={bean.id} className="bg-[#1F1712] border-[#3E2C22] transition-colors hover:border-[#C67C4E]/30">
-            <CardContent className="p-4 flex flex-col h-full justify-between gap-3">
+            <CardContent className="p-4 flex flex-col gap-3 text-right">
               <div>
                 <p className="text-xs text-[#C67C4E] font-medium mb-1">{bean.roasterName}</p>
-                <h4 className="font-semibold text-[#E6D2B5] line-clamp-1">{bean.beanName}</h4>
+                <h4 className="font-semibold text-[#E6D2B5]">{bean.beanName}</h4>
               </div>
 
+              {bean.roastLevel && (
+                <div className="flex items-center gap-1.5 justify-start">
+                  <span className="text-xs font-medium text-[#EAE0D5]/80">קלייה:</span>
+                  <RoastRatingInput rating={bean.roastLevel} onRatingChange={() => {}} disabled size="sm" />
+                </div>
+              )}
+
               {bean.flavorTags && bean.flavorTags.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {bean.flavorTags.slice(0, 3).map((tag) => (
+                <div className="flex flex-wrap gap-1.5 justify-start">
+                  {bean.flavorTags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full border border-[#C67C4E]/40 bg-[#C67C4E]/10 px-2 py-0.5 text-[10px] text-[#E6D2B5]"
+                      className="rounded-full border border-[#C67C4E]/40 bg-[#C67C4E]/10 px-2.5 py-1 text-[11px] text-[#E6D2B5]"
                     >
                       {tag}
                     </span>
                   ))}
-                  {bean.flavorTags.length > 3 && (
-                    <span className="text-[10px] text-[#EAE0D5]/60 flex items-center">
-                      +{bean.flavorTags.length - 3}
-                    </span>
-                  )}
                 </div>
               )}
-
-              <div className="flex items-center justify-end mt-1 pt-3 border-t border-[#3E2C22]/50">
-                <div className="text-xs font-bold text-[#E6D2B5]">
-                  {bean.pricePerKilo?.toFixed(0)}₪<span className="text-[#EAE0D5]/60 font-normal ml-0.5"> לקילו</span>
-                </div>
-              </div>
             </CardContent>
           </Card>
         ))}

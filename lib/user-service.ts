@@ -23,7 +23,7 @@ export const deleteUserData = async (userId: string) => {
     const batch = writeBatch(db);
     
     // Delete documents from subcollections
-    const subcollections = ['beans', 'settings', 'maintenance'];
+    const subcollections = ['beans', 'maintenance', 'roasters', 'lastShot'];
     
     for (const subcol of subcollections) {
         const colRef = collection(db, 'users', userId, subcol);

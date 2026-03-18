@@ -79,6 +79,9 @@ export function MaintenanceLog() {
       if (snapshot.exists()) {
         setUserPreferences(snapshot.data().preferences || {});
       }
+    }, (error) => {
+      if (error.code === 'permission-denied') return;
+      console.error("MaintenanceLog user error:", error);
     });
 
     const unsubMaintenance = onSnapshot(maintenanceRef, (snapshot) => {
@@ -88,6 +91,9 @@ export function MaintenanceLog() {
         setDates({});
       }
       setLoading(false);
+    }, (error) => {
+      if (error.code === 'permission-denied') return;
+      console.error("MaintenanceLog log error:", error);
     });
 
     return () => {

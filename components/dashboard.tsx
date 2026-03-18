@@ -69,6 +69,9 @@ export default function Dashboard() {
                 setMaintenanceFrequencies(userData.preferences.maintenanceFrequencies);
             }
         }
+    }, (error) => {
+        if (error.code === 'permission-denied') return;
+        console.error("Dashboard user error:", error);
     });
 
     // Listener for beans
@@ -77,6 +80,9 @@ export default function Dashboard() {
     const unsubscribeBeans = onSnapshot(q, (snapshot) => {
       const beansData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as SavedBean));
       setBeans(beansData);
+    }, (error) => {
+        if (error.code === 'permission-denied') return;
+        console.error("Dashboard beans error:", error);
     });
 
     return () => {

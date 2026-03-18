@@ -142,6 +142,9 @@ export function BeanLibrary() {
       setFilteredBeans(beansFromDb); // Initially, filtered beans are all beans
       setStoredBeans(beansFromDb);
       setLoading(false);
+    }, (error) => {
+      if (error.code === 'permission-denied') return;
+      console.error("BeanLibrary error:", error);
     });
     return () => unsubscribe();
   }, []);
