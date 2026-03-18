@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { Check, ChevronsUpDown, PlusCircle, Trash2 } from "lucide-react"
+import { Check, ChevronsUpDown, PlusCircle, Trash2, BadgeCheck } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getPrivateRoasters, addPrivateRoaster, deletePrivateRoaster } from "@/lib/firestore";
+import { getPrivateRoasters, addPrivateRoaster, deletePrivateRoaster, getGlobalRoasters } from "@/lib/firestore";
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/firebase-config';
 
@@ -135,6 +135,7 @@ export function RoasterCombobox({ value, onChange, "aria-labelledby": ariaLabell
   const [open, setOpen] = React.useState(false)
   const [user] = useAuthState(auth);
   const [privateRoasters, setPrivateRoasters] = React.useState<string[]>([]);
+  const [globalRoasters, setGlobalRoasters] = React.useState<{id: string, name: string}[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isAddRoasterOpen, setAddRoasterOpen] = React.useState(false);
   const [isDeleteRoasterOpen, setDeleteRoasterOpen] = React.useState(false);
@@ -144,14 +145,18 @@ export function RoasterCombobox({ value, onChange, "aria-labelledby": ariaLabell
 
 
   React.useEffect(() => {
-    async function fetchPrivateRoasters() {
+    async function fetchRoasters() {
       if (user) {
         setIsLoading(true);
         try {
-          const roasters = await getPrivateRoasters();
+          const [roasters, gRoasters] = await Promise.all([
+             getPrivateRoasters(),
+             getGlobalRoasters()
+          ]);
           setPrivateRoasters(roasters);
+          setGlobalRoasters(gRoasters);
         } catch (error) {
-          console.error("Failed to fetch private roasters:", error);
+          console.error("Failed to fetch roasters:", error);
         } finally {
           setIsLoading(false);
         }
@@ -159,16 +164,16 @@ export function RoasterCombobox({ value, onChange, "aria-labelledby": ariaLabell
         setIsLoading(false);
       }
     }
-    fetchPrivateRoasters();
+    fetchRoasters();
   // CRITICAL: Always use user?.uid here. Using the full 'user' object 
   // causes infinite render loops in Vitest due to reference changes.
   }, [user?.uid]);
 
   const roastersList = React.useMemo(() => {
-    const combined = [...roasteries, ...privateRoasters];
+    const combined = [...roasteries, ...privateRoasters, ...globalRoasters.map(r => r.name)];
     const unique = Array.from(new Set(combined));
     return unique.sort((a,b) => a.localeCompare(b)).map(roastery => ({ label: roastery, value: roastery }));
-  }, [privateRoasters]);
+  }, [privateRoasters, globalRoasters]);
 
   const handleRoasterAdded = (roasterName: string) => {
     setPrivateRoasters(prev => [...prev, roasterName]);
@@ -248,7 +253,8 @@ export function RoasterCombobox({ value, onChange, "aria-labelledby": ariaLabell
               <CommandGroup>
                 {isLoading && <CommandItem disabled>טוען בתי קלייה...</CommandItem>}
                 {!isLoading && roastersList.map((roaster) => {
-                    const isPrivate = !roasteries.includes(roaster.value);
+                    const isGlobal = roasteries.includes(roaster.value) || globalRoasters.some(r => r.name === roaster.value);
+                    const isPrivate = !isGlobal;
                     return (
                         <CommandItem
                             key={roaster.value}
@@ -264,7 +270,12 @@ export function RoasterCombobox({ value, onChange, "aria-labelledby": ariaLabell
                                     value === roaster.value ? "opacity-100" : "opacity-0"
                                 )}
                             />
-                            <span className="flex-grow">{roaster.label}</span>
+                            <span className="flex-grow flex items-center gap-1.5">
+                                {roaster.label}
+                                {isGlobal && (
+                                    <BadgeCheck className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                )}
+                            </span>
                             {isPrivate && (
                                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); openDeleteDialog(roaster.value)}}>
                                     <Trash2 className="h-4 w-4 text-red-500/80" />

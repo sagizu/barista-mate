@@ -10,6 +10,8 @@ vi.mock('@/lib/firestore', () => ({
   addBean: vi.fn(),
   updateBean: vi.fn(),
   getPrivateRoasters: vi.fn(() => Promise.resolve(['A Roastery', 'B Roastery'])),
+  getGlobalRoasters: vi.fn(() => Promise.resolve([])),
+  getGlobalBeans: vi.fn(() => Promise.resolve([])),
 }));
 
 // Mock firebase/firestore

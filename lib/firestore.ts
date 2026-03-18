@@ -194,3 +194,58 @@ export const submitFeedback = async (message: string) => {
         handleError(error, "submitFeedback");
     }
 };
+
+export const getGlobalRoasters = async (): Promise<{id: string, name: string}[]> => {
+    try {
+        const globalRoastersRef = collection(db, "global_roasters");
+        const querySnapshot = await getDocs(globalRoastersRef);
+        return querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            name: doc.data().name as string
+        }));
+    } catch (error: any) {
+        if (error.code === 'permission-denied') return [];
+        handleError(error, 'getGlobalRoasters');
+        return [];
+    }
+};
+
+export const getGlobalBeans = async (roasterName: string): Promise<{id: string, roasterName: string, beanName: string, roastLevel?: number, flavorTags?: string[]}[]> => {
+    try {
+        const globalBeansRef = collection(db, "global_beans");
+        const q = query(globalBeansRef, where("roasterName", "==", roasterName.trim()));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            roasterName: doc.data().roasterName,
+            beanName: doc.data().beanName,
+            roastLevel: doc.data().roastLevel,
+            flavorTags: doc.data().flavorTags,
+        }));
+    } catch (error: any) {
+        if (error.code === 'permission-denied') return [];
+        handleError(error, 'getGlobalBeans');
+        return [];
+    }
+};
+
+export const submitForVerification = async (type: 'roaster' | 'bean', data: any) => {
+    try {
+        const user = auth.currentUser;
+        if (!user) return; // Silent return if disconnected
+        
+        const pendingRef = collection(db, "pending_verification");
+        await addDoc(pendingRef, {
+            type,
+            ...data,
+            submittedBy: user.uid,
+            submittedAt: serverTimestamp(),
+            status: 'pending'
+        });
+    } catch (error: any) {
+        // We gracefully ignore permission errors if validation rules are strict or logging out
+        if (error?.code !== 'permission-denied') {
+            console.error("Error submitting for verification:", error);
+        }
+    }
+};

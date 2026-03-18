@@ -14,10 +14,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { addBean, updateBean } from "@/lib/firestore";
+import { addBean, updateBean, getGlobalRoasters, getGlobalBeans, submitForVerification } from "@/lib/firestore";
 import type { SavedBean, RoastLevel } from "@/lib/types";
 import { RoastRatingInput } from "./roast-rating-input";
 import { RoasterCombobox } from "./roaster-combobox";
+import { BeanCombobox } from "./bean-combobox";
+import roasteries from '@/roasteries.json';
 
 interface AddBeanDialogProps {
   open: boolean;
@@ -45,6 +47,8 @@ const flavorTagsOptions = [
   "תה",
   "יין",
   "טופי",
+  "קקאו",
+  "פירות יבשים"
 ];
 
 export function AddBeanDialog({
@@ -101,6 +105,25 @@ export function AddBeanDialog({
         await updateBean(bean.id, cleanBeanToSave);
       } else {
         await addBean({ ...cleanBeanToSave, isTestData });
+        
+        // Quietly check references against global registries for the verification queue
+        const globalRoasters = await getGlobalRoasters();
+        const isRoasterVerified = roasteries.includes(cleanBeanToSave.roasterName) || globalRoasters.some(r => r.name === cleanBeanToSave.roasterName);
+        if (!isRoasterVerified) {
+            await submitForVerification('roaster', { name: cleanBeanToSave.roasterName, isTestData });
+        }
+        
+        const globalBeansForRoaster = await getGlobalBeans(cleanBeanToSave.roasterName);
+        const isBeanVerified = globalBeansForRoaster.some(b => b.beanName === cleanBeanToSave.beanName);
+        if (!isBeanVerified) {
+            await submitForVerification('bean', {
+                roasterName: cleanBeanToSave.roasterName,
+                beanName: cleanBeanToSave.beanName,
+                flavorTags: cleanBeanToSave.flavorTags || [],
+                roastLevel: cleanBeanToSave.roastLevel || null,
+                isTestData
+            });
+        }
       }
       setBean({}); // Reset form
       onBeanAdded();
@@ -144,8 +167,22 @@ export function AddBeanDialog({
               />
             </div>
             <div>
-              <Label htmlFor="beanName" className="text-right">שם הפול</Label>
-              <Input id="beanName" value={bean.beanName || ''} onChange={(e) => setBean({ ...bean, beanName: e.target.value })} />
+              <Label id="beanName-label" className="text-right">שם הפול</Label>
+              <BeanCombobox 
+                roasterName={bean.roasterName}
+                value={bean.beanName || ''}
+                onChange={(value, metadata) => {
+                    const updates: Partial<SavedBean> = { beanName: value };
+                    
+                    if (metadata) {
+                        if (metadata.roastLevel) updates.roastLevel = metadata.roastLevel as RoastLevel;
+                        if (metadata.flavorTags && metadata.flavorTags.length > 0) updates.flavorTags = metadata.flavorTags;
+                    }
+                    
+                    setBean({ ...bean, ...updates });
+                }}
+                aria-labelledby="beanName-label"
+              />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">

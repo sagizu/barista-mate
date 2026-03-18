@@ -41,6 +41,11 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 - **Overdue Notifications**: When a task is overdue based on your custom (or default) frequency, it will be highlighted with an orange border and a "Time to do it!" badge, making it easy to see what needs attention.
 - **Cloud-Synced**: Your maintenance log and custom frequencies are saved to your account and synced across devices.
 
+### 6. Global Verification System
+- **Smart Autocomplete**: The platform supports a unified community dictionary of verified roasters and beans utilizing a high-speed search index alongside your local JSON lists.
+- **Auto-Populate Metadata**: Selecting a verified global bean instantly fetches and cascades the known roast level and detailed flavor tags directly into your active form while remaining fully customizable.
+- **Verification Queue**: Submitting personalized or unrecognized bean attributes automatically triggers a silent metadata insertion to the `pending_verification` queue for internal admin review, driving the continuous expansion of the global index.
+
 ## 🛠️ Tech Stack
 - **Framework**: Next.js
 - **Language**: TypeScript
@@ -57,7 +62,7 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 - **Smart Dial-In Tests**: Comprehensive tests covering dial-in calculation accuracy, feedback logic, and UI state management.
 - **Maintenance Log Tests**: Tests for rendering tasks, handling overdue status, and user-configurable frequencies.
 - **Run Tests**: `npm test`
-- **All tests pass** with 47 passing tests covering core functionality.
+- **All tests pass** with 48 passing tests covering core functionality.
 
 ##  Roadmap
 1.  **Full User Authentication**: **✓ Done!** Google sign-in and anonymous login are now implemented.

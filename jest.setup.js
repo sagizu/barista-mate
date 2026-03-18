@@ -57,6 +57,9 @@ vi.mock('@/lib/firestore', () => ({
     getBeansByRoaster: vi.fn(async (name) => {
         return beansStore.filter(b => b.roasterName === name);
     }),
+    getGlobalRoasters: vi.fn(async () => []),
+    getGlobalBeans: vi.fn(async () => []),
+    submitForVerification: vi.fn(async () => {}),
 }));
 
 export function setupMocks() {
