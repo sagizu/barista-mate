@@ -2,8 +2,6 @@
 import { auth, db } from "@/firebase-config";
 import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, setDoc, getDoc, arrayUnion, query, where, getDocs, arrayRemove } from "firebase/firestore";
 import type { SavedBean, MaintenanceDates, GeneralSettings, DialInRecord } from "./types";
-import { communityCache } from "@/lib/community-cache";
-
 const getBeansCollection = () => {
     const user = auth.currentUser;
     if (!user) throw new Error("User not authenticated");
@@ -36,8 +34,6 @@ export const addBean = async (beanData: Omit<SavedBean, 'id' | 'createdAt'>) => 
         const isTestData = process.env.NODE_ENV === 'development' || 
                            process.env.NODE_ENV === 'test' || 
                            process.env.VITEST != null;
-        
-        communityCache.invalidate();
         
         return await addDoc(beansCollection, {
             ...sanitizedBeanData,
