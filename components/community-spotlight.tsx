@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { collectionGroup, query, orderBy, getDocs, limit } from "firebase/firestore";
 import { db, auth } from "@/firebase-config";
 import type { SavedBean } from "@/lib/types";
+import { communityCache } from "@/lib/community-cache";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users } from "lucide-react";
@@ -26,6 +27,14 @@ export function CommunitySpotlight() {
 
   useEffect(() => {
     async function fetchSpotlight() {
+      if (communityCache.isValid()) {
+        const cachedBeans = communityCache.getBeans();
+        setAllValidBeans(cachedBeans);
+        shuffleAndSet(cachedBeans);
+        setLoading(false);
+        return;
+      }
+
       try {
         const beansQuery = query(
           collectionGroup(db, 'beans'),
@@ -56,7 +65,7 @@ export function CommunitySpotlight() {
           seenBeans.add(uniqueKey);
           validBeans.push({ ...data, id: doc.id, userId });
         }
-        
+        communityCache.setBeans(validBeans);
         setAllValidBeans(validBeans);
         shuffleAndSet(validBeans);
       } catch (error: any) {
