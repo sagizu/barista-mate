@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { submitFeedback } from "@/lib/firestore";
 import { Loader2 } from "lucide-react";
 
-export function FeedbackForm() {
+export function FeedbackForm({ onSuccess }: { onSuccess?: () => void } = {}) {
   const { user } = useAuth();
   const [message, setMessage] = useState("");
   const [honeypot, setHoneypot] = useState("");
@@ -24,6 +24,10 @@ export function FeedbackForm() {
     setIsSuccess(false);
     try {
       await submitFeedback(message);
+      if (typeof window !== "undefined") {
+          localStorage.setItem("feedback_sent", "true");
+      }
+      if (onSuccess) onSuccess();
       setIsSuccess(true);
       setMessage("");
       setTimeout(() => setIsSuccess(false), 3000);

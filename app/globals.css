@@ -79,3 +79,17 @@ body {
     --chart-5: 340 75% 55%;
   }
 }
+
+@keyframes soft-pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(198, 124, 78, 0.4); }
+  50% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(198, 124, 78, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(198, 124, 78, 0); }
+}
+
+.animate-soft-pulse {
+  animation: soft-pulse 1.2s ease-in-out;
+}
+
+.animate-soft-pulse-initial {
+  animation: soft-pulse 1.2s ease-in-out 3;
+}

@@ -42,6 +42,14 @@ export default function Dashboard() {
   const [tab, setTab] = useState("beans");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [pulseClass, setPulseClass] = useState("animate-soft-pulse-initial");
+  const [feedbackSent, setFeedbackSent] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setFeedbackSent(localStorage.getItem("feedback_sent") === "true");
+    }
+  }, []);
 
   
   const [beans, setBeans] = useState<SavedBean[]>([]);
@@ -59,6 +67,18 @@ export default function Dashboard() {
       setSettings({});
       return;
     }
+
+    // Feedback Pulse Animation Timer Logic
+    const initialTimer = setTimeout(() => {
+      setPulseClass("");
+    }, 3600); // 3 iterations * 1.2s
+
+    const intervalTimer = setInterval(() => {
+      setPulseClass("animate-soft-pulse");
+      setTimeout(() => {
+        setPulseClass("");
+      }, 1200);
+    }, 60000); // Every 60s
 
     const userRef = doc(db, 'users', user.uid);
     const unsubscribeUser = onSnapshot(userRef, (snapshot) => {
@@ -88,8 +108,12 @@ export default function Dashboard() {
     return () => {
       unsubscribeUser();
       unsubscribeBeans();
+      clearTimeout(initialTimer);
+      clearInterval(intervalTimer);
     };
   }, [user]);
+
+
 
   const activeBean = useMemo(() => {
     if (!settings.activeBeanId || beans.length === 0) return null;
@@ -175,8 +199,10 @@ return (
                 size="icon"
                 onClick={() => setFeedbackOpen(true)}
                 aria-label="פידבק"
+                className={`relative ${!feedbackSent ? pulseClass : ""} rounded-full`}
               >
                 <MessageSquare className="h-5 w-5 text-[#E6D2B5]" />
+                {!feedbackSent && <span className="absolute top-2 right-2 w-2 h-2 bg-[#C67C4E] rounded-full border border-[#1F1712] z-10" />}
               </Button>
               <Button
                 variant="ghost"
@@ -234,7 +260,7 @@ return (
           <DialogHeader>
             <DialogTitle>פידבק</DialogTitle>
           </DialogHeader>
-          <FeedbackForm />
+          <FeedbackForm onSuccess={() => setFeedbackSent(true)} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setFeedbackOpen(false)}>
               סגור
