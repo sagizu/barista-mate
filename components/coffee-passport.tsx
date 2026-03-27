@@ -14,7 +14,7 @@ export function CoffeePassport({ userBeans = [], userName }: CoffeePassportProps
   const uniqueRoasters = new Set(userBeans.map(b => b.roasterName).filter(Boolean)).size;
 
   const handleShare = async () => {
-    const text = `מדד הקפאין שלי ב-Barista Mate ☕\n\nטוויתי ${totalBeans} סוגי פולים שונים\nגיליתי ${uniqueRoasters} בתי קלייה\n\nבואו לנהל את אוסף הקפה שלכם!`;
+    const text = `מדד הקפאין שלי ב-Barista Mate ☕\n\n${totalBeans} סוגי פולים באוסף\n${uniqueRoasters} בתי קלייה\n\nבואו לנהל את אוסף הקפה שלכם!\nhttps://barista-mate.vercel.app/`;
     
     if (navigator.share) {
       try {
