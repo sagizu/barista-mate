@@ -235,7 +235,7 @@ return (
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator className="bg-[#3E2C22]" />
-                    <UserSettingsDialog>
+                    <UserSettingsDialog userBeans={beans}>
                       <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer focus:bg-[#3E2C22] focus:text-[#EAE0D5]">
                         <Settings className="mr-2 h-4 w-4" />
                         <span>הגדרות חשבון</span>

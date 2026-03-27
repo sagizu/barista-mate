@@ -176,13 +176,15 @@ export function BeanLibrary() {
       } catch (error) {
         console.error("Error sharing:", error);
       }
-    } else {
+    } else if (navigator.clipboard) {
       try {
         await navigator.clipboard.writeText(shareText);
         alert("הטקסט הועתק ללוח!");
       } catch (err) {
         console.error('Failed to copy text: ', err);
       }
+    } else {
+      alert("השיתוף וההעתקה זמינים רק בחיבור מאובטח (HTTPS) או דרך הדפדפן שלך.");
     }
   };
 

@@ -30,12 +30,15 @@ import { updateProfile } from 'firebase/auth';
 import { doc, writeBatch } from 'firebase/firestore';
 import { auth, db } from '../firebase-config';
 import { deleteUserData } from '@/lib/user-service';
+import type { SavedBean } from '@/lib/types';
+import { CoffeePassport } from './coffee-passport';
 
 interface UserSettingsDialogProps {
   children: React.ReactNode;
+  userBeans: SavedBean[];
 }
 
-const UserSettingsDialog = ({ children }: UserSettingsDialogProps) => {
+const UserSettingsDialog = ({ children, userBeans }: UserSettingsDialogProps) => {
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [error, setError] = useState('');
@@ -94,9 +97,11 @@ const UserSettingsDialog = ({ children }: UserSettingsDialogProps) => {
             אתה מחובר כאורח. כדי לשמור את הנתונים שלך, עליך להירשם.
           </DialogDescription>
         ) : (
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right text-[#EAE0D5]">
+          <div className="flex flex-col gap-6 py-2">
+            <CoffeePassport userBeans={userBeans} userName={user?.displayName} />
+            <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right text-[#EAE0D5]">
                 שם
               </Label>
               <Input
@@ -127,6 +132,7 @@ const UserSettingsDialog = ({ children }: UserSettingsDialogProps) => {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            </div>
           </div>
         )}
         <DialogFooter>
