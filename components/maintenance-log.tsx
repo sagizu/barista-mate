@@ -12,8 +12,9 @@ import { updateMaintenanceDates } from '@/lib/firestore';
 import type { MaintenanceDates } from '@/lib/types';
 import { Skeleton } from './ui/skeleton';
 import { EmptyState } from './empty-state';
-import { Wrench, PlusCircle } from 'lucide-react';
+import { Wrench, PlusCircle, Bell, BellRing } from 'lucide-react';
 import { HybridDateInput } from './hybrid-date-input';
+import { requestNotificationPermission } from '@/lib/fcm';
 
 const MAINTENANCE_TASKS: {
   key: keyof MaintenanceDates;
@@ -63,6 +64,14 @@ export function MaintenanceLog() {
   const [loading, setLoading] = useState(true);
   const [showDashboard, setShowDashboard] = useState(false);
   const [userPreferences, setUserPreferences] = useState<any>({});
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setPushEnabled(Notification.permission === "granted");
+    }
+  }, []);
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -112,6 +121,29 @@ export function MaintenanceLog() {
     handleDateChange(key, today);
   };
 
+  const handleEnablePush = async () => {
+    if (!auth.currentUser) return;
+    setPushLoading(true);
+    const success = await requestNotificationPermission(auth.currentUser.uid);
+    setPushEnabled(success);
+    setPushLoading(false);
+  };
+
+  const handleTestPush = async () => {
+    if (!auth.currentUser) return;
+    setPushLoading(true);
+    try {
+      await fetch('/api/test-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: auth.currentUser.uid })
+      });
+    } catch (e) {
+      console.error(e);
+    }
+    setPushLoading(false);
+  };
+
   const isOverdue = (
     taskKey: keyof MaintenanceDates,
     lastDate: string | undefined,
@@ -154,6 +186,31 @@ export function MaintenanceLog() {
 
   return (
     <div className="space-y-6">
+      {/* Notifications Banner */}
+      <div className="bg-[#1F1712]/80 border border-[#3E2C22] rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3 text-right">
+          <div className="bg-[#C67C4E]/20 p-2 rounded-full hidden sm:block">
+            <Bell className="h-5 w-5 text-[#C67C4E]" />
+          </div>
+          <div>
+            <h4 className="text-[#E6D2B5] font-semibold text-sm">התראות תחזוקה</h4>
+            <p className="text-[#EAE0D5]/70 text-xs mt-1">קבלו תזכורת אוטומטית כשהגיע הזמן לנקות את המכונה.</p>
+          </div>
+        </div>
+        
+        {pushEnabled ? (
+          <Button variant="outline" size="sm" onClick={handleTestPush} disabled={pushLoading} className="border-[#3E2C22] text-[#EAE0D5] hover:text-[#C67C4E]">
+            <BellRing className="h-4 w-4 ml-2" />
+            בדיקת התראה
+          </Button>
+        ) : (
+          <Button onClick={handleEnablePush} disabled={pushLoading} size="sm" className="bg-[#C67C4E] hover:bg-[#C67C4E]/90 text-white shadow-lg">
+             <Bell className="h-4 w-4 ml-2" />
+             הפעלת התראות
+          </Button>
+        )}
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2">
         {MAINTENANCE_TASKS.map(({ key, label, defaultFrequency }) => {
           const overdue = isOverdue(key, dates[key], defaultFrequency);

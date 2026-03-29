@@ -34,12 +34,17 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 - **Smart Filtering & Sorting**: Organize your library by roastery, and instantly filter your collection by flavor profile, exact roast level range, and price per kilo.
 - **Dial-In Integration**: Save dial-in settings (grind size, dose, and roast level) directly from the Smart Dial-In Calculator to your bean library as a default for future shots.
 
-### 5. Maintenance Log
+### 5. Maintenance Log & Push Notifications
 - **Task Tracking**: Log important maintenance tasks like descaling, water filter changes, and backflushing to keep your machine in top condition.
 - **Default Frequencies**: The app comes with sensible default time intervals (in days) for each maintenance task.
 - **Customizable Frequencies**: In the main settings, you can override the defaults and set your own preferred frequencies for each task.
-- **Overdue Notifications**: When a task is overdue based on your custom (or default) frequency, it will be highlighted with an orange border and a "Time to do it!" badge, making it easy to see what needs attention.
+- **Smart Push Notifications (FCM)**: Opt-in to OS-level background push notifications. A Vercel Cron job automatically calculates your overdue tasks based on your personal frequencies and pushes native alerts directly to your phone.
+- **Overdue Visuals**: When a task is overdue, it will be highlighted with an orange border and a "Time to do it!" badge inside the app.
 - **Cloud-Synced**: Your maintenance log and custom frequencies are saved to your account and synced across devices.
+
+### 6. Personal Coffee Passport (מדד קפאין)
+- **Visual Identity Card**: A beautifully designed "Caffeine Index" that aggregates your total beans logged and unique roasters discovered.
+- **Native Sharing**: Share your personalized coffee statistics directly to social media or messaging apps using the native Web Share API.
 
 ### 6. Global Verification System
 - **Smart Autocomplete**: The platform supports a unified community dictionary of verified roasters and beans utilizing a high-speed search index alongside your local JSON lists.
@@ -52,7 +57,9 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 - **Styling**: Tailwind CSS
 - **UI Components**: shadcn/ui
 - **Authentication**: Firebase Auth
-- **Database**: Firestore
+- **Database**: Firestore & Firebase Admin SDK
+- **Push Notifications**: Firebase Cloud Messaging (FCM) & Service Workers
+- **Background Tasks**: Vercel Cron Jobs
 - **Testing**: Vitest + React Testing Library
 - **Deployment**: Vercel
 
