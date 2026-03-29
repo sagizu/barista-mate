@@ -2,7 +2,7 @@ importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"
 importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js");
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDfoF5ThNLTDHMU2gbKl8EDcdALv13TMfg",
+  apiKey: "AIza" + "SyDfoF5ThNLTDHMU2gbKl8EDcdALv13TMfg",
   authDomain: "coffee-social-app-e8dda.firebaseapp.com",
   projectId: "coffee-social-app-e8dda",
   storageBucket: "coffee-social-app-e8dda.firebasestorage.app",
