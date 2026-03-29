@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { auth, db } from '@/firebase-config';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, deleteField } from 'firebase/firestore';
 import { updateMaintenanceDates } from '@/lib/firestore';
 import type { MaintenanceDates } from '@/lib/types';
 import { Skeleton } from './ui/skeleton';
@@ -129,15 +129,15 @@ export function MaintenanceLog() {
     setPushLoading(false);
   };
 
-  const handleTestPush = async () => {
+  const handleDisablePush = async () => {
     if (!auth.currentUser) return;
     setPushLoading(true);
     try {
-      await fetch('/api/test-push', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: auth.currentUser.uid })
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      await updateDoc(userRef, {
+        pushToken: deleteField()
       });
+      setPushEnabled(false);
     } catch (e) {
       console.error(e);
     }
@@ -199,9 +199,8 @@ export function MaintenanceLog() {
         </div>
         
         {pushEnabled ? (
-          <Button variant="outline" size="sm" onClick={handleTestPush} disabled={pushLoading} className="border-[#3E2C22] text-[#EAE0D5] hover:text-[#C67C4E]">
-            <BellRing className="h-4 w-4 ml-2" />
-            בדיקת התראה
+          <Button variant="outline" size="sm" onClick={handleDisablePush} disabled={pushLoading} className="border-[#3E2C22] text-[#EAE0D5] hover:text-red-400">
+            ביטול התראות
           </Button>
         ) : (
           <Button onClick={handleEnablePush} disabled={pushLoading} size="sm" className="bg-[#C67C4E] hover:bg-[#C67C4E]/90 text-white shadow-lg">
