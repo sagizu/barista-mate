@@ -38,10 +38,6 @@ vi.mock('@/firebase-config', () => ({
   },
 }));
 
-// Mock storage
-vi.mock('@/lib/storage', () => ({
-  setStoredBeans: vi.fn(),
-}));
 
 const mockBeans: SavedBean[] = [
   { id: '1', roasterName: 'B Roastery', beanName: 'Z Blend', roastLevel: 3, pricePerKilo: 120, flavorTags: ['שוקולדי', 'אגוזי'], createdAt: '2023-01-01', grindSetting: '' },

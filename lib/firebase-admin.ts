@@ -27,4 +27,3 @@ const app = initApp();
 
 export const adminDb = (app ? admin.firestore(app) : null) as admin.firestore.Firestore;
 export const adminMessaging = (app ? admin.messaging(app) : null) as admin.messaging.Messaging;
-export const adminAuth = (app ? admin.auth(app) : null) as admin.auth.Auth;

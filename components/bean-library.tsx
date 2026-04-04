@@ -10,7 +10,6 @@ import { collection, onSnapshot, query, orderBy, doc } from "firebase/firestore"
 import { db, auth } from "@/firebase-config";
 import { deleteBean, updateGeneralSettings } from "@/lib/firestore";
 import { format } from "date-fns";
-import { setStoredBeans } from "@/lib/storage";
 import type { SavedBean } from "@/lib/types";
 import { AddBeanDialog } from "@/components/add-bean-dialog";
 import { HybridDateInput } from "@/components/hybrid-date-input";
@@ -153,7 +152,6 @@ export function BeanLibrary() {
 
       setBeans(beansFromDb);
       setFilteredBeans(beansFromDb); // Initially, filtered beans are all beans
-      setStoredBeans(beansFromDb);
       setLoading(false);
     }, (error) => {
       if (error.code === 'permission-denied') return;

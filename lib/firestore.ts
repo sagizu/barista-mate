@@ -152,7 +152,7 @@ export const getPrivateRoasters = async (): Promise<string[]> => {
     }
 };
 
-export const getBeansByRoaster = async (roasterName: string): Promise<SavedBean[]> => {
+const getBeansByRoaster = async (roasterName: string): Promise<SavedBean[]> => {
     try {
         const beansCollection = getBeansCollection();
         const q = query(beansCollection, where("roasterName", "==", roasterName));
