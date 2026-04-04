@@ -27,8 +27,9 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 
 ### 4. Bean & Roast Management
 - **Cross-Device Sync**: All beans are stored in Firestore, so your bean library syncs seamlessly across multiple devices when logged into the same account.
-- **Active Bean Selection**: Easily set a currently active bean from your library through the main settings panel.
-- **Quick Date Entry**: A "Today" button in the settings allows for one-click entry of the current date for the opened bag.
+- **Active Bean Spotlight**: Pin your currently active bean to the "Bama" (main stage) at the top of your library for instant access.
+- **Inline Date Entry**: A dynamic hybrid date input directly inside your active bean card allows for seamless entry and editing of the exact date you cracked the bag open.
+- **Precision Star Rating**: Give each bean a personal enjoyment score using an interactive 1-5 star slider supporting half-star increments.
 - **Comprehensive Bean Library**: Maintain a detailed library of your coffee beans, including roaster name, bean name, grind setting, roast level (visual 1-5 rating), price paid, bag weight, and flavor notes.
 - **Community Spotlight**: Discover what the community is brewing with a dynamic, randomized showcase of high-quality beans shared by other users in your Bean Library.
 - **Smart Filtering & Sorting**: Organize your library by roastery, and instantly filter your collection by flavor profile, exact roast level range, and price per kilo.
@@ -69,7 +70,7 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 - **Smart Dial-In Tests**: Comprehensive tests covering dial-in calculation accuracy, feedback logic, and UI state management.
 - **Maintenance Log Tests**: Tests for rendering tasks, handling overdue status, and user-configurable frequencies.
 - **Run Tests**: `npm test`
-- **All tests pass** with 48 passing tests covering core functionality.
+- **All tests pass** with 47 passing tests covering core functionality.
 
 ##  Roadmap
 1.  **Full User Authentication**: **✓ Done!** Google sign-in and anonymous login are now implemented.
@@ -77,6 +78,6 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 3.  **Firestore Integration for Beans**: **✓ Done!** Beans now sync across devices.
 4.  **Custom Dial-In Range**: **✓ Done!** Users can now set their own target extraction time.
 5.  **Maintenance Log**: **✓ Done!** Track and get reminders for machine maintenance.
-6.  **Bean Library V2**: Add sharing capabilities and user ratings for beans.
+6.  **Bean Library V2**: **✓ Done!** Added sharing capabilities, precision user star-ratings, inline date editing, and a dedicated Spotlight architectural layout.
 7.  **Community Features**: **✓ Done (Initial implementation)** Added Community Spotlight to see top beans from other users.
 8.  **PWA & Native**: Enhance PWA capabilities and wrap the app for native mobile stores.

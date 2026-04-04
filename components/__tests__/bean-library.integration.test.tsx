@@ -173,5 +173,49 @@ describe('BeanLibrary', () => {
       expect(roasteryTitles.length).toBe(2);
     });
   });
+
+  it('renders the Spotlight Layout when an active bean exists', async () => {
+    // Override the mock to return an active bean (id: '2', which is 'Y Blend' from 'A Roastery')
+    (onSnapshot as vi.Mock).mockImplementation((queryOrRef, callback) => {
+        if (queryOrRef?.type === 'document') {
+           const userSnapshot = {
+               exists: () => true,
+               data: () => ({ settings: { general: { activeBeanId: '2', activeBeanOpenedDate: '2023-01-01' } } })
+           };
+           callback(userSnapshot);
+        } else {
+           const snapshot = {
+               docs: mockBeans.map(bean => ({
+                   id: bean.id,
+                   data: () => bean,
+               })),
+           };
+           callback(snapshot);
+        }
+        return () => {}; // Unsubscribe function
+    });
+
+    render(<BeanLibrary />);
+    
+    // Verify that the Spotlight section title exists
+    await waitFor(() => {
+       const spotlightHeading = screen.getByRole('heading', { name: /הפול הפעיל שלך/i });
+       expect(spotlightHeading).toBeInTheDocument();
+    });
+
+    // Verify the library section exists below it
+    expect(screen.getByRole('heading', { name: /ספריית הפולים/i })).toBeInTheDocument();
+
+    // Verify 'A Roastery' list is COMPLETELY GONE from the collection
+    // (Because its ONLY bean, Y Blend, was extracted to the Spotlight)
+    const roasterCards = screen.queryAllByTestId('roastery-title');
+    expect(roasterCards.some(t => t.textContent === 'A Roastery')).toBe(false);
+
+    // B Roastery should still exist for the other beans
+    expect(roasterCards.some(t => t.textContent === 'B Roastery')).toBe(true);
+
+    const yBlendInstances = screen.getAllByText('Y Blend');
+    expect(yBlendInstances.length).toBe(1); // Should only exist in the spotlight, not twice
+  });
   
 });
