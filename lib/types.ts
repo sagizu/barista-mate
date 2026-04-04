@@ -37,6 +37,7 @@ export interface SavedBean {
   createdAt: string;
   openedDate?: string;
   dose?: number;
+  rating?: number;
 }
 
 export interface MaintenanceDates {

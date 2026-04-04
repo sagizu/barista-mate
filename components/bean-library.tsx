@@ -1,17 +1,19 @@
 
 "use client";
 
-import { BookOpen, Trash2, PlusCircle, Pencil, Coffee, Filter, X, Share2 } from "lucide-react";
+import { BookOpen, Trash2, PlusCircle, Pencil, Coffee, Filter, X, Share2, Star, Target } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState, useMemo } from "react";
-import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, doc } from "firebase/firestore";
 import { db, auth } from "@/firebase-config";
-import { deleteBean } from "@/lib/firestore";
+import { deleteBean, updateGeneralSettings } from "@/lib/firestore";
+import { format } from "date-fns";
 import { setStoredBeans } from "@/lib/storage";
 import type { SavedBean } from "@/lib/types";
 import { AddBeanDialog } from "@/components/add-bean-dialog";
+import { HybridDateInput } from "@/components/hybrid-date-input";
 import { RoastRatingInput } from "./roast-rating-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "./empty-state";
@@ -69,6 +71,9 @@ export function BeanLibrary() {
   const [filterFlavorTags, setFilterFlavorTags] = useState<string[]>([]);
   const [filterRoastLevel, setFilterRoastLevel] = useState<[number, number]>([1, 5]);
   const [filterPricePerKilo, setFilterPricePerKilo] = useState<[number, number]>([0, 500]);
+  
+  const [activeBeanId, setActiveBeanId] = useState<string | null>(null);
+  const [activeOpenedDate, setActiveOpenedDate] = useState<string>("");
 
   const handleClearFilters = () => {
     setFilterRoastery(null);
@@ -119,8 +124,15 @@ export function BeanLibrary() {
       setLoading(false);
       return;
     };
+
+    const userRef = doc(db, 'users', user.uid);
+    const unsubscribeUser = onSnapshot(userRef, (snapshot) => {
+        const data = snapshot.data()?.settings?.general;
+        setActiveBeanId(data?.activeBeanId || null);
+        setActiveOpenedDate(data?.activeBeanOpenedDate || "");
+    });
+
     const beansRef = collection(db, "users", user.uid, "beans");
-    // The query is now simplified as sorting is handled client-side
     const q = query(beansRef);
     const unsubscribe = onSnapshot(q, (snapshot) => {
       let beansFromDb = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as SavedBean));
@@ -147,8 +159,20 @@ export function BeanLibrary() {
       if (error.code === 'permission-denied') return;
       console.error("BeanLibrary error:", error);
     });
-    return () => unsubscribe();
+    return () => {
+       unsubscribe();
+       unsubscribeUser();
+    }
   }, []);
+
+  const handleSetActive = async (id: string | null) => {
+     if (!auth.currentUser) return;
+     if (id) {
+         await updateGeneralSettings({ activeBeanId: id, activeBeanOpenedDate: format(new Date(), 'yyyy-MM-dd') });
+     } else {
+         await updateGeneralSettings({ activeBeanId: null, activeBeanOpenedDate: "" });
+     }
+  };
 
   const handleEdit = (bean: SavedBean) => {
     setEditingBean(bean);
@@ -188,7 +212,10 @@ export function BeanLibrary() {
     }
   };
 
-  const groupedBeans = filteredBeans.reduce((acc, bean) => {
+  const otherBeans = filteredBeans.filter(b => b.id !== activeBeanId);
+  const activeBean = filteredBeans.find(b => b.id === activeBeanId);
+
+  const groupedBeans = otherBeans.reduce((acc, bean) => {
     const roasteryName = bean.roasterName || "בתי קלייה לא ידועים";
     if (!acc[roasteryName]) {
       acc[roasteryName] = [];
@@ -233,97 +260,188 @@ export function BeanLibrary() {
       );
     }
     
-    return (
-      <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
-        {Object.entries(groupedBeans).map(([roasteryName, beansInGroup]) => (
-          <Card
-            key={roasteryName}
-            className="transition-colors hover:border-[#C67C4E]/30 flex flex-col"
-          >
-            <CardHeader>
-              <CardTitle className="text-[#E6D2B5]" data-testid="roastery-title">{roasteryName}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 flex-grow">
-             {beansInGroup.map(bean => {
-                 return (
-                    <div key={bean.id} className="border-t border-[#3E2C22] pt-4">
-                        <div className="flex justify-between items-start">
-                            <div className="space-y-2">
-                                <p className="font-semibold text-[#E6D2B5]">{bean.beanName}</p>
-                                 <div className="flex flex-wrap items-center gap-4">
-                                    {bean.grindSetting && (
-                                        <Badge
-                                            variant="secondary"
-                                            className="bg-[#C67C4E]/20 text-[#E6D2B5] border-[#C67C4E]/40 font-medium"
-                                        >
-                                            טחינה: {bean.grindSetting}
-                                        </Badge>
-                                    )}
-                                    {bean.roastLevel && (
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium text-[#EAE0D5]/80">קלייה:</span>
-                                            <RoastRatingInput rating={bean.roastLevel} onRatingChange={() => {}} disabled />
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                            <div className="flex gap-1 flex-shrink-0">
-                                <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 shrink-0 text-[#EAE0D5]/60 hover:text-[#C67C4E]"
-                                onClick={() => handleShare(bean)}
-                                aria-label="שתף"
+    const sortedGroups = Object.entries(groupedBeans).sort(([roasterA], [roasterB]) => roasterA.localeCompare(roasterB));
+
+    const renderBeanDetails = (bean: SavedBean) => {
+        const isActive = bean.id === activeBeanId;
+        return (
+            <div key={bean.id} className={!isActive ? "border-t border-[#3E2C22] pt-4 first:border-0 first:pt-0" : ""}>
+                <div className="flex justify-between items-start">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <p className="font-semibold text-[#E6D2B5] text-lg">{bean.beanName}</p>
+                            {isActive && (
+                                <Badge 
+                                    className="bg-[#C67C4E] hover:bg-red-500 text-white select-none whitespace-nowrap cursor-pointer transition-colors"
+                                    onClick={() => handleSetActive(null)}
+                                    title="לחץ כדי להסיר פול פעיל"
                                 >
-                                <Share2 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 shrink-0 text-[#EAE0D5]/60 hover:text-[#C67C4E]"
-                                onClick={() => handleEdit(bean)}
-                                aria-label="ערוך"
-                                >
-                                <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 shrink-0 text-[#EAE0D5]/60 hover:text-red-300"
-                                onClick={() => handleDelete(bean.id)}
-                                aria-label="מחק"
-                                >
-                                <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
+                                    <Target className="h-3 w-3 mr-1" /> פעיל כרגע
+                                </Badge>
+                            )}
                         </div>
-                        
-                        {bean.beanDescription && (
-                            <p className="text-sm text-[#EAE0D5]/90 whitespace-pre-line mt-3">{bean.beanDescription}</p>
+                        {isActive && (
+                            <div className="flex items-center gap-2 mt-2">
+                                <span className="text-xs text-[#EAE0D5]/70 whitespace-nowrap">נפתח בתאריך:</span>
+                                <div className="w-[130px]">
+                                <HybridDateInput 
+                                    id={`date-${bean.id}`}
+                                    value={activeOpenedDate}
+                                    onChange={(newVal) => updateGeneralSettings({ activeBeanOpenedDate: newVal })}
+                                    className="h-7 py-0 px-2 text-xs bg-transparent border-[#C67C4E]/30 text-[#E6D2B5] focus-visible:ring-[#C67C4E]/50 focus-visible:ring-offset-0 focus:border-[#C67C4E]"
+                                />
+                                </div>
+                            </div> 
                         )}
-                        {bean.pricePerKilo && (
-                            <div className="text-sm text-[#EAE0D5]/80 mt-2 font-medium">
-                                <span className="font-bold text-[#C67C4E]">{bean.pricePerKilo.toFixed(2)}₪</span> / לק"ג
-                            </div>
-                        )}
-                        {bean.flavorTags && bean.flavorTags.length > 0 && (
-                            <div className="flex flex-wrap gap-1 pt-3">
-                            {bean.flavorTags.map((tag) => (
-                                <span
-                                key={tag}
-                                className="rounded-full border border-[#C67C4E]/40 bg-[#C67C4E]/10 px-2 py-0.5 text-xs text-[#E6D2B5]"
+                        <div className="flex flex-wrap items-center gap-4">
+                            {bean.grindSetting && (
+                                <Badge
+                                    variant="secondary"
+                                    className="bg-[#C67C4E]/20 text-[#E6D2B5] border-[#C67C4E]/40 font-medium"
                                 >
-                                {tag}
-                                </span>
-                            ))}
-                            </div>
+                                    טחינה: {bean.grindSetting}
+                                </Badge>
+                            )}
+                            {bean.roastLevel && (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-[#EAE0D5]/80">קלייה:</span>
+                                    <RoastRatingInput rating={bean.roastLevel} onRatingChange={() => {}} disabled />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex gap-1 flex-shrink-0 flex-wrap justify-end">
+                        <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0 text-[#EAE0D5]/60 hover:text-[#C67C4E]"
+                        onClick={() => handleShare(bean)}
+                        aria-label="שתף"
+                        >
+                        <Share2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0 text-[#EAE0D5]/60 hover:text-[#C67C4E]"
+                        onClick={() => handleEdit(bean)}
+                        aria-label="ערוך"
+                        >
+                        <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0 text-[#EAE0D5]/60 hover:text-red-300"
+                        onClick={() => handleDelete(bean.id)}
+                        aria-label="מחק"
+                        >
+                        <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+                
+                {bean.beanDescription && (
+                    <p className="text-sm text-[#EAE0D5]/90 whitespace-pre-line mt-3">{bean.beanDescription}</p>
+                )}
+
+                {bean.rating !== undefined && (
+                    <div className="flex items-center gap-1 mt-3">
+                        <div className="flex gap-0.5">
+                            {[1, 2, 3, 4, 5].map((starIndex) => {
+                                const rating = bean.rating || 0;
+                                const isFull = rating >= starIndex;
+                                const isHalf = rating === starIndex - 0.5;
+                                return (
+                                    <div key={starIndex} className="relative w-4 h-4">
+                                        <Star className="absolute inset-0 h-4 w-4 text-[#EAE0D5]/20" />
+                                        {isFull && <Star className="absolute inset-0 h-4 w-4 fill-[#C67C4E] text-[#C67C4E]" />}
+                                        {isHalf && (
+                                            <Star 
+                                                className="absolute inset-0 h-4 w-4 fill-[#C67C4E] text-[#C67C4E]" 
+                                                style={{ clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 50% 100%)' }}
+                                            />
+                                        )}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                        <span className="text-xs font-bold text-[#EAE0D5]/50 ml-1">{bean.rating.toFixed(1)}</span>
+                    </div>
+                )}
+
+                {bean.pricePerKilo && (
+                    <div className="text-sm text-[#EAE0D5]/80 mt-2 font-medium">
+                        <span className="font-bold text-[#C67C4E]">{bean.pricePerKilo.toFixed(2)}₪</span> / לק"ג
+                    </div>
+                )}
+                {(!isActive || (bean.flavorTags && bean.flavorTags.length > 0)) && (
+                    <div className="flex items-center justify-between gap-4 mt-4 pt-3 border-t border-[#3E2C22]/30">
+                        <div className="flex-grow">
+                            {bean.flavorTags && bean.flavorTags.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                {bean.flavorTags.map((tag) => (
+                                    <span
+                                    key={tag}
+                                    className="rounded-full border border-[#C67C4E]/40 bg-[#C67C4E]/10 px-2 py-0.5 text-xs text-[#E6D2B5]"
+                                    >
+                                    {tag}
+                                    </span>
+                                ))}
+                                </div>
+                            )}
+                        </div>
+                        {!isActive && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="shrink-0 h-7 px-3 text-[#C67C4E] border-[#C67C4E]/30 hover:bg-[#C67C4E]/10 text-xs shadow-none"
+                                onClick={() => handleSetActive(bean.id)}
+                            >
+                                הגדר כפעיל
+                            </Button>
                         )}
                     </div>
-                 )
-            })}
-            </CardContent>
-          </Card>
-        ))}
+                )}
+            </div>
+        )
+    }
+
+    return (
+      <div className="space-y-8">
+        {activeBean && (
+            <div className="space-y-4">
+               <h2 className="text-xl font-bold text-[#C67C4E] flex items-center gap-2">
+                  <Target className="h-6 w-6" /> הפול הפעיל שלך
+               </h2>
+               <Card className="border-[#C67C4E] shadow-[0_0_15px_rgba(198,124,78,0.15)] flex flex-col bg-[#C67C4E]/5">
+                 <CardHeader>
+                   <CardTitle className="text-[#E6D2B5]">{activeBean.roasterName}</CardTitle>
+                 </CardHeader>
+                 <CardContent className="space-y-4 flex-grow">
+                   {renderBeanDetails(activeBean)}
+                 </CardContent>
+               </Card>
+            </div>
+        )}
+
+        {sortedGroups.length > 0 && (
+            <div className="space-y-4">
+                {activeBean && <h2 className="text-xl font-bold text-[#E6D2B5]">📚 ספריית הפולים</h2>}
+                <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
+                    {sortedGroups.map(([roasteryName, beansInGroup]) => (
+                        <Card key={roasteryName} className="transition-colors flex flex-col hover:border-[#C67C4E]/30">
+                            <CardHeader>
+                                <CardTitle className="text-[#E6D2B5]" data-testid="roastery-title">{roasteryName}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4 flex-grow">
+                                {beansInGroup.map(bean => renderBeanDetails(bean))}
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </div>
+        )}
       </div>
     );
   }

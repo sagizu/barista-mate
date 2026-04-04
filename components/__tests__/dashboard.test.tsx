@@ -94,26 +94,6 @@ describe('Dashboard', () => {
     await waitFor(() => {
         expect(within(dialog).getByLabelText(/שם המכונה שלי/i)).toHaveValue(mockSettings.machineName);
     });
-
-    const options = await within(dialog).findAllByRole('option');
-    expect(options).toHaveLength(4);
-    expect(screen.getByRole('option', { name: 'Espresso Blend (Roastery A)' })).toBeInTheDocument();
-  });
-
-  test('opened date input is disabled when no bean is selected', async () => {
-    const dialog = await openSettingsDialog();
-    const dateInput = within(dialog).getByLabelText(/תאריך פתיחת שקית/i);
-    expect(dateInput).toBeDisabled();
-  });
-  
-  test('selecting a bean enables the opened date input', async () => {
-    const dialog = await openSettingsDialog();
-    const beanSelect = within(dialog).getByLabelText(/פולים פעילים/i);
-    
-    await user.selectOptions(beanSelect, '1');
-
-    const dateInput = within(dialog).getByLabelText(/תאריך פתיחת שקית/i);
-    expect(dateInput).toBeEnabled();
   });
 
   test('saving settings calls updateGeneralSettings and updateMaintenanceFrequencies with new values', async () => {
@@ -124,8 +104,6 @@ describe('Dashboard', () => {
     await user.clear(machineNameInput);
     await user.type(machineNameInput, newMachineName);
     
-    await user.selectOptions(within(dialog).getByLabelText(/פולים פעילים/i), '3');
-    
     const descalingInput = within(dialog).getByLabelText(/תדירות ניקוי אבנית/i);
     await user.clear(descalingInput);
     await user.type(descalingInput, '200');
@@ -134,8 +112,7 @@ describe('Dashboard', () => {
 
     await waitFor(() => {
       expect(mockUpdateGeneralSettings).toHaveBeenCalledWith(expect.objectContaining({
-        machineName: newMachineName,
-        activeBeanId: '3',
+        machineName: newMachineName
       }));
       expect(mockUpdateMaintenanceFrequencies).toHaveBeenCalledWith(expect.objectContaining({
         lastDescaling: 200,

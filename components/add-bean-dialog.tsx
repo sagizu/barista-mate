@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { addBean, updateBean, getGlobalRoasters, getGlobalBeans, submitForVerification } from "@/lib/firestore";
 import type { SavedBean, RoastLevel } from "@/lib/types";
@@ -69,7 +70,7 @@ export function AddBeanDialog({
       } else if (beanToEdit) { // Partial bean
         setBean({ ...beanToEdit, flavorTags: beanToEdit.flavorTags || []});
       } else { // For new beans
-        setBean({ flavorTags: [], roastLevel: undefined });
+        setBean({ flavorTags: [], roastLevel: undefined, rating: undefined });
       }
     }
   }, [open, beanToEdit]);
@@ -137,7 +138,7 @@ export function AddBeanDialog({
 
   const handleClose = () => {
     onDialogClose();
-    setBean({ flavorTags: [], roastLevel: undefined }); // Reset form state on close
+    setBean({ flavorTags: [], roastLevel: undefined, rating: undefined }); // Reset form state on close
     setError(null);
   };
 
@@ -210,6 +211,42 @@ export function AddBeanDialog({
                 <Input id="bagWeight" type="number" value={bean.bagWeightGrams || ''} onChange={(e) => setBean({ ...bean, bagWeightGrams: e.target.value ? parseInt(e.target.value, 10) : undefined })} />
             </div>
            </div>
+          <div>
+            <Label>ציון אישי</Label>
+            <div className="flex items-center gap-4 pt-2">
+              <div className="flex gap-1 items-center relative group">
+                <Slider 
+                  dir="rtl"
+                  min={0} 
+                  max={5} 
+                  step={0.5} 
+                  value={[bean.rating || 0]} 
+                  onValueChange={(val) => setBean({ ...bean, rating: val[0] === 0 ? undefined : val[0] })}
+                  className="w-[180px] h-8 absolute inset-0 z-10 opacity-0 cursor-pointer"
+                />
+                {[1, 2, 3, 4, 5].map((starIndex) => {
+                  const rating = bean.rating || 0;
+                  const isFull = rating >= starIndex;
+                  const isHalf = rating === starIndex - 0.5;
+                  
+                  return (
+                    <div key={starIndex} className="relative w-8 h-8">
+                       <Star className="absolute inset-0 h-8 w-8 text-[#EAE0D5]/20" />
+                       {isFull && <Star className="absolute inset-0 h-8 w-8 fill-[#C67C4E] text-[#C67C4E]" />}
+                       {isHalf && (
+                         <Star 
+                            className="absolute inset-0 h-8 w-8 fill-[#C67C4E] text-[#C67C4E]" 
+                            style={{ clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 50% 100%)' }}
+                         />
+                       )}
+                    </div>
+                  );
+                })}
+              </div>
+              <span className="text-sm font-bold text-[#EAE0D5]/60 w-8">{bean.rating ? bean.rating.toFixed(1) : '-'}</span>
+            </div>
+          </div>
+
           <div>
             <Label>פרופיל טעמים</Label>
             <div className="flex flex-wrap gap-2 pt-2">

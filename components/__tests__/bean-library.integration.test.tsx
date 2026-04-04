@@ -23,6 +23,7 @@ vi.mock('firebase/firestore', async () => {
         query: vi.fn(),
         orderBy: vi.fn(),
         onSnapshot: vi.fn(),
+        doc: vi.fn(() => ({ type: 'document' })),
     };
 });
 
@@ -52,14 +53,22 @@ describe('BeanLibrary', () => {
   beforeEach(() => {
     // Reset mocks before each test
     vi.clearAllMocks();
-    (onSnapshot as vi.Mock).mockImplementation((query, callback) => {
-        const snapshot = {
-            docs: mockBeans.map(bean => ({
-                id: bean.id,
-                data: () => bean,
-            })),
-        };
-        callback(snapshot);
+    (onSnapshot as vi.Mock).mockImplementation((queryOrRef, callback) => {
+        if (queryOrRef?.type === 'document') {
+           const userSnapshot = {
+               exists: () => true,
+               data: () => ({ settings: { general: { activeBeanId: null, activeBeanOpenedDate: '' } } })
+           };
+           callback(userSnapshot);
+        } else {
+           const snapshot = {
+               docs: mockBeans.map(bean => ({
+                   id: bean.id,
+                   data: () => bean,
+               })),
+           };
+           callback(snapshot);
+        }
         return () => {}; // Unsubscribe function
     });
   });

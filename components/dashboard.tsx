@@ -284,62 +284,6 @@ return (
                   onChange={(e) => handleSettingChange("machineName", e.target.value)}
                 />
               </div>
-              <div>
-                <Label htmlFor="active-bean">פולים פעילים</Label>
-                <Select
-                  id="active-bean"
-                  value={settingsInput.activeBeanId || "-"}
-                  onChange={(e) =>
-                    handleSettingChange(
-                      "activeBeanId",
-                      e.target.value === "-" ? null : e.target.value
-                    )
-                  }
-                >
-                  <option value="-">ללא</option>
-                  {beans.map((bean) => (
-                    <option key={bean.id} value={bean.id}>
-                      {bean.beanName} ({bean.roasterName})
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="opened-date">תאריך פתיחת שקית</Label>
-                <div className="flex items-center gap-2">
-                  <div className="flex-grow">
-                    <HybridDateInput
-                      id="opened-date"
-                      value={settingsInput.activeBeanOpenedDate}
-                      onChange={(newValue) =>
-                        handleSettingChange("activeBeanOpenedDate", newValue)
-                      }
-                      disabled={
-                        !settingsInput.activeBeanId ||
-                        settingsInput.activeBeanId === "-"
-                      }
-                      className="!h-10 !py-2 !px-3 !text-sm"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      handleSettingChange(
-                        "activeBeanOpenedDate",
-                        new Date().toISOString().split("T")[0]
-                      )
-                    }
-                    disabled={
-                      !settingsInput.activeBeanId ||
-                      settingsInput.activeBeanId === "-"
-                    }
-                  >
-                    היום
-                  </Button>
-                </div>
-              </div>
               <div className="space-y-4 pt-4 border-t border-[#3E2C22]">
                 <h3 className="font-medium text-lg text-[#EAE0D5]">הגדרות תחזוקה</h3>
                 <div className="space-y-2">
