@@ -24,7 +24,7 @@
     "firebase": "^12.9.0",
     "firebase-admin": "^13.7.0",
     "lucide-react": "^0.460.0",
-    "next": "^16.1.6",
+    "next": "^16.2.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-firebase-hooks": "^5.1.1",
@@ -46,7 +46,7 @@
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14",
     "typescript": "^5.6.3",
-    "vitest": "^2.0.4",
+    "vitest": "^4.1.5",
     "whatwg-fetch": "^3.6.20"
   },
   "overrides": {
@@ -54,6 +54,8 @@
     "cross-spawn": "^6.0.6",
     "esbuild": "^0.25.0",
     "minimatch": "^10.2.1",
-    "tmp": "^0.2.4"
+    "tmp": "^0.2.4",
+    "protobufjs": "^7.5.5",
+    "fast-xml-parser": "^5.7.1"
   }
 }

@@ -16,6 +16,7 @@ describe('AddBeanDialog', () => {
   });
 
   afterEach(() => {
+    vi.clearAllMocks();
     vi.restoreAllMocks();
     onBeanAdded.mockClear();
     onDialogClose.mockClear();
