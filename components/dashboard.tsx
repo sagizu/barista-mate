@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { db } from '../firebase-config';
 import { signOut } from 'firebase/auth';
 import { doc, onSnapshot, collection, query, orderBy } from 'firebase/firestore';
+import { format, parseISO, differenceInDays } from 'date-fns';
 import { updateGeneralSettings, updateMaintenanceFrequencies } from "@/lib/firestore";
 import { setupForegroundMessageHandler } from "@/lib/fcm";
 import { 
@@ -61,6 +62,7 @@ export default function Dashboard() {
     waterFilterLastChanged: 60,
     lastBackflush: 60,
   });
+  const [maintenanceDates, setMaintenanceDates] = useState<any>({});
 
   useEffect(() => {
     if (!user) {
@@ -106,12 +108,25 @@ export default function Dashboard() {
         console.error("Dashboard beans error:", error);
     });
 
+    // Listener for maintenance dates
+    const maintenanceRef = doc(db, 'users', user.uid, 'maintenance', 'log');
+    const unsubscribeMaintenance = onSnapshot(maintenanceRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setMaintenanceDates(snapshot.data());
+      } else {
+        setMaintenanceDates({});
+      }
+    }, (error) => {
+        if (error.code === 'permission-denied') return;
+    });
+
     // Initialize foreground messaging listener
     const unsubscribeFCM = setupForegroundMessageHandler();
 
     return () => {
       unsubscribeUser();
       unsubscribeBeans();
+      unsubscribeMaintenance();
       unsubscribeFCM();
       clearTimeout(initialTimer);
       clearInterval(intervalTimer);
@@ -124,6 +139,23 @@ export default function Dashboard() {
     if (!settings.activeBeanId || beans.length === 0) return null;
     return beans.find(b => b.id === settings.activeBeanId) || null;
   }, [settings.activeBeanId, beans]);
+
+  const hasOverdueMaintenance = useMemo(() => {
+    const checkOverdue = (key: string, defaultFreq: number) => {
+      const lastDate = maintenanceDates[key];
+      if (!lastDate) return false;
+      const freq = maintenanceFrequencies[key] || defaultFreq;
+      try {
+        return differenceInDays(new Date(), parseISO(lastDate)) > Number(freq);
+      } catch (e) {
+        return false;
+      }
+    };
+    
+    return checkOverdue('lastDescaling', 180) || 
+           checkOverdue('waterFilterLastChanged', 60) || 
+           checkOverdue('lastBackflush', 60);
+  }, [maintenanceDates, maintenanceFrequencies]);
 
 
   const openSettings = () => {
@@ -341,7 +373,12 @@ return (
           <TabsList className="grid w-full h-auto grid-cols-3 gap-2 sm:h-10 max-w-xl mb-6">
             <TabsTrigger value="beans">ספריית פולים</TabsTrigger>
             <TabsTrigger value="dial-in">כיול</TabsTrigger>
-            <TabsTrigger value="maintenance">תחזוקה</TabsTrigger>
+            <TabsTrigger value="maintenance" className="relative">
+              תחזוקה
+              {hasOverdueMaintenance && (
+                <span className="absolute top-1 left-2 sm:left-4 w-2 h-2 rounded-full bg-[#C67C4E] animate-pulse" />
+              )}
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="beans" className="w-full mt-0 overflow-y-auto">
             <BeanLibrary />
