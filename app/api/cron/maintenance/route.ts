@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 
       const checkOverdue = (key: string, frequency: number) => {
         const lastDateStr = maintenanceDates[key];
-        if (!lastDateStr) return true; // If never done, it needs to be done!
+        if (!lastDateStr) return false; // User requested not to alert if no date is set
         
         // Frontend saves as YYYY-MM-DD string
         const lastDate = new Date(lastDateStr);
