@@ -1,5 +1,5 @@
 import { messaging } from "../firebase-config";
-import { getToken } from "firebase/messaging";
+import { getToken, onMessage } from "firebase/messaging";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase-config";
 
@@ -43,4 +43,25 @@ export const requestNotificationPermission = async (userId: string): Promise<boo
     console.error("An error occurred while retrieving token. ", error);
     return false;
   }
+};
+
+export const setupForegroundMessageHandler = () => {
+  if (typeof window !== "undefined" && messaging) {
+    return onMessage(messaging, (payload) => {
+      console.log("Message received in foreground: ", payload);
+      
+      const title = payload.notification?.title || "תזכורת חדשה";
+      const body = payload.notification?.body || "";
+      
+      // We can use standard browser notification if permitted, 
+      // or rely on a custom toast. For now, let's trigger a system notification:
+      if (Notification.permission === "granted") {
+        new Notification(title, {
+          body,
+          icon: "/icon-192.png",
+        });
+      }
+    });
+  }
+  return () => {};
 };

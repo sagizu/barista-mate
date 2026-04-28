@@ -22,6 +22,7 @@ export async function GET(request: Request) {
       const frequencies = userData.preferences?.maintenanceFrequencies;
       if (!pushToken || !frequencies) continue;
 
+      console.log("User:", doc.id, "frequencies:", frequencies, "hasPushToken:", !!pushToken);
       // Ensure we have logs to check against
       const logsSnapshot = await adminDb.collection('users').doc(doc.id).collection('maintenanceLogs').orderBy('date', 'desc').limit(20).get();
       const logs = logsSnapshot.docs.map(l => l.data());
@@ -33,24 +34,25 @@ export async function GET(request: Request) {
       const now = new Date();
 
       // Check Backflush
-      if (frequencies.backflush) {
+      if (frequencies.lastBackflush) {
         const lastBackflush = logs.find(l => l.task === 'backflush')?.date?.toDate() || new Date(0);
         const daysSince = (now.getTime() - lastBackflush.getTime()) / (1000 * 3600 * 24);
-        if (daysSince >= frequencies.backflush) needsBackflush = true;
+        if (daysSince >= frequencies.lastBackflush) needsBackflush = true;
       }
       
       // Check Deep clean
-      if (frequencies.deepClean) {
+      if (frequencies.lastDescaling) {
         const lastDeepClean = logs.find(l => l.task === 'deepClean')?.date?.toDate() || new Date(0);
         const daysSinceContext = (now.getTime() - lastDeepClean.getTime()) / (1000 * 3600 * 24);
-        if (daysSinceContext >= frequencies.deepClean) needsDeepClean = true;
+        if (daysSinceContext >= frequencies.lastDescaling) needsDeepClean = true;
       }
       
       // Check Water filter
-      if (frequencies.waterFilter) {
+      if (frequencies.waterFilterLastChanged) {
         const lastFilter = logs.find(l => l.task === 'waterFilter')?.date?.toDate() || new Date(0);
         const daysSinceContextFilter = (now.getTime() - lastFilter.getTime()) / (1000 * 3600 * 24);
-        if (daysSinceContextFilter >= frequencies.waterFilter) needsFilterChange = true;
+        console.log("Water filter: ", { frequenciesWaterFilter: frequencies.waterFilterLastChanged, lastFilter, daysSinceContextFilter });
+        if (daysSinceContextFilter >= frequencies.waterFilterLastChanged) needsFilterChange = true;
       }
 
       if (needsBackflush || needsDeepClean || needsFilterChange) {

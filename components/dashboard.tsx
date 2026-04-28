@@ -7,6 +7,7 @@ import { db } from '../firebase-config';
 import { signOut } from 'firebase/auth';
 import { doc, onSnapshot, collection, query, orderBy } from 'firebase/firestore';
 import { updateGeneralSettings, updateMaintenanceFrequencies } from "@/lib/firestore";
+import { setupForegroundMessageHandler } from "@/lib/fcm";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -105,9 +106,13 @@ export default function Dashboard() {
         console.error("Dashboard beans error:", error);
     });
 
+    // Initialize foreground messaging listener
+    const unsubscribeFCM = setupForegroundMessageHandler();
+
     return () => {
       unsubscribeUser();
       unsubscribeBeans();
+      unsubscribeFCM();
       clearTimeout(initialTimer);
       clearInterval(intervalTimer);
     };
