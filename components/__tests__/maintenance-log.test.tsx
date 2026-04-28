@@ -119,7 +119,12 @@ describe('MaintenanceLog Component', () => {
     render(<MaintenanceLog />);
     
     const sixtyOneDaysAgo = format(subDays(new Date(), 61), 'yyyy-MM-dd');
-    const mockData = { waterFilterLastChanged: sixtyOneDaysAgo };
+    const recentDate = format(subDays(new Date(), 10), 'yyyy-MM-dd');
+    const mockData = { 
+      waterFilterLastChanged: sixtyOneDaysAgo,
+      lastBackflush: recentDate,
+      lastDescaling: recentDate
+    };
     
     await act(async () => {
       onSnapshotCallback({ exists: () => true, data: () => mockData });
@@ -135,7 +140,11 @@ describe('MaintenanceLog Component', () => {
     render(<MaintenanceLog />);
     
     const fiftyNineDaysAgo = format(subDays(new Date(), 59), 'yyyy-MM-dd');
-    const mockData = { waterFilterLastChanged: fiftyNineDaysAgo };
+    const mockData = { 
+      waterFilterLastChanged: fiftyNineDaysAgo,
+      lastBackflush: fiftyNineDaysAgo,
+      lastDescaling: fiftyNineDaysAgo 
+    };
     
     await act(async () => {
       onSnapshotCallback({ exists: () => true, data: () => mockData });

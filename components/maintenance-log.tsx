@@ -149,7 +149,7 @@ export function MaintenanceLog() {
     lastDate: string | undefined,
     taskDefaultFrequency: number
   ) => {
-    if (!lastDate) return false;
+    if (!lastDate) return true; // Never done means it needs doing!
     const frequency =
       userPreferences?.maintenanceFrequencies?.[taskKey] ?? taskDefaultFrequency;
     try {

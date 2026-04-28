@@ -143,7 +143,7 @@ export default function Dashboard() {
   const hasOverdueMaintenance = useMemo(() => {
     const checkOverdue = (key: string, defaultFreq: number) => {
       const lastDate = maintenanceDates[key];
-      if (!lastDate) return false;
+      if (!lastDate) return true; // Never done means it needs doing!
       const freq = maintenanceFrequencies[key] || defaultFreq;
       try {
         return differenceInDays(new Date(), parseISO(lastDate)) > Number(freq);

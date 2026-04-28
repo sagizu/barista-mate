@@ -23,9 +23,9 @@ export async function GET(request: Request) {
       if (!pushToken || !frequencies) continue;
 
       console.log("User:", doc.id, "frequencies:", frequencies, "hasPushToken:", !!pushToken);
-      // Ensure we have logs to check against
-      const logsSnapshot = await adminDb.collection('users').doc(doc.id).collection('maintenanceLogs').orderBy('date', 'desc').limit(20).get();
-      const logs = logsSnapshot.docs.map(l => l.data());
+      // Get maintenance dates
+      const maintenanceDoc = await adminDb.collection('users').doc(doc.id).collection('maintenance').doc('log').get();
+      const maintenanceDates = maintenanceDoc.data() || {};
 
       let needsBackflush = false;
       let needsDeepClean = false;
@@ -33,26 +33,29 @@ export async function GET(request: Request) {
 
       const now = new Date();
 
+      const checkOverdue = (key: string, frequency: number) => {
+        const lastDateStr = maintenanceDates[key];
+        if (!lastDateStr) return true; // If never done, it needs to be done!
+        
+        // Frontend saves as YYYY-MM-DD string
+        const lastDate = new Date(lastDateStr);
+        const daysSince = (now.getTime() - lastDate.getTime()) / (1000 * 3600 * 24);
+        return daysSince >= frequency;
+      };
+
       // Check Backflush
       if (frequencies.lastBackflush) {
-        const lastBackflush = logs.find(l => l.task === 'backflush')?.date?.toDate() || new Date(0);
-        const daysSince = (now.getTime() - lastBackflush.getTime()) / (1000 * 3600 * 24);
-        if (daysSince >= frequencies.lastBackflush) needsBackflush = true;
+        if (checkOverdue('lastBackflush', frequencies.lastBackflush)) needsBackflush = true;
       }
       
       // Check Deep clean
       if (frequencies.lastDescaling) {
-        const lastDeepClean = logs.find(l => l.task === 'deepClean')?.date?.toDate() || new Date(0);
-        const daysSinceContext = (now.getTime() - lastDeepClean.getTime()) / (1000 * 3600 * 24);
-        if (daysSinceContext >= frequencies.lastDescaling) needsDeepClean = true;
+        if (checkOverdue('lastDescaling', frequencies.lastDescaling)) needsDeepClean = true;
       }
       
       // Check Water filter
       if (frequencies.waterFilterLastChanged) {
-        const lastFilter = logs.find(l => l.task === 'waterFilter')?.date?.toDate() || new Date(0);
-        const daysSinceContextFilter = (now.getTime() - lastFilter.getTime()) / (1000 * 3600 * 24);
-        console.log("Water filter: ", { frequenciesWaterFilter: frequencies.waterFilterLastChanged, lastFilter, daysSinceContextFilter });
-        if (daysSinceContextFilter >= frequencies.waterFilterLastChanged) needsFilterChange = true;
+        if (checkOverdue('waterFilterLastChanged', frequencies.waterFilterLastChanged)) needsFilterChange = true;
       }
 
       if (needsBackflush || needsDeepClean || needsFilterChange) {
