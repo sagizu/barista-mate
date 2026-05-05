@@ -343,7 +343,7 @@ export function BeanLibrary() {
                     <p className="text-sm text-[#EAE0D5]/90 whitespace-pre-line mt-3">{bean.beanDescription}</p>
                 )}
 
-                {bean.rating !== undefined && (
+                {bean.rating != null && (
                     <div className="flex items-center gap-1 mt-3">
                         <div className="flex gap-0.5">
                             {[1, 2, 3, 4, 5].map((starIndex) => {

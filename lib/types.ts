@@ -26,14 +26,14 @@ export interface SavedBean {
   roasterName: string;
   beanName: string;
   isTestData?: boolean;
-  grindSetting: string;
+  grindSetting?: string | null;
   roastLevel?: RoastLevel | null;
-  beanDescription?: string;
+  beanDescription?: string | null;
   /** Flavor profile tags (multiple) */
   flavorTags?: string[];
-  pricePaid?: number;
-  bagWeightGrams?: number;
-  pricePerKilo?: number;
+  pricePaid?: number | null;
+  bagWeightGrams?: number | null;
+  pricePerKilo?: number | null;
   createdAt: string;
   openedDate?: string;
   dose?: number;
