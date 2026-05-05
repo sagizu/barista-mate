@@ -27,7 +27,7 @@ export interface SavedBean {
   beanName: string;
   isTestData?: boolean;
   grindSetting: string;
-  roastLevel?: RoastLevel;
+  roastLevel?: RoastLevel | null;
   beanDescription?: string;
   /** Flavor profile tags (multiple) */
   flavorTags?: string[];
@@ -37,7 +37,7 @@ export interface SavedBean {
   createdAt: string;
   openedDate?: string;
   dose?: number;
-  rating?: number;
+  rating?: number | null;
 }
 
 export interface MaintenanceDates {

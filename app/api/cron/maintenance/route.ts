@@ -26,6 +26,7 @@ export async function GET(request: Request) {
       // Get maintenance dates
       const maintenanceDoc = await adminDb.collection('users').doc(doc.id).collection('maintenance').doc('log').get();
       const maintenanceDates = maintenanceDoc.data() || {};
+      console.log("Dates for", doc.id, ":", maintenanceDates);
 
       let needsBackflush = false;
       let needsDeepClean = false;

@@ -131,7 +131,7 @@ describe('AddBeanDialog', () => {
     await user.click(within(dialog).getByRole('button', { name: /שמור שינויים/i }));
 
     await waitFor(() => {
-      expect(firestore.updateBean).toHaveBeenCalledWith('1', { ...beanToEdit, beanName: 'פול חדש', roasterName: 'נחת', roastLevel: 5 });
+      expect(firestore.updateBean).toHaveBeenCalledWith('1', { ...beanToEdit, beanName: 'פול חדש', roasterName: 'נחת', roastLevel: 5, pricePerKilo: null });
     });
     await waitFor(() => {
       expect(onBeanAdded).toHaveBeenCalled();

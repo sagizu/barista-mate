@@ -70,7 +70,7 @@ export function AddBeanDialog({
       } else if (beanToEdit) { // Partial bean
         setBean({ ...beanToEdit, flavorTags: beanToEdit.flavorTags || []});
       } else { // For new beans
-        setBean({ flavorTags: [], roastLevel: undefined, rating: undefined });
+        setBean({ flavorTags: [], roastLevel: null, rating: null });
       }
     }
   }, [open, beanToEdit]);
@@ -92,6 +92,8 @@ export function AddBeanDialog({
 
       if (beanToSave.pricePaid && beanToSave.bagWeightGrams) {
         beanToSave.pricePerKilo = (beanToSave.pricePaid / beanToSave.bagWeightGrams) * 1000;
+      } else {
+        beanToSave.pricePerKilo = null as any;
       }
 
       const isTestData = process.env.NODE_ENV === 'development' || 
@@ -138,7 +140,7 @@ export function AddBeanDialog({
 
   const handleClose = () => {
     onDialogClose();
-    setBean({ flavorTags: [], roastLevel: undefined, rating: undefined }); // Reset form state on close
+    setBean({ flavorTags: [], roastLevel: null, rating: null }); // Reset form state on close
     setError(null);
   };
 
@@ -192,23 +194,23 @@ export function AddBeanDialog({
                 <div className="pt-2">
                  <RoastRatingInput 
                     rating={bean.roastLevel || 0}
-                    onRatingChange={(newRating) => setBean({...bean, roastLevel: newRating === 0 ? undefined : newRating as RoastLevel})} 
+                    onRatingChange={(newRating) => setBean({...bean, roastLevel: newRating === 0 ? null : newRating as RoastLevel})} 
                  />
                 </div>
              </div>
              <div>
               <Label htmlFor="grindSetting" className="text-right">דרגת טחינה</Label>
-              <Input id="grindSetting" value={bean.grindSetting || ''} onChange={(e) => setBean({ ...bean, grindSetting: e.target.value })} />
+              <Input id="grindSetting" value={bean.grindSetting || ''} onChange={(e) => setBean({ ...bean, grindSetting: e.target.value || null })} />
              </div>
           </div>
            <div className="grid grid-cols-2 gap-4">
             <div>
                 <Label htmlFor="pricePaid">מחיר ששולם (₪)</Label>
-                <Input id="pricePaid" type="number" value={bean.pricePaid || ''} onChange={(e) => setBean({ ...bean, pricePaid: e.target.value ? parseFloat(e.target.value) : undefined })} />
+                <Input id="pricePaid" type="number" value={bean.pricePaid || ''} onChange={(e) => setBean({ ...bean, pricePaid: e.target.value ? parseFloat(e.target.value) : null })} />
             </div>
             <div>
                 <Label htmlFor="bagWeight">משקל שקית (גרם)</Label>
-                <Input id="bagWeight" type="number" value={bean.bagWeightGrams || ''} onChange={(e) => setBean({ ...bean, bagWeightGrams: e.target.value ? parseInt(e.target.value, 10) : undefined })} />
+                <Input id="bagWeight" type="number" value={bean.bagWeightGrams || ''} onChange={(e) => setBean({ ...bean, bagWeightGrams: e.target.value ? parseInt(e.target.value, 10) : null })} />
             </div>
            </div>
           <div>
@@ -221,7 +223,7 @@ export function AddBeanDialog({
                   max={5} 
                   step={0.5} 
                   value={[bean.rating || 0]} 
-                  onValueChange={(val) => setBean({ ...bean, rating: val[0] === 0 ? undefined : val[0] })}
+                  onValueChange={(val) => setBean({ ...bean, rating: val[0] === 0 ? null : val[0] })}
                   className="w-[180px] h-8 absolute inset-0 z-10 opacity-0 cursor-pointer"
                 />
                 {[1, 2, 3, 4, 5].map((starIndex) => {
@@ -264,7 +266,7 @@ export function AddBeanDialog({
           </div>
           <div>
             <Label htmlFor="beanDescription" className="text-right">תיאור הפולים</Label>
-            <Textarea id="beanDescription" value={bean.beanDescription || ''} onChange={(e) => setBean({ ...bean, beanDescription: e.target.value })} />
+            <Textarea id="beanDescription" value={bean.beanDescription || ''} onChange={(e) => setBean({ ...bean, beanDescription: e.target.value || null })} />
           </div>
         </div>
         <DialogFooter className="flex-shrink-0 pt-4 items-center justify-between">

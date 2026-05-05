@@ -1,6 +1,6 @@
 
 import { auth, db } from "@/firebase-config";
-import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, setDoc, getDoc, arrayUnion, query, where, getDocs, arrayRemove } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, setDoc, getDoc, arrayUnion, query, where, getDocs, arrayRemove, deleteField } from "firebase/firestore";
 import type { SavedBean, MaintenanceDates, GeneralSettings, DialInRecord } from "./types";
 const getBeansCollection = () => {
     const user = auth.currentUser;
@@ -30,7 +30,14 @@ export const addBean = async (beanData: Omit<SavedBean, 'id' | 'createdAt'>) => 
             ...beanData,
             beanName: beanData.beanName?.trim(),
             roasterName: beanData.roasterName?.trim(),
-        };
+        } as any;
+        
+        for (const key in sanitizedBeanData) {
+            if (sanitizedBeanData[key] === null) {
+                delete sanitizedBeanData[key];
+            }
+        }
+        
         const isTestData = process.env.NODE_ENV === 'development' || 
                            process.env.NODE_ENV === 'test' || 
                            process.env.VITEST != null;
@@ -49,12 +56,18 @@ export const addBean = async (beanData: Omit<SavedBean, 'id' | 'createdAt'>) => 
 export const updateBean = async (id: string, updates: Partial<Omit<SavedBean, 'id'>>) => {
     try {
         const beansCollection = getBeansCollection();
-        const sanitizedUpdates = { ...updates };
+        const sanitizedUpdates = { ...updates } as any;
         if (sanitizedUpdates.beanName) {
             sanitizedUpdates.beanName = sanitizedUpdates.beanName.trim();
         }
         if (sanitizedUpdates.roasterName) {
             sanitizedUpdates.roasterName = sanitizedUpdates.roasterName.trim();
+        }
+        
+        for (const key in sanitizedUpdates) {
+            if (sanitizedUpdates[key] === null) {
+                sanitizedUpdates[key] = deleteField();
+            }
         }
         const beanRef = doc(beansCollection, id);
         return await updateDoc(beanRef, sanitizedUpdates);
