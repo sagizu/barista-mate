@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Star } from "lucide-react";
+import { Loader2, Star, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -246,6 +246,18 @@ export function AddBeanDialog({
                 })}
               </div>
               <span className="text-sm font-bold text-[#EAE0D5]/60 w-8">{bean.rating ? bean.rating.toFixed(1) : '-'}</span>
+              {bean.rating != null && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-[#EAE0D5]/40 hover:text-red-400 hover:bg-transparent ml-2"
+                  onClick={() => setBean({ ...bean, rating: null })}
+                  title="מחק ציון"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
 
