@@ -38,6 +38,7 @@ export interface SavedBean {
   openedDate?: string;
   dose?: number;
   rating?: number | null;
+  imageUrl?: string | null;
 }
 
 export interface MaintenanceDates {

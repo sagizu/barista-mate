@@ -1,7 +1,7 @@
 
 "use client";
 
-import { BookOpen, Trash2, PlusCircle, Pencil, Coffee, Filter, X, Share2, Star, Target } from "lucide-react";
+import { BookOpen, Trash2, PlusCircle, Pencil, Coffee, Filter, X, Share2, Star, Target, Image as ImageIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -266,17 +266,30 @@ export function BeanLibrary() {
             <div key={bean.id} className={!isActive ? "border-t border-[#3E2C22] pt-4 first:border-0 first:pt-0" : ""}>
                 <div className="flex justify-between items-start">
                     <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                            <p className="font-semibold text-[#E6D2B5] text-lg">{bean.beanName}</p>
-                            {isActive && (
-                                <Badge 
-                                    className="bg-[#C67C4E] hover:bg-red-500 text-white select-none whitespace-nowrap cursor-pointer transition-colors"
-                                    onClick={() => handleSetActive(null)}
-                                    title="לחץ כדי להסיר פול פעיל"
-                                >
-                                    <Target className="h-3 w-3 mr-1" /> פעיל כרגע
-                                </Badge>
+                        <div className="flex items-center gap-3">
+                            {bean.imageUrl ? (
+                                <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 border border-[#C67C4E]/20">
+                                    <img src={bean.imageUrl} alt={bean.beanName} className="w-full h-full object-cover" loading="lazy" />
+                                </div>
+                            ) : (
+                                <div className="w-12 h-12 rounded-md bg-[#C67C4E]/10 flex items-center justify-center flex-shrink-0 border border-[#C67C4E]/20">
+                                    <Coffee className="w-6 h-6 text-[#C67C4E]/50" />
+                                </div>
                             )}
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <p className="font-semibold text-[#E6D2B5] text-lg">{bean.beanName}</p>
+                                    {isActive && (
+                                        <Badge 
+                                            className="bg-[#C67C4E] hover:bg-red-500 text-white select-none whitespace-nowrap cursor-pointer transition-colors"
+                                            onClick={() => handleSetActive(null)}
+                                            title="לחץ כדי להסיר פול פעיל"
+                                        >
+                                            <Target className="h-3 w-3 mr-1" /> פעיל כרגע
+                                        </Badge>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                         {isActive && (
                             <div className="flex items-center gap-2 mt-2">

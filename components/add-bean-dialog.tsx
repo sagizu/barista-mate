@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Star, X } from "lucide-react";
+import { Loader2, Star, X, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,6 +17,7 @@ import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { addBean, updateBean, getGlobalRoasters, getGlobalBeans, submitForVerification } from "@/lib/firestore";
 import type { SavedBean, RoastLevel } from "@/lib/types";
+import { uploadBeanImage, deleteBeanImage } from "@/lib/storage";
 import { RoastRatingInput } from "./roast-rating-input";
 import { RoasterCombobox } from "./roaster-combobox";
 import { BeanCombobox } from "./bean-combobox";
@@ -62,15 +63,21 @@ export function AddBeanDialog({
   const [bean, setBean] = useState<Partial<SavedBean>>({});
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
+      setImageFile(null);
       if (beanToEdit && beanToEdit.id) { // Check for a full bean to edit
         setBean(beanToEdit);
+        setImagePreview(beanToEdit.imageUrl || null);
       } else if (beanToEdit) { // Partial bean
         setBean({ ...beanToEdit, flavorTags: beanToEdit.flavorTags || []});
+        setImagePreview(null);
       } else { // For new beans
         setBean({ flavorTags: [], roastLevel: null, rating: null });
+        setImagePreview(null);
       }
     }
   }, [open, beanToEdit]);
@@ -103,6 +110,10 @@ export function AddBeanDialog({
       const cleanBeanToSave = Object.fromEntries(
         Object.entries(beanToSave).filter(([_, value]) => value !== undefined)
       ) as Omit<SavedBean, "id" | "createdAt">;
+
+      if (imageFile) {
+        cleanBeanToSave.imageUrl = await uploadBeanImage(imageFile);
+      }
 
       if (bean.id) {
         await updateBean(bean.id, cleanBeanToSave);
@@ -141,7 +152,25 @@ export function AddBeanDialog({
   const handleClose = () => {
     onDialogClose();
     setBean({ flavorTags: [], roastLevel: null, rating: null }); // Reset form state on close
+    setImageFile(null);
+    setImagePreview(null);
     setError(null);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+      // Reset the input value so the same file can be selected again if removed
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setBean({ ...bean, imageUrl: null }); // Explicitly remove from bean state
   };
 
   const toggleFlavorTag = (tag: string) => {
@@ -160,6 +189,33 @@ export function AddBeanDialog({
           <DialogTitle>{bean.id ? "ערוך פול קיים" : "הוסף פול חדש"}</DialogTitle>
         </DialogHeader>
         <div className="flex-grow overflow-y-auto pr-6 pl-2 -mr-6 -ml-2 space-y-4">
+          <div className="flex justify-center mb-4">
+              <div className="relative">
+                  {imagePreview ? (
+                      <div className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-[#C67C4E]/30">
+                          <img src={imagePreview} alt="Bean preview" className="w-full h-full object-cover" />
+                          <button 
+                              onClick={handleRemoveImage}
+                              className="absolute top-1 right-1 bg-black/60 rounded-full p-1 text-white hover:text-red-400 hover:bg-black/80 transition-colors"
+                              type="button"
+                          >
+                              <X className="w-3 h-3" />
+                          </button>
+                      </div>
+                  ) : (
+                      <label className="flex flex-col items-center justify-center w-24 h-24 rounded-lg border-2 border-dashed border-[#C67C4E]/30 bg-[#C67C4E]/5 cursor-pointer hover:bg-[#C67C4E]/10 transition-colors">
+                          <ImagePlus className="w-6 h-6 text-[#C67C4E]/60 mb-2" />
+                          <span className="text-[10px] text-[#EAE0D5]/60">הוסף תמונה</span>
+                          <input 
+                              type="file" 
+                              className="hidden" 
+                              accept="image/*"
+                              onChange={handleImageChange}
+                          />
+                      </label>
+                  )}
+              </div>
+          </div>
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="roasterName" id="roaster-label" className="text-right">שם בית הקלייה</Label>

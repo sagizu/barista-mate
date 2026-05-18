@@ -81,6 +81,18 @@ export const deleteBean = async (id: string) => {
     try {
         const beansCollection = getBeansCollection();
         const beanRef = doc(beansCollection, id);
+        
+        // Fetch the bean to check if it has an image
+        const beanDoc = await getDoc(beanRef);
+        if (beanDoc.exists()) {
+            const beanData = beanDoc.data() as SavedBean;
+            if (beanData.imageUrl) {
+                // We need to import deleteBeanImage, we can do it dynamically or statically
+                const { deleteBeanImage } = await import('./storage');
+                await deleteBeanImage(beanData.imageUrl);
+            }
+        }
+
         return await deleteDoc(beanRef);
     } catch (error) {
         handleError(error, 'deleteBean');
