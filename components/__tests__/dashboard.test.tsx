@@ -17,6 +17,7 @@ vi.mock('@/components/user-settings-dialog', () => ({
     __esModule: true,
     default: ({children}: {children: React.ReactNode}) => <div data-testid="user-settings-dialog">{children}</div>
 }));
+vi.mock('@/components/feature-announcement', () => ({ FeatureAnnouncement: () => null }));
 
 
 // Mock dependencies

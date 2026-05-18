@@ -38,6 +38,7 @@ import type { SavedBean, GeneralSettings } from "@/lib/types";
 import { auth } from "@/firebase-config";
 import { deleteUserData } from '@/lib/user-service';
 import { FeedbackForm } from "./feedback-form";
+import { FeatureAnnouncement } from "./feature-announcement";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -291,6 +292,8 @@ return (
             </div>            
           </div>
         </header>
+
+        <FeatureAnnouncement />
 
       <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
         <DialogContent className="bg-[#1F1712] border-[#3E2C22]">
