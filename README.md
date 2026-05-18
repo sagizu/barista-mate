@@ -30,6 +30,7 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 - **Active Bean Spotlight**: Pin your currently active bean to the "Bama" (main stage) at the top of your library for instant access.
 - **Inline Date Entry**: A dynamic hybrid date input directly inside your active bean card allows for seamless entry and editing of the exact date you cracked the bag open.
 - **Precision Star Rating**: Give each bean a personal enjoyment score using an interactive 1-5 star slider supporting half-star increments.
+- **Bean Imagery**: Upload photos of your coffee bags directly to your library. Images are automatically compressed on the client-side to save bandwidth and stored securely in Firebase Cloud Storage.
 - **Comprehensive Bean Library**: Maintain a detailed library of your coffee beans, including roaster name, bean name, grind setting, roast level (visual 1-5 rating), price paid, bag weight, and flavor notes.
 - **Community Spotlight**: Discover what the community is brewing with a dynamic, randomized showcase of high-quality beans shared by other users in your Bean Library.
 - **Smart Filtering & Sorting**: Organize your library by roastery, and instantly filter your collection by flavor profile, exact roast level range, and price per kilo.
