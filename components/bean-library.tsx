@@ -262,26 +262,36 @@ export function BeanLibrary() {
 
     const renderBeanDetails = (bean: SavedBean) => {
         const isActive = bean.id === activeBeanId;
+        const imageContainerClass = isActive 
+            ? "w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden flex-shrink-0 border-2 border-[#C67C4E]/30 shadow-lg" 
+            : "w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden flex-shrink-0 border border-[#C67C4E]/20";
+            
+        const placeholderClass = isActive
+            ? "w-24 h-24 sm:w-28 sm:h-28 rounded-lg bg-[#C67C4E]/10 flex items-center justify-center flex-shrink-0 border-2 border-[#C67C4E]/30 shadow-inner"
+            : "w-16 h-16 sm:w-20 sm:h-20 rounded-md bg-[#C67C4E]/10 flex items-center justify-center flex-shrink-0 border border-[#C67C4E]/20";
+
+        const iconSizeClass = isActive ? "w-10 h-10 text-[#C67C4E]/50" : "w-8 h-8 text-[#C67C4E]/50";
+
         return (
             <div key={bean.id} className={!isActive ? "border-t border-[#3E2C22] pt-4 first:border-0 first:pt-0" : ""}>
                 <div className="flex justify-between items-start">
                     <div className="space-y-2">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-4">
                             {bean.imageUrl ? (
-                                <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 border border-[#C67C4E]/20">
+                                <div className={imageContainerClass}>
                                     <img src={bean.imageUrl} alt={bean.beanName} className="w-full h-full object-cover" loading="lazy" />
                                 </div>
                             ) : (
-                                <div className="w-12 h-12 rounded-md bg-[#C67C4E]/10 flex items-center justify-center flex-shrink-0 border border-[#C67C4E]/20">
-                                    <Coffee className="w-6 h-6 text-[#C67C4E]/50" />
+                                <div className={placeholderClass}>
+                                    <Coffee className={iconSizeClass} />
                                 </div>
                             )}
                             <div>
-                                <div className="flex items-center gap-2">
-                                    <p className="font-semibold text-[#E6D2B5] text-lg">{bean.beanName}</p>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <p className={`font-semibold text-[#E6D2B5] ${isActive ? 'text-2xl' : 'text-lg'}`}>{bean.beanName}</p>
                                     {isActive && (
                                         <Badge 
-                                            className="bg-[#C67C4E] hover:bg-red-500 text-white select-none whitespace-nowrap cursor-pointer transition-colors"
+                                            className="bg-[#C67C4E] hover:bg-red-500 text-white select-none whitespace-nowrap cursor-pointer transition-colors text-xs"
                                             onClick={() => handleSetActive(null)}
                                             title="לחץ כדי להסיר פול פעיל"
                                         >
