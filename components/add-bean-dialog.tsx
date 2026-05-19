@@ -115,6 +115,16 @@ export function AddBeanDialog({
         cleanBeanToSave.imageUrl = await uploadBeanImage(imageFile);
       }
 
+      if (beanToEdit && beanToEdit.imageUrl) {
+        if (imageFile || cleanBeanToSave.imageUrl === null) {
+          try {
+            await deleteBeanImage(beanToEdit.imageUrl);
+          } catch (err) {
+            console.error("Failed to delete old image:", err);
+          }
+        }
+      }
+
       if (bean.id) {
         await updateBean(bean.id, cleanBeanToSave);
       } else {
