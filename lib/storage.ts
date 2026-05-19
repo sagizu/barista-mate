@@ -1,4 +1,4 @@
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { storage, auth } from "@/firebase-config";
 import imageCompression from "browser-image-compression";
 import { v4 as uuidv4 } from "uuid";
@@ -23,7 +23,7 @@ export async function uploadBeanImage(file: File): Promise<string> {
         const storageRef = ref(storage, `users/${user.uid}/beans/${filename}`);
 
         // Upload the compressed file
-        const snapshot = await uploadBytesResumable(storageRef, compressedFile);
+        const snapshot = await uploadBytes(storageRef, compressedFile);
         
         // Get the download URL
         const downloadURL = await getDownloadURL(snapshot.ref);

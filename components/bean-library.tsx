@@ -274,9 +274,9 @@ export function BeanLibrary() {
 
         return (
             <div key={bean.id} className={!isActive ? "border-t border-[#3E2C22] pt-4 first:border-0 first:pt-0" : ""}>
-                <div className="flex justify-between items-start">
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-4">
+                <div className="flex justify-between items-start gap-2">
+                    <div className="space-y-2 flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                             {bean.imageUrl ? (
                                 <div className={imageContainerClass}>
                                     <img src={bean.imageUrl} alt={bean.beanName} className="w-full h-full object-cover" loading="lazy" />
@@ -286,12 +286,12 @@ export function BeanLibrary() {
                                     <Coffee className={iconSizeClass} />
                                 </div>
                             )}
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <p className={`font-semibold text-[#E6D2B5] ${isActive ? 'text-2xl' : 'text-lg'}`}>{bean.beanName}</p>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-2 mb-1">
+                                    <p className={`font-semibold text-[#E6D2B5] truncate max-w-full ${isActive ? 'text-xl sm:text-2xl' : 'text-lg'}`}>{bean.beanName}</p>
                                     {isActive && (
                                         <Badge 
-                                            className="bg-[#C67C4E] hover:bg-red-500 text-white select-none whitespace-nowrap cursor-pointer transition-colors text-xs"
+                                            className="bg-[#C67C4E] hover:bg-red-500 text-white select-none whitespace-nowrap cursor-pointer transition-colors text-xs shrink-0"
                                             onClick={() => handleSetActive(null)}
                                             title="לחץ כדי להסיר פול פעיל"
                                         >
