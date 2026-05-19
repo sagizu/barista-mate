@@ -11,7 +11,7 @@ export async function uploadBeanImage(file: File): Promise<string> {
     const options = {
         maxSizeMB: 0.1, // 100KB max size
         maxWidthOrHeight: 600, // max 600x600 px
-        useWebWorker: true,
+        useWebWorker: false, // Disabling web worker to prevent hangs in some environments
         fileType: "image/webp" as string,
     };
 
