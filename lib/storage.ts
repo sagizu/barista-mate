@@ -16,20 +16,22 @@ export async function uploadBeanImage(file: File): Promise<string> {
     };
 
     try {
+        console.log("[PROD TRACKING] 1. Starting image compression...", { size: file.size });
         const compressedFile = await imageCompression(file, options);
+        console.log("[PROD TRACKING] 2. Compression finished. Compressed size:", compressedFile.size);
         
-        // Create a unique filename
         const filename = `${uuidv4()}.webp`;
         const storageRef = ref(storage, `users/${user.uid}/beans/${filename}`);
 
-        // Upload the compressed file
+        console.log("[PROD TRACKING] 3. Starting uploadBytes to Firebase Storage...", storageRef.fullPath);
         const snapshot = await uploadBytes(storageRef, compressedFile);
+        console.log("[PROD TRACKING] 4. Upload finished. Getting download URL...");
         
-        // Get the download URL
         const downloadURL = await getDownloadURL(snapshot.ref);
+        console.log("[PROD TRACKING] 5. Got download URL successfully!");
         return downloadURL;
     } catch (error) {
-        console.error("Error compressing or uploading image:", error);
+        console.error("[PROD TRACKING] XXX Error during upload process XXX:", error);
         throw error;
     }
 }
