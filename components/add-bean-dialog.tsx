@@ -151,16 +151,9 @@ export function AddBeanDialog({
       }
       setBean({}); // Reset form
       onBeanAdded();
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error saving bean:', err);
-      // If the error has a message (like our custom timeout or env var error), display it to the user
-      if (err && err.message && err.message.includes("UPLOAD_TIMEOUT")) {
-          setError("שגיאת התחברות לשרת התמונות. אנא בדוק אם משתנה NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET מוגדר ב-Vercel, או נסה שוב.");
-      } else if (err && err.message && err.message.includes("Missing NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET")) {
-          setError("שגיאה חמורה: משתנה הסביבה NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET חסר ב-Vercel!");
-      } else {
-          setError("שגיאה בשמירת הפול. נסה שוב.");
-      }
+      setError("שגיאה בשמירת הפול. נסה שוב.");
     } finally {
       setIsSaving(false);
     }
