@@ -15,13 +15,26 @@ export async function uploadBeanImage(file: File): Promise<string> {
         fileType: "image/webp" as string,
     };
 
+    if (!process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET) {
+        throw new Error("Missing NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET environment variable in Vercel!");
+    }
+
     try {
         const compressedFile = await imageCompression(file, options);
         
         const filename = `${uuidv4()}.webp`;
         const storageRef = ref(storage, `users/${user.uid}/beans/${filename}`);
 
-        const snapshot = await uploadBytes(storageRef, compressedFile);
+        // Firebase uploadBytes can hang indefinitely if CORS fails or bucket is wrong.
+        // Wrap it in a 15-second timeout to force an error instead of hanging.
+        const uploadPromise = uploadBytes(storageRef, compressedFile);
+        const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => {
+                reject(new Error("UPLOAD_TIMEOUT: Firebase Storage is not responding. Check CORS or bucket env vars."));
+            }, 15000);
+        });
+
+        const snapshot = await Promise.race([uploadPromise, timeoutPromise]);
         
         const downloadURL = await getDownloadURL(snapshot.ref);
         return downloadURL;
