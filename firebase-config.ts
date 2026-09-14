@@ -22,13 +22,18 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-let messaging: ReturnType<typeof getMessaging> | null = null;
-if (typeof window !== "undefined") {
-  isSupported().then((supported) => {
-    if (supported) {
-      messaging = getMessaging(app);
-    }
-  });
+let _messaging: ReturnType<typeof getMessaging> | null = null;
+
+export async function getMessagingInstance(): Promise<ReturnType<typeof getMessaging> | null> {
+  if (typeof window === "undefined") return null;
+  if (_messaging) return _messaging;
+  const supported = await isSupported();
+  if (supported) {
+    _messaging = getMessaging(app);
+  }
+  return _messaging;
 }
 
-export { app, auth, db, messaging, storage };
+// Keep a synchronous export for backward compatibility (may be null on first render)
+export { app, auth, db, storage };
+export const messaging = _messaging;

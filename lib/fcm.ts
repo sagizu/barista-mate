@@ -1,4 +1,4 @@
-import { messaging } from "../firebase-config";
+import { getMessagingInstance } from "../firebase-config";
 import { getToken, onMessage } from "firebase/messaging";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase-config";
@@ -12,15 +12,17 @@ export const requestNotificationPermission = async (userId: string): Promise<boo
   try {
     const permission = await Notification.requestPermission();
     if (permission === "granted") {
-      if (!messaging) {
+      // Await the async getter — eliminates the race condition where
+      // messaging was null because isSupported() hadn't resolved yet.
+      const messagingInstance = await getMessagingInstance();
+      if (!messagingInstance) {
         console.error("Firebase messaging is not initialized. Make sure you are using an HTTPS connection or localhost.");
         return false;
       }
 
       // Generate the push token
-      // NOTE: You need to specify a VAPID key in production if you enforce web push identity.
-      const currentToken = await getToken(messaging, { 
-        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY // optional fallback
+      const currentToken = await getToken(messagingInstance, { 
+        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
       });
       
       if (currentToken) {
@@ -45,23 +47,24 @@ export const requestNotificationPermission = async (userId: string): Promise<boo
   }
 };
 
-export const setupForegroundMessageHandler = () => {
-  if (typeof window !== "undefined" && messaging) {
-    return onMessage(messaging, (payload) => {
-      console.log("Message received in foreground: ", payload);
-      
-      const title = payload.notification?.title || "תזכורת חדשה";
-      const body = payload.notification?.body || "";
-      
-      // We can use standard browser notification if permitted, 
-      // or rely on a custom toast. For now, let's trigger a system notification:
-      if (Notification.permission === "granted") {
-        new Notification(title, {
-          body,
-          icon: "/icon-192.png",
-        });
-      }
-    });
-  }
-  return () => {};
+export const setupForegroundMessageHandler = async () => {
+  if (typeof window === "undefined") return () => {};
+  const messagingInstance = await getMessagingInstance();
+  if (!messagingInstance) return () => {};
+
+  return onMessage(messagingInstance, (payload) => {
+    console.log("Message received in foreground: ", payload);
+    
+    const title = payload.notification?.title || "תזכורת חדשה";
+    const body = payload.notification?.body || "";
+    
+    // We can use standard browser notification if permitted, 
+    // or rely on a custom toast. For now, let's trigger a system notification:
+    if (Notification.permission === "granted") {
+      new Notification(title, {
+        body,
+        icon: "/icon-192.png",
+      });
+    }
+  });
 };

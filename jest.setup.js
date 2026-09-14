@@ -93,7 +93,8 @@ vi.mock('@/firebase-config', () => ({
 	app: {},
 	auth: { currentUser: { uid: 'test-user' } },
 	db: {},
-    messaging: {},
+    messaging: null,
+    getMessagingInstance: vi.fn().mockResolvedValue(null),
 }));
 
 

@@ -20,7 +20,7 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification?.title || "Barista Mate";
   const notificationOptions = {
     body: payload.notification?.body || "תזכורת חדשה",
-    icon: "/icon-192x192.png",
+    icon: "/icon-192.png",
     // We can add a custom icon logic later if we upload PWA icons
   };
 

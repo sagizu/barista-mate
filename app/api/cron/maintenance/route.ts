@@ -38,9 +38,13 @@ export async function GET(request: Request) {
         const lastDateStr = maintenanceDates[key];
         if (!lastDateStr) return false; // User requested not to alert if no date is set
         
-        // Frontend saves as YYYY-MM-DD string
-        const lastDate = new Date(lastDateStr);
-        const daysSince = (now.getTime() - lastDate.getTime()) / (1000 * 3600 * 24);
+        // Parse YYYY-MM-DD as UTC midnight to avoid timezone off-by-one errors.
+        // new Date("YYYY-MM-DD") already returns UTC midnight per spec — but
+        // we explicitly use UTC math for now to be safe and consistent.
+        const [year, month, day] = (lastDateStr as string).split('-').map(Number);
+        const lastDateUTC = Date.UTC(year, month - 1, day);
+        const nowUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+        const daysSince = (nowUTC - lastDateUTC) / (1000 * 3600 * 24);
         return daysSince >= frequency;
       };
 

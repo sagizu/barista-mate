@@ -121,14 +121,17 @@ export default function Dashboard() {
         if (error.code === 'permission-denied') return;
     });
 
-    // Initialize foreground messaging listener
-    const unsubscribeFCM = setupForegroundMessageHandler();
+    // Initialize foreground messaging listener (async — store unsubscribe for cleanup)
+    let unsubscribeFCM: (() => void) | undefined;
+    setupForegroundMessageHandler().then((unsub) => {
+      unsubscribeFCM = unsub;
+    });
 
     return () => {
       unsubscribeUser();
       unsubscribeBeans();
       unsubscribeMaintenance();
-      unsubscribeFCM();
+      unsubscribeFCM?.();
       clearTimeout(initialTimer);
       clearInterval(intervalTimer);
     };
