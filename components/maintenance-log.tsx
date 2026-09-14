@@ -67,11 +67,12 @@ export function MaintenanceLog() {
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
 
-  useEffect(() => {
-    if (typeof window !== "undefined" && "Notification" in window) {
-      setPushEnabled(Notification.permission === "granted");
-    }
-  }, []);
+  // No separate useEffect for push permission — pushEnabled is derived from
+  // the Firestore user document (pushToken field) inside the snapshot listener below.
+  // Reading only Notification.permission was the root cause of the "re-enable on tab switch"
+  // bug: the browser permission stays "granted" even after the user clicks
+  // "ביטול התראות" (which only deletes the token from Firestore), so on re-mount
+  // it would flip back to true. Now we use the token presence as the source of truth.
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -86,7 +87,12 @@ export function MaintenanceLog() {
 
     const unsubUser = onSnapshot(userRef, (snapshot) => {
       if (snapshot.exists()) {
-        setUserPreferences(snapshot.data().preferences || {});
+        const data = snapshot.data();
+        setUserPreferences(data.preferences || {});
+        // Derive pushEnabled from whether a token is stored — NOT from
+        // Notification.permission, which stays "granted" even after we
+        // delete the token (the browser doesn't let us revoke it via JS).
+        setPushEnabled(!!data.pushToken);
       }
     }, (error) => {
       if (error.code === 'permission-denied') return;
