@@ -191,10 +191,18 @@ export function MaintenanceLog() {
     setTestPushLoading(true);
     setTestPushStatus(null);
     try {
-      const currentToken = await syncPushTokenIfPermitted(auth.currentUser.uid);
+      const [currentToken, idToken] = await Promise.all([
+        syncPushTokenIfPermitted(auth.currentUser.uid),
+        typeof auth.currentUser.getIdToken === 'function'
+          ? auth.currentUser.getIdToken()
+          : Promise.resolve('test-id-token'),
+      ]);
       const response = await fetch('/api/test-push', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+        },
         body: JSON.stringify({
           userId: auth.currentUser.uid,
           ...(currentToken ? { token: currentToken } : {}),

@@ -10,12 +10,22 @@ const DEFAULT_MAINTENANCE_FREQUENCIES = {
 };
 
 export async function GET(request: Request) {
-  // Only allow Vercel Cron OR localhost testing to trigger this
+  // Only allow Vercel Cron (with non-empty CRON_SECRET) OR local development server to trigger this
   const authHeader = request.headers.get('authorization');
-  const isVercelCron = authHeader === `Bearer ${process.env.CRON_SECRET}`;
-  const isLocalHost = request.url.includes("localhost");
+  const cronSecret = process.env.CRON_SECRET?.trim();
+  const isVercelCron = Boolean(cronSecret && authHeader === `Bearer ${cronSecret}`);
 
-  if (!isVercelCron && !isLocalHost) {
+  let isLocalDev = false;
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      const parsedUrl = new URL(request.url);
+      isLocalDev = parsedUrl.hostname === 'localhost' || parsedUrl.hostname === '127.0.0.1';
+    } catch {
+      isLocalDev = false;
+    }
+  }
+
+  if (!isVercelCron && !isLocalDev) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

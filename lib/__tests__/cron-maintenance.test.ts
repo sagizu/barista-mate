@@ -1,10 +1,11 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 
-const { mockGetUsers, mockGetMaintenance, mockUpdateUser, mockSend } = vi.hoisted(() => ({
+const { mockGetUsers, mockGetMaintenance, mockUpdateUser, mockSend, mockVerifyIdToken } = vi.hoisted(() => ({
   mockGetUsers: vi.fn(),
   mockGetMaintenance: vi.fn(),
   mockUpdateUser: vi.fn().mockResolvedValue(undefined),
   mockSend: vi.fn().mockResolvedValue('message-id'),
+  mockVerifyIdToken: vi.fn(),
 }));
 
 vi.mock('@/lib/firebase-admin', () => ({
@@ -12,6 +13,8 @@ vi.mock('@/lib/firebase-admin', () => ({
     collection: vi.fn(() => ({
       get: mockGetUsers,
       doc: vi.fn(() => ({
+        get: mockGetUsers,
+        update: mockUpdateUser,
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
             get: mockGetMaintenance,
@@ -22,6 +25,9 @@ vi.mock('@/lib/firebase-admin', () => ({
   },
   adminMessaging: {
     send: mockSend,
+  },
+  adminAuth: {
+    verifyIdToken: mockVerifyIdToken,
   },
 }));
 
@@ -37,6 +43,7 @@ vi.mock('@/lib/catalog-sync', () => ({
 }));
 
 import { GET } from '@/app/api/cron/maintenance/route';
+import { POST as testPushPOST } from '@/app/api/test-push/route';
 
 describe('Maintenance Cron Route (/api/cron/maintenance)', () => {
   beforeEach(() => {
@@ -129,5 +136,37 @@ describe('Maintenance Cron Route (/api/cron/maintenance)', () => {
         pushToken: 'valid-android-token',
       })
     );
+  });
+
+  test('rejects ?localhost=1 query string spoofing without valid CRON_SECRET', async () => {
+    const req = new Request('https://barista-mate.vercel.app/api/cron/maintenance?localhost=1');
+    const res = await GET(req);
+    expect(res.status).toBe(401);
+  });
+
+  test('requires valid Firebase ID token on /api/test-push', async () => {
+    const unauthReq = new Request('https://barista-mate.vercel.app/api/test-push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: 'user-1', token: 'tok-1' }),
+    });
+    const unauthRes = await testPushPOST(unauthReq);
+    expect(unauthRes.status).toBe(401);
+
+    mockVerifyIdToken.mockResolvedValue({ uid: 'user-1' });
+    mockGetUsers.mockResolvedValue({
+      data: () => ({ pushToken: 'tok-1' }),
+    });
+
+    const authReq = new Request('https://barista-mate.vercel.app/api/test-push', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer valid-id-token',
+      },
+      body: JSON.stringify({ userId: 'user-1', token: 'tok-1' }),
+    });
+    const authRes = await testPushPOST(authReq);
+    expect(authRes.status).toBe(200);
   });
 });

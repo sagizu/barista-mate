@@ -1,18 +1,285 @@
-```
 rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: users/{userId}
+// Fields:
+//   - uid: string (optional, immutable, matches userId)
+//   - email: string | null (optional, <= 320 chars)
+//   - displayName: string | null (optional, <= 200 chars)
+//   - createdAt: timestamp | string (optional)
+//   - settings: map (optional, contains general settings)
+//   - preferences: map (optional, contains maintenanceFrequencies)
+//   - pushToken: string | null (optional, <= 4096 chars)
+//   - pushTokens: list<string> (optional, <= 50 items)
+//
+// Subcollection: users/{userId}/beans/{beanId} (and collectionGroup 'beans')
+// Fields:
+//   - id: string (optional, <= 200 chars)
+//   - roasterName: string (required, 1..200 chars)
+//   - beanName: string (required, 1..200 chars)
+//   - isTestData: bool (optional)
+//   - grindSetting: string | null (optional, <= 200 chars)
+//   - roastLevel: number | null (optional, 1..5)
+//   - beanDescription: string | null (optional, <= 2000 chars)
+//   - flavorTags: list<string> (optional, <= 50 items)
+//   - pricePaid: number | null (optional, >= 0)
+//   - bagWeightGrams: number | null (optional, > 0)
+//   - pricePerKilo: number | null (optional, >= 0)
+//   - createdAt: timestamp | string (optional)
+//   - openedDate: string | null (optional, <= 100 chars)
+//   - dose: number | null (optional, > 0)
+//   - rating: number | null (optional, 0..5)
+//   - imageUrl: string | null (optional, <= 2048 chars)
+//
+// Subcollection: users/{userId}/maintenance/{docId}
+// Fields:
+//   - lastGroupHeadCleaning: string (optional, <= 100 chars)
+//   - lastBackflush: string (optional, <= 100 chars)
+//   - lastDescaling: string (optional, <= 100 chars)
+//   - waterFilterLastChanged: string (optional, <= 100 chars)
+//
+// Subcollection: users/{userId}/lastShot/{docId}
+// Fields:
+//   - drinkType: string (required, <= 50 chars)
+//   - roastLevel: number (required, 1..5)
+//   - time: number (required, >= 0)
+//   - targetTime: number (required, >= 0)
+//   - feedback: string (required, <= 50 chars)
+//   - advice: string (required, <= 500 chars)
+//   - grindSetting: string (optional, <= 200 chars)
+//   - dose: number (optional, > 0)
+//   - createdAt: timestamp | string (optional)
+//
+// Subcollection: users/{userId}/roasters/{docId}
+// Fields:
+//   - names: list<string> (required, <= 500 items)
+//
+// Collection: global_roasters/{roasterId}
+//   - Read-only for authenticated users; writes managed by server (firebase-admin).
+//
+// Collection: global_beans/{beanId}
+//   - Read-only for authenticated users; writes managed by server (firebase-admin).
+//
+// Collection: pending_verification/{docId}
+//   - Authenticated users can create with submittedBy == request.auth.uid and status == 'pending'.
+//   - Read, update, delete denied to clients (managed by server firebase-admin).
+//
+// Collection: feedback/{feedbackId}
+//   - Create allowed when message is a non-empty string <= 2000 chars.
+//   - Read, update, delete denied to clients.
+// ===============================================================
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can only read and write their own data.
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
-    // Anyone can submit feedback, but no one can read, update, or delete it.
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidOptionalNullableString(data, field, maxLen) {
+      return !(field in data) ||
+             data[field] == null ||
+             (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    function isValidUser(data, userId) {
+      return data.keys().hasOnly([
+               'uid',
+               'email',
+               'displayName',
+               'createdAt',
+               'settings',
+               'preferences',
+               'pushToken',
+               'pushTokens'
+             ]) &&
+             (!('uid' in data) || data.uid == userId) &&
+             isValidOptionalNullableString(data, 'email', 320) &&
+             isValidOptionalNullableString(data, 'displayName', 200) &&
+             isValidOptionalNullableString(data, 'pushToken', 4096) &&
+             (!('pushTokens' in data) || (data.pushTokens is list && data.pushTokens.size() <= 50)) &&
+             (!('settings' in data) || data.settings is map) &&
+             (!('preferences' in data) || data.preferences is map);
+    }
+
+    function isValidBean(data) {
+      return data.keys().hasOnly([
+               'id',
+               'roasterName',
+               'beanName',
+               'isTestData',
+               'grindSetting',
+               'roastLevel',
+               'beanDescription',
+               'flavorTags',
+               'pricePaid',
+               'bagWeightGrams',
+               'pricePerKilo',
+               'createdAt',
+               'openedDate',
+               'dose',
+               'rating',
+               'imageUrl'
+             ]) &&
+             data.roasterName is string &&
+             data.roasterName.size() > 0 &&
+             data.roasterName.size() <= 200 &&
+             data.beanName is string &&
+             data.beanName.size() > 0 &&
+             data.beanName.size() <= 200 &&
+             isValidOptionalNullableString(data, 'id', 200) &&
+             isValidOptionalNullableString(data, 'grindSetting', 200) &&
+             isValidOptionalNullableString(data, 'beanDescription', 2000) &&
+             isValidOptionalNullableString(data, 'openedDate', 100) &&
+             isValidOptionalNullableString(data, 'imageUrl', 2048) &&
+             (!('isTestData' in data) || data.isTestData is bool) &&
+             (!('flavorTags' in data) || (data.flavorTags is list && data.flavorTags.size() <= 50)) &&
+             (!('roastLevel' in data) || data.roastLevel == null || (data.roastLevel is number && data.roastLevel >= 1 && data.roastLevel <= 5)) &&
+             (!('pricePaid' in data) || data.pricePaid == null || (data.pricePaid is number && data.pricePaid >= 0)) &&
+             (!('bagWeightGrams' in data) || data.bagWeightGrams == null || (data.bagWeightGrams is number && data.bagWeightGrams > 0)) &&
+             (!('pricePerKilo' in data) || data.pricePerKilo == null || (data.pricePerKilo is number && data.pricePerKilo >= 0)) &&
+             (!('dose' in data) || data.dose == null || (data.dose is number && data.dose > 0)) &&
+             (!('rating' in data) || data.rating == null || (data.rating is number && data.rating >= 0 && data.rating <= 5));
+    }
+
+    function isValidMaintenanceLog(data) {
+      return data.keys().hasOnly([
+               'lastGroupHeadCleaning',
+               'lastBackflush',
+               'lastDescaling',
+               'waterFilterLastChanged'
+             ]) &&
+             isValidOptionalNullableString(data, 'lastGroupHeadCleaning', 100) &&
+             isValidOptionalNullableString(data, 'lastBackflush', 100) &&
+             isValidOptionalNullableString(data, 'lastDescaling', 100) &&
+             isValidOptionalNullableString(data, 'waterFilterLastChanged', 100);
+    }
+
+    function isValidLastShot(data) {
+      return data.keys().hasOnly([
+               'drinkType',
+               'roastLevel',
+               'time',
+               'targetTime',
+               'feedback',
+               'advice',
+               'grindSetting',
+               'dose',
+               'createdAt'
+             ]) &&
+             data.drinkType is string && data.drinkType.size() <= 50 &&
+             data.roastLevel is number && data.roastLevel >= 1 && data.roastLevel <= 5 &&
+             data.time is number && data.time >= 0 &&
+             data.targetTime is number && data.targetTime >= 0 &&
+             data.feedback is string && data.feedback.size() <= 50 &&
+             data.advice is string && data.advice.size() <= 500 &&
+             isValidOptionalNullableString(data, 'grindSetting', 200) &&
+             (!('dose' in data) || data.dose == null || (data.dose is number && data.dose > 0));
+    }
+
+    function isValidPrivateRoasters(data) {
+      return data.keys().hasOnly(['names']) &&
+             data.names is list &&
+             data.names.size() <= 500;
+    }
+
+    function isValidPendingVerification(data) {
+      return data.submittedBy == request.auth.uid &&
+             data.status == 'pending' &&
+             isValidOptionalNullableString(data, 'type', 50) &&
+             isValidOptionalNullableString(data, 'name', 200) &&
+             isValidOptionalNullableString(data, 'roasterName', 200) &&
+             isValidOptionalNullableString(data, 'beanName', 200) &&
+             (!('flavorTags' in data) || (data.flavorTags is list && data.flavorTags.size() <= 50));
+    }
+
+    function isValidFeedback(data) {
+      return data.message is string &&
+             data.message.size() > 0 &&
+             data.message.size() <= 2000 &&
+             isValidOptionalNullableString(data, 'userContext', 320);
+    }
+
+    // ===============================================================
+    // Collection Group Rules
+    // ===============================================================
+
+    // Community Spotlight queries collectionGroup(db, 'beans') for authenticated users.
+    match /{path=**}/beans/{beanId} {
+      allow read: if isAuthenticated();
+    }
+
+    // ===============================================================
+    // User Document & Subcollections
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidUser(request.resource.data, userId);
+
+      match /beans/{beanId} {
+        allow read: if isAuthenticated();
+        allow create, update: if isOwner(userId) && isValidBean(request.resource.data);
+        allow delete: if isOwner(userId);
+      }
+
+      match /maintenance/{docId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidMaintenanceLog(request.resource.data);
+      }
+
+      match /lastShot/{docId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidLastShot(request.resource.data);
+      }
+
+      match /roasters/{docId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidPrivateRoasters(request.resource.data);
+      }
+    }
+
+    // ===============================================================
+    // Global Catalog Collections (Server-Managed)
+    // ===============================================================
+
+    match /global_roasters/{roasterId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    match /global_beans/{beanId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // ===============================================================
+    // Pending Verification Queue
+    // ===============================================================
+
+    match /pending_verification/{docId} {
+      allow create: if isAuthenticated() && isValidPendingVerification(request.resource.data);
+      allow read, update, delete: if false;
+    }
+
+    // ===============================================================
+    // User Feedback
+    // ===============================================================
+
     match /feedback/{feedbackId} {
-      allow create: if true;
+      allow create: if isValidFeedback(request.resource.data);
       allow read, update, delete: if false;
     }
   }
 }
-```

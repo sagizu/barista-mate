@@ -1,13 +1,32 @@
 import { NextResponse } from 'next/server';
 import * as admin from 'firebase-admin';
-import { adminDb, adminMessaging } from '@/lib/firebase-admin';
+import { adminDb, adminMessaging, adminAuth } from '@/lib/firebase-admin';
 
 export async function POST(request: Request) {
   try {
-    const { userId, token } = await request.json();
-    if (!userId && !token) {
-      return NextResponse.json({ error: 'No userId or token provided' }, { status: 400 });
+    const authHeader = request.headers.get('authorization');
+    const bearerToken = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice('Bearer '.length).trim()
+      : null;
+
+    if (!bearerToken) {
+      return NextResponse.json({ error: 'Unauthorized: Missing ID token' }, { status: 401 });
     }
+
+    let verifiedUid: string;
+    try {
+      const decoded = await adminAuth.verifyIdToken(bearerToken);
+      verifiedUid = decoded.uid;
+    } catch (authErr) {
+      console.error('Invalid Firebase ID token in /api/test-push:', authErr);
+      return NextResponse.json({ error: 'Unauthorized: Invalid ID token' }, { status: 401 });
+    }
+
+    const { userId: bodyUserId, token } = await request.json();
+    if (bodyUserId && bodyUserId !== verifiedUid) {
+      return NextResponse.json({ error: 'Forbidden: User ID mismatch' }, { status: 403 });
+    }
+    const userId = verifiedUid;
 
     const tokensSet = new Set<string>();
     if (typeof token === 'string' && token) {

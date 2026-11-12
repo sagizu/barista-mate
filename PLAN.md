@@ -26,10 +26,10 @@
   - [x] Cleaned and normalized existing `global_beans` records (trimming trailing newlines and normalizing string `roastLevel` to numbers).
   - [x] Triggered automatic promotion immediately when users add a new bean/roaster (`submitForVerification`) and during the daily maintenance cron job.
 
-- [ ] **Task 4 (Priority 2 — Critical Security & Firestore Rules): Secure API Endpoints & Fix `firestore.rules`**
-  - [ ] Strip invalid markdown fences from `firestore.rules` and add rules for `global_roasters`, `global_beans`, `pending_verification`, and `collectionGroup('beans')`.
-  - [ ] Fix `request.url.includes("localhost")` auth bypass in `/api/cron/maintenance`.
-  - [ ] Require Firebase Auth ID token verification in `/api/test-push`.
+- [x] **Task 4 (Priority 2 — Critical Security & Firestore Rules): Secure API Endpoints & Fix `firestore.rules`** *(Completed & Tested)*
+  - [x] Stripped invalid markdown fences from `firestore.rules` and added complete security rules for `users/{userId}` subcollections, `global_roasters`, `global_beans`, `pending_verification`, `feedback`, and `collectionGroup('beans')`.
+  - [x] Fixed `request.url.includes("localhost")` auth bypass in `/api/cron/maintenance` (restricted to `NODE_ENV === 'development'` hostname or valid `CRON_SECRET`).
+  - [x] Required Firebase Auth ID token verification (`adminAuth.verifyIdToken`) in `/api/test-push`.
 
 - [ ] **Task 5 (Priority 3 — Functional Accuracy): Fix Extraction Stopwatch Drift & Align Overdue Math**
   - [ ] Refactor `SmartDialIn` stopwatch to compute elapsed time via `Date.now()` delta and clean up interval on unmount.
