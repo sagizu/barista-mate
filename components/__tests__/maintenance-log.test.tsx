@@ -43,6 +43,7 @@ describe('MaintenanceLog Component', () => {
     vi.spyOn(fcm, 'requestNotificationPermission').mockResolvedValue(true);
     vi.spyOn(fcm, 'disableNotificationPermission').mockResolvedValue();
     vi.spyOn(fcm, 'syncPushTokenIfPermitted').mockResolvedValue('mock-device-token');
+    vi.spyOn(fcm, 'displaySystemNotification').mockResolvedValue(true);
 
     // This mock will now handle both maintenance and user preference snapshots
     vi.spyOn(fs, 'onSnapshot').mockImplementation(((ref: any, callback: any) => {

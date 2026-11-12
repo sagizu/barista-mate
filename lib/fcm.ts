@@ -10,12 +10,21 @@ export const getOrRegisterServiceWorker = async (): Promise<ServiceWorkerRegistr
     const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js", {
       scope: "/",
     });
+    registration.update?.().catch(() => {});
     await navigator.serviceWorker.ready;
     return registration;
   } catch (error) {
     console.error("Service Worker registration failed:", error);
     return undefined;
   }
+};
+
+const buildTokenOptions = (swRegistration?: ServiceWorkerRegistration) => {
+  const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY?.trim();
+  return {
+    ...(vapidKey ? { vapidKey } : {}),
+    ...(swRegistration ? { serviceWorkerRegistration: swRegistration } : {}),
+  };
 };
 
 export const requestNotificationPermission = async (userId: string): Promise<boolean> => {
@@ -38,10 +47,7 @@ export const requestNotificationPermission = async (userId: string): Promise<boo
     }
 
     const swRegistration = await getOrRegisterServiceWorker();
-    const currentToken = await getToken(messagingInstance, {
-      vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-      ...(swRegistration ? { serviceWorkerRegistration: swRegistration } : {}),
-    });
+    const currentToken = await getToken(messagingInstance, buildTokenOptions(swRegistration));
 
     if (currentToken) {
       console.log("FCM Token acquired.");
@@ -78,10 +84,7 @@ export const syncPushTokenIfPermitted = async (userId: string): Promise<string |
     if (!messagingInstance) return null;
 
     const swRegistration = await getOrRegisterServiceWorker();
-    const currentToken = await getToken(messagingInstance, {
-      vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-      ...(swRegistration ? { serviceWorkerRegistration: swRegistration } : {}),
-    });
+    const currentToken = await getToken(messagingInstance, buildTokenOptions(swRegistration));
 
     if (currentToken) {
       const userRef = doc(db, "users", userId);
@@ -110,10 +113,7 @@ export const disableNotificationPermission = async (userId: string): Promise<voi
     if (messagingInstance && typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
       try {
         const swRegistration = await getOrRegisterServiceWorker();
-        const currentToken = await getToken(messagingInstance, {
-          vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-          ...(swRegistration ? { serviceWorkerRegistration: swRegistration } : {}),
-        });
+        const currentToken = await getToken(messagingInstance, buildTokenOptions(swRegistration));
         if (currentToken) {
           await updateDoc(userRef, {
             pushToken: deleteField(),
@@ -136,41 +136,62 @@ export const disableNotificationPermission = async (userId: string): Promise<voi
   });
 };
 
+export const displaySystemNotification = async (
+  title: string,
+  body: string,
+  url: string = "/",
+  tag: string = "barista-mate-notification"
+): Promise<boolean> => {
+  if (typeof window === "undefined" || typeof Notification === "undefined" || Notification.permission !== "granted") {
+    return false;
+  }
+  const icon = "/icon-192.png";
+  try {
+    if ("serviceWorker" in navigator) {
+      const registration =
+        (await navigator.serviceWorker.getRegistration()) ||
+        (await getOrRegisterServiceWorker());
+      if (registration && typeof registration.showNotification === "function") {
+        await registration.showNotification(title, {
+          body,
+          icon,
+          badge: "/icon-192.png",
+          dir: "rtl",
+          lang: "he",
+          tag,
+          data: { url },
+        });
+        return true;
+      }
+    }
+    new Notification(title, {
+      body,
+      icon,
+      tag,
+    });
+    return true;
+  } catch (err) {
+    console.error("Failed to display system notification:", err);
+    return false;
+  }
+};
+
 export const setupForegroundMessageHandler = async () => {
   if (typeof window === "undefined") return () => {};
   const messagingInstance = await getMessagingInstance();
   if (!messagingInstance) return () => {};
+
+  if ("Notification" in window && Notification.permission === "granted") {
+    getOrRegisterServiceWorker().catch(() => {});
+  }
 
   return onMessage(messagingInstance, async (payload) => {
     console.log("Message received in foreground: ", payload);
 
     const title = payload.notification?.title || payload.data?.title || "תזכורת חדשה";
     const body = payload.notification?.body || payload.data?.body || "";
-    const icon = "/icon-192.png";
+    const url = payload.data?.url || "/";
 
-    if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-      try {
-        if ("serviceWorker" in navigator) {
-          const registration = await navigator.serviceWorker.getRegistration();
-          if (registration && typeof registration.showNotification === "function") {
-            await registration.showNotification(title, {
-              body,
-              icon,
-              badge: "/icon-192.png",
-              dir: "rtl",
-              lang: "he",
-              data: { url: "/" },
-            });
-            return;
-          }
-        }
-        new Notification(title, {
-          body,
-          icon,
-        });
-      } catch (err) {
-        console.error("Failed to display foreground notification:", err);
-      }
-    }
+    await displaySystemNotification(title, body, url);
   });
 };

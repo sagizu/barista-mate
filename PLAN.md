@@ -10,32 +10,43 @@
   - [x] Per-device permission state check & in-app **"שלח התראת בדיקה"** button in `components/maintenance-log.tsx`.
   - [x] Unit tests (`components/__tests__/maintenance-log.test.tsx`, `lib/__tests__/cron-maintenance.test.ts`) and `next build` verified.
 
-- [x] **Task 1.5 (Security — Dependabot Alerts): Resolve All Open GitHub Dependabot Alerts (0 Remaining)** *(Completed, Tested & Pushed — Commits `16681fd`, `c6ed674`)*
+- [x] **Task 1.5 (Security — Dependabot Alerts): Resolve All Open GitHub Dependabot Alerts (0 Remaining)** *(Completed, Tested & Pushed — Commits `16681fd`, `c6ed674`, `6617640`)*
   - [x] Upgraded `next` (`16.4.6`), `vitest` (`4.1.12`), `@vitest/mocker` (`4.1.12`), `vite` (`6.4.6`), `fast-xml-parser` (`5.12.0`), `source-map-js` (`1.2.2`), `@fastify/busboy` (`3.2.5`), and `@grpc/grpc-js` (`1.14.7`).
   - [x] Added transitive dependency overrides for `node-forge` (`^1.4.3`), `minimatch` (`^11.0.1`), `postcss-selector-parser` (`^6.1.5`), and `brace-expansion` (`^5.0.12`).
   - [x] Dismissed withdrawn `braces` advisory (#117, `GHSA-vfj7-8cjw-p6xm`).
 
-- [ ] **Task 2 (Priority 2 — Critical Security & Firestore Rules): Secure API Endpoints & Fix `firestore.rules`**
+- [x] **Task 2 (Priority 1 — Urgent S25 Push Fix): Fix `firebase-admin` Server Crash (`ERR_REQUIRE_ESM`) & S25 Foreground Delivery** *(Completed & Tested)*
+  - [x] Replaced breaking ESM-only `"uuid": "^14.0.0"` and `"@tootallnate/once": "^3.0.1"` overrides in `package.json` with CommonJS+ESM compatible `"uuid": "^11.1.0"`, resolving the `ERR_REQUIRE_ESM` crash inside `google-gax` (`@google-cloud/firestore`) on Vercel when `/api/test-push` and `/api/cron/maintenance` are called.
+  - [x] Updated `public/firebase-messaging-sw.js` with `self.skipWaiting()` and `self.clients.claim()` so updated Service Workers immediately activate and control open mobile tabs.
+  - [x] Updated `lib/fcm.ts` to omit `vapidKey` when `NEXT_PUBLIC_FIREBASE_VAPID_KEY` is unset, call `getOrRegisterServiceWorker()` in `setupForegroundMessageHandler()`, and added `displaySystemNotification()` with deduplicating `tag`.
+  - [x] Improved error reporting and invalid-token cleanup in `/api/test-push` and `components/maintenance-log.tsx`.
+
+- [ ] **Task 3 (Priority 2 — Firebase Automation): Automate `pending_verification` → `global_roasters` & `global_beans` Pipeline**
+  - [ ] Create `/api/catalog/sync` using `adminDb` to automatically promote all existing and new non-test `pending_verification` items into `global_roasters` and `global_beans` and delete processed pending docs.
+  - [ ] Clean and normalize existing `global_beans` records (trim trailing newlines and normalize string `roastLevel` to numbers).
+  - [ ] Trigger automatic promotion immediately when users add a new bean/roaster and during the daily maintenance cron job.
+
+- [ ] **Task 4 (Priority 2 — Critical Security & Firestore Rules): Secure API Endpoints & Fix `firestore.rules`**
   - [ ] Strip invalid markdown fences from `firestore.rules` and add rules for `global_roasters`, `global_beans`, `pending_verification`, and `collectionGroup('beans')`.
   - [ ] Fix `request.url.includes("localhost")` auth bypass in `/api/cron/maintenance`.
   - [ ] Require Firebase Auth ID token verification in `/api/test-push`.
 
-- [ ] **Task 3 (Priority 3 — Functional Accuracy): Fix Extraction Stopwatch Drift & Align Overdue Math**
+- [ ] **Task 5 (Priority 3 — Functional Accuracy): Fix Extraction Stopwatch Drift & Align Overdue Math**
   - [ ] Refactor `SmartDialIn` stopwatch to compute elapsed time via `Date.now()` delta and clean up interval on unmount.
   - [ ] Align overdue day comparison (`>=` vs `>`) across UI and Cron.
   - [ ] Fix truncated footer text in `components/dashboard.tsx`.
 
-- [ ] **Task 4 (Priority 3 — Data & Storage Integrity): Clean Up Orphaned Images & Dangling Active Bean**
+- [ ] **Task 6 (Priority 3 — Data & Storage Integrity): Clean Up Orphaned Images & Dangling Active Bean**
   - [ ] Clear `settings.general.activeBeanId` when deleting the active bean in `lib/firestore.ts`.
   - [ ] Delete Firebase Storage images inside `deleteUserData()` in `lib/user-service.ts`.
   - [ ] Revoke blob preview URLs (`URL.revokeObjectURL`) in `components/add-bean-dialog.tsx`.
 
-- [ ] **Task 5 (Priority 4 — Code Quality & CI): Fix Test Suite TypeScript Errors & Deduplicate Firestore Listeners**
+- [ ] **Task 7 (Priority 4 — Code Quality & CI): Fix Test Suite TypeScript Errors & Deduplicate Firestore Listeners**
   - [ ] Resolve all TypeScript errors in `components/__tests__/*` and include tests in `tsconfig.json`.
   - [ ] Consolidate duplicate Firestore `onSnapshot` listeners across `Dashboard`, `BeanLibrary`, and `MaintenanceLog`.
   - [ ] Update `.github/workflows/ci.yml` to run `vitest run` and `npm run build`.
 
-- [ ] **Task 6 (Priority 4 — Feature Enhancements): Smart Dial-In Active Bean Sync, Freshness Window & Quick-Add**
+- [ ] **Task 8 (Priority 4 — Feature Enhancements): Smart Dial-In Active Bean Sync, Freshness Window & Quick-Add**
   - [ ] Pre-fill `SmartDialIn` from the active bean and allow one-tap grind setting update.
   - [ ] Add optional `roastDate` and freshness badge on the active bean card.
   - [ ] Add one-tap "Add to Library" on `BeanSuggestions` and `CommunitySpotlight` cards.

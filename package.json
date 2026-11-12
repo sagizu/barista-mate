@@ -30,7 +30,8 @@
     "react-dom": "^18.3.1",
     "react-firebase-hooks": "^5.1.1",
     "tailwind-merge": "^2.6.1",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
@@ -59,8 +60,7 @@
     "protobufjs": "^8.2.1",
     "fast-xml-parser": "^5.12.0",
     "vite": "^6.4.4",
-    "uuid": "^14.0.0",
-    "@tootallnate/once": "^3.0.1",
+    "uuid": "^11.1.0",
     "postcss": "^8.5.10",
     "source-map-js": "^1.2.2",
     "@fastify/busboy": "^3.2.1",

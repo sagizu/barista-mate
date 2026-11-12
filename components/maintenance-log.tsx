@@ -18,6 +18,7 @@ import {
   requestNotificationPermission,
   disableNotificationPermission,
   syncPushTokenIfPermitted,
+  displaySystemNotification,
 } from '@/lib/fcm';
 
 const MAINTENANCE_TASKS: {
@@ -200,14 +201,22 @@ export function MaintenanceLog() {
         }),
       });
       if (response.ok) {
+        await displaySystemNotification(
+          'התראת בדיקה ☕ | Barista Mate',
+          'התראות התחזוקה שלך ב-Barista Mate פועלות בהצלחה!',
+          '/'
+        );
         setTestPushStatus({
           type: 'success',
           message: 'התראת בדיקה נשלחה בהצלחה!',
         });
       } else {
+        const errData = await response.json().catch(() => ({}));
         setTestPushStatus({
           type: 'error',
-          message: 'שליחת התראת הבדיקה נכשלה. נסה להפעיל התראות מחדש.',
+          message: errData?.details
+            ? `שליחת התראת הבדיקה נכשלה (${errData.details}). נסה להפעיל התראות מחדש.`
+            : 'שליחת התראת הבדיקה נכשלה. נסה להפעיל התראות מחדש.',
         });
       }
     } catch (error) {
