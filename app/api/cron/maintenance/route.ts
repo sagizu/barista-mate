@@ -1,5 +1,12 @@
 import { NextResponse } from 'next/server';
+import * as admin from 'firebase-admin';
 import { adminDb, adminMessaging } from '@/lib/firebase-admin';
+
+const DEFAULT_MAINTENANCE_FREQUENCIES = {
+  lastDescaling: 180,
+  waterFilterLastChanged: 60,
+  lastBackflush: 60,
+};
 
 export async function GET(request: Request) {
   // Only allow Vercel Cron OR localhost testing to trigger this
@@ -18,11 +25,27 @@ export async function GET(request: Request) {
 
     for (const doc of usersSnapshot.docs) {
       const userData = doc.data();
-      const pushToken = userData.pushToken;
-      const frequencies = userData.preferences?.maintenanceFrequencies;
-      if (!pushToken || !frequencies) continue;
+      const tokensSet = new Set<string>();
+      if (typeof userData.pushToken === 'string' && userData.pushToken) {
+        tokensSet.add(userData.pushToken);
+      }
+      if (Array.isArray(userData.pushTokens)) {
+        for (const token of userData.pushTokens) {
+          if (typeof token === 'string' && token) {
+            tokensSet.add(token);
+          }
+        }
+      }
 
-      console.log("User:", doc.id, "frequencies:", frequencies, "hasPushToken:", !!pushToken);
+      const tokens = Array.from(tokensSet);
+      if (tokens.length === 0) continue;
+
+      const frequencies = {
+        ...DEFAULT_MAINTENANCE_FREQUENCIES,
+        ...(userData.preferences?.maintenanceFrequencies || {}),
+      };
+
+      console.log("User:", doc.id, "frequencies:", frequencies, "tokenCount:", tokens.length);
       // Get maintenance dates
       const maintenanceDoc = await adminDb.collection('users').doc(doc.id).collection('maintenance').doc('log').get();
       const maintenanceDates = maintenanceDoc.data() || {};
@@ -39,8 +62,6 @@ export async function GET(request: Request) {
         if (!lastDateStr) return false; // User requested not to alert if no date is set
         
         // Parse YYYY-MM-DD as UTC midnight to avoid timezone off-by-one errors.
-        // new Date("YYYY-MM-DD") already returns UTC midnight per spec — but
-        // we explicitly use UTC math for now to be safe and consistent.
         const [year, month, day] = (lastDateStr as string).split('-').map(Number);
         const lastDateUTC = Date.UTC(year, month - 1, day);
         const nowUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
@@ -50,17 +71,17 @@ export async function GET(request: Request) {
 
       // Check Backflush
       if (frequencies.lastBackflush) {
-        if (checkOverdue('lastBackflush', frequencies.lastBackflush)) needsBackflush = true;
+        if (checkOverdue('lastBackflush', Number(frequencies.lastBackflush))) needsBackflush = true;
       }
       
       // Check Deep clean
       if (frequencies.lastDescaling) {
-        if (checkOverdue('lastDescaling', frequencies.lastDescaling)) needsDeepClean = true;
+        if (checkOverdue('lastDescaling', Number(frequencies.lastDescaling))) needsDeepClean = true;
       }
       
       // Check Water filter
       if (frequencies.waterFilterLastChanged) {
-        if (checkOverdue('waterFilterLastChanged', frequencies.waterFilterLastChanged)) needsFilterChange = true;
+        if (checkOverdue('waterFilterLastChanged', Number(frequencies.waterFilterLastChanged))) needsFilterChange = true;
       }
 
       if (needsBackflush || needsDeepClean || needsFilterChange) {
@@ -72,20 +93,65 @@ export async function GET(request: Request) {
         if (needsFilterChange) tasks.push("החלפת פילטר");
         bodyText += tasks.join(", ") + ".";
 
-        const message = {
-          notification: {
-            title: 'תזכורת תחזוקה | Barista Mate',
-            body: bodyText,
-          },
-          token: pushToken
-        };
+        const titleText = 'תזכורת תחזוקה | Barista Mate';
+        const invalidTokens: string[] = [];
 
-        try {
-          await adminMessaging.send(message);
-          notificationsSent++;
-        } catch (msgErr) {
-          console.error(`Failed to send to user ${doc.id}:`, msgErr);
-          // Token might be invalid, we could mark it as invalid here
+        for (const token of tokens) {
+          const message: admin.messaging.Message = {
+            token,
+            notification: {
+              title: titleText,
+              body: bodyText,
+            },
+            data: {
+              title: titleText,
+              body: bodyText,
+              url: '/',
+            },
+            webpush: {
+              headers: {
+                Urgency: 'high',
+              },
+              notification: {
+                title: titleText,
+                body: bodyText,
+                icon: '/icon-192.png',
+                badge: '/icon-192.png',
+                dir: 'rtl',
+                lang: 'he',
+              },
+              fcmOptions: {
+                link: '/',
+              },
+            },
+          };
+
+          try {
+            await adminMessaging.send(message);
+            notificationsSent++;
+          } catch (msgErr: any) {
+            console.error(`Failed to send to user ${doc.id} token:`, msgErr);
+            const errorCode = msgErr?.code || msgErr?.errorInfo?.code;
+            if (
+              errorCode === 'messaging/registration-token-not-registered' ||
+              errorCode === 'messaging/invalid-registration-token'
+            ) {
+              invalidTokens.push(token);
+            }
+          }
+        }
+
+        if (invalidTokens.length > 0) {
+          const updates: Record<string, any> = {
+            pushTokens: admin.firestore.FieldValue.arrayRemove(...invalidTokens),
+          };
+          if (userData.pushToken && invalidTokens.includes(userData.pushToken)) {
+            const remaining = tokens.filter((t) => !invalidTokens.includes(t));
+            updates.pushToken = remaining.length > 0 ? remaining[0] : admin.firestore.FieldValue.delete();
+          }
+          await doc.ref.update(updates).catch((err) => {
+            console.error(`Failed to clean up invalid tokens for user ${doc.id}:`, err);
+          });
         }
       }
     }

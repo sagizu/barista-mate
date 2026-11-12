@@ -1,20 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { auth, db } from '@/firebase-config';
-import { doc, onSnapshot, updateDoc, deleteField } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { updateMaintenanceDates } from '@/lib/firestore';
 import type { MaintenanceDates } from '@/lib/types';
 import { Skeleton } from './ui/skeleton';
 import { EmptyState } from './empty-state';
-import { Wrench, PlusCircle, Bell, BellRing } from 'lucide-react';
+import { Wrench, PlusCircle, Bell, Send } from 'lucide-react';
 import { HybridDateInput } from './hybrid-date-input';
-import { requestNotificationPermission } from '@/lib/fcm';
+import {
+  requestNotificationPermission,
+  disableNotificationPermission,
+  syncPushTokenIfPermitted,
+} from '@/lib/fcm';
 
 const MAINTENANCE_TASKS: {
   key: keyof MaintenanceDates;
@@ -66,13 +70,12 @@ export function MaintenanceLog() {
   const [userPreferences, setUserPreferences] = useState<any>({});
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
-
-  // No separate useEffect for push permission — pushEnabled is derived from
-  // the Firestore user document (pushToken field) inside the snapshot listener below.
-  // Reading only Notification.permission was the root cause of the "re-enable on tab switch"
-  // bug: the browser permission stays "granted" even after the user clicks
-  // "ביטול התראות" (which only deletes the token from Firestore), so on re-mount
-  // it would flip back to true. Now we use the token presence as the source of truth.
+  const [testPushLoading, setTestPushLoading] = useState(false);
+  const [testPushStatus, setTestPushStatus] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
+  const hasSyncedTokenRef = useRef(false);
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -85,31 +88,58 @@ export function MaintenanceLog() {
     const userRef = doc(db, 'users', user.uid);
     const maintenanceRef = doc(db, 'users', user.uid, 'maintenance', 'log');
 
-    const unsubUser = onSnapshot(userRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.data();
-        setUserPreferences(data.preferences || {});
-        // Derive pushEnabled from whether a token is stored — NOT from
-        // Notification.permission, which stays "granted" even after we
-        // delete the token (the browser doesn't let us revoke it via JS).
-        setPushEnabled(!!data.pushToken);
-      }
-    }, (error) => {
-      if (error.code === 'permission-denied') return;
-      console.error("MaintenanceLog user error:", error);
-    });
+    const unsubUser = onSnapshot(
+      userRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.data();
+          setUserPreferences(data.preferences || {});
 
-    const unsubMaintenance = onSnapshot(maintenanceRef, (snapshot) => {
-      if (snapshot.exists()) {
-        setDates(snapshot.data() as MaintenanceDates);
-      } else {
-        setDates({});
+          const hasFirestoreToken =
+            Boolean(data.pushToken) ||
+            (Array.isArray(data.pushTokens) && data.pushTokens.length > 0);
+          const isBrowserPermissionGranted =
+            typeof window !== 'undefined' && 'Notification' in window
+              ? Notification.permission === 'granted'
+              : true;
+
+          const enabled = hasFirestoreToken && isBrowserPermissionGranted;
+          setPushEnabled(enabled);
+
+          // Automatically keep this device's token synced in Firestore if already permitted
+          if (
+            enabled &&
+            !hasSyncedTokenRef.current &&
+            typeof window !== 'undefined' &&
+            'Notification' in window &&
+            Notification.permission === 'granted'
+          ) {
+            hasSyncedTokenRef.current = true;
+            syncPushTokenIfPermitted(user.uid);
+          }
+        }
+      },
+      (error) => {
+        if (error.code === 'permission-denied') return;
+        console.error('MaintenanceLog user error:', error);
       }
-      setLoading(false);
-    }, (error) => {
-      if (error.code === 'permission-denied') return;
-      console.error("MaintenanceLog log error:", error);
-    });
+    );
+
+    const unsubMaintenance = onSnapshot(
+      maintenanceRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          setDates(snapshot.data() as MaintenanceDates);
+        } else {
+          setDates({});
+        }
+        setLoading(false);
+      },
+      (error) => {
+        if (error.code === 'permission-denied') return;
+        console.error('MaintenanceLog log error:', error);
+      }
+    );
 
     return () => {
       unsubUser();
@@ -130,24 +160,65 @@ export function MaintenanceLog() {
   const handleEnablePush = async () => {
     if (!auth.currentUser) return;
     setPushLoading(true);
+    setTestPushStatus(null);
     const success = await requestNotificationPermission(auth.currentUser.uid);
     setPushEnabled(success);
+    if (!success) {
+      setTestPushStatus({
+        type: 'error',
+        message: 'לא ניתן להפעיל התראות. ודא שאישרת הרשאת התראות בדפדפן.',
+      });
+    }
     setPushLoading(false);
   };
 
   const handleDisablePush = async () => {
     if (!auth.currentUser) return;
     setPushLoading(true);
+    setTestPushStatus(null);
     try {
-      const userRef = doc(db, "users", auth.currentUser.uid);
-      await updateDoc(userRef, {
-        pushToken: deleteField()
-      });
+      await disableNotificationPermission(auth.currentUser.uid);
       setPushEnabled(false);
     } catch (e) {
       console.error(e);
     }
     setPushLoading(false);
+  };
+
+  const handleTestPush = async () => {
+    if (!auth.currentUser) return;
+    setTestPushLoading(true);
+    setTestPushStatus(null);
+    try {
+      const currentToken = await syncPushTokenIfPermitted(auth.currentUser.uid);
+      const response = await fetch('/api/test-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: auth.currentUser.uid,
+          ...(currentToken ? { token: currentToken } : {}),
+        }),
+      });
+      if (response.ok) {
+        setTestPushStatus({
+          type: 'success',
+          message: 'התראת בדיקה נשלחה בהצלחה!',
+        });
+      } else {
+        setTestPushStatus({
+          type: 'error',
+          message: 'שליחת התראת הבדיקה נכשלה. נסה להפעיל התראות מחדש.',
+        });
+      }
+    } catch (error) {
+      console.error('Error sending test push:', error);
+      setTestPushStatus({
+        type: 'error',
+        message: 'שגיאת תקשורת בשליחת התראת בדיקה.',
+      });
+    } finally {
+      setTestPushLoading(false);
+    }
   };
 
   const isOverdue = (
@@ -193,26 +264,62 @@ export function MaintenanceLog() {
   return (
     <div className="space-y-6">
       {/* Notifications Banner */}
-      <div className="bg-[#1F1712]/80 border border-[#3E2C22] rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3 text-right">
-          <div className="bg-[#C67C4E]/20 p-2 rounded-full hidden sm:block">
-            <Bell className="h-5 w-5 text-[#C67C4E]" />
+      <div className="bg-[#1F1712]/80 border border-[#3E2C22] rounded-lg p-4 flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3 text-right">
+            <div className="bg-[#C67C4E]/20 p-2 rounded-full hidden sm:block">
+              <Bell className="h-5 w-5 text-[#C67C4E]" />
+            </div>
+            <div>
+              <h4 className="text-[#E6D2B5] font-semibold text-sm">התראות תחזוקה</h4>
+              <p className="text-[#EAE0D5]/70 text-xs mt-1">
+                קבלו תזכורת אוטומטית כשהגיע הזמן לנקות את המכונה.
+              </p>
+            </div>
           </div>
-          <div>
-            <h4 className="text-[#E6D2B5] font-semibold text-sm">התראות תחזוקה</h4>
-            <p className="text-[#EAE0D5]/70 text-xs mt-1">קבלו תזכורת אוטומטית כשהגיע הזמן לנקות את המכונה.</p>
-          </div>
+
+          {pushEnabled ? (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTestPush}
+                disabled={testPushLoading || pushLoading}
+                className="border-[#C67C4E]/50 text-[#E6D2B5] hover:bg-[#C67C4E]/10"
+              >
+                <Send className="h-3.5 w-3.5 ml-1.5" />
+                {testPushLoading ? 'שולח...' : 'שלח התראת בדיקה'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDisablePush}
+                disabled={pushLoading || testPushLoading}
+                className="border-[#3E2C22] text-[#EAE0D5] hover:text-red-400"
+              >
+                ביטול התראות
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={handleEnablePush}
+              disabled={pushLoading}
+              size="sm"
+              className="bg-[#C67C4E] hover:bg-[#C67C4E]/90 text-white shadow-lg"
+            >
+              <Bell className="h-4 w-4 ml-2" />
+              הפעלת התראות
+            </Button>
+          )}
         </div>
-        
-        {pushEnabled ? (
-          <Button variant="outline" size="sm" onClick={handleDisablePush} disabled={pushLoading} className="border-[#3E2C22] text-[#EAE0D5] hover:text-red-400">
-            ביטול התראות
-          </Button>
-        ) : (
-          <Button onClick={handleEnablePush} disabled={pushLoading} size="sm" className="bg-[#C67C4E] hover:bg-[#C67C4E]/90 text-white shadow-lg">
-             <Bell className="h-4 w-4 ml-2" />
-             הפעלת התראות
-          </Button>
+        {testPushStatus && (
+          <p
+            className={`text-xs text-right ${
+              testPushStatus.type === 'success' ? 'text-emerald-400' : 'text-red-400'
+            }`}
+          >
+            {testPushStatus.message}
+          </p>
         )}
       </div>
 

@@ -2,6 +2,7 @@ import { render, screen, waitFor, act, within, fireEvent } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { MaintenanceLog } from '@/components/maintenance-log';
 import * as firestore from '@/lib/firestore';
+import * as fcm from '@/lib/fcm';
 import * as auth from 'react-firebase-hooks/auth';
 import * as fs from 'firebase/firestore';
 import { format, subDays } from 'date-fns';
@@ -9,6 +10,7 @@ import { format, subDays } from 'date-fns';
 // Mock dependencies
 vi.mock('firebase/firestore');
 vi.mock('@/lib/firestore');
+vi.mock('@/lib/fcm');
 vi.mock('react-firebase-hooks/auth');
 
 const mockUser = {
@@ -18,6 +20,7 @@ const mockUser = {
 
 // This will be the global mock for onSnapshot callbacks
 let onSnapshotCallback: (snapshot: any) => void;
+let userSnapshotCallback: (snapshot: any) => void;
 
 describe('MaintenanceLog Component', () => {
   let user: ReturnType<typeof userEvent.setup>;
@@ -27,27 +30,31 @@ describe('MaintenanceLog Component', () => {
     user = userEvent.setup();
 
     vi.spyOn(auth, 'useAuthState').mockReturnValue([mockUser as any, false, undefined]);
-    vi.spyOn(fs, 'doc').mockImplementation((...args) => {
-        // Based on call, return a specific mock
-        if (args[1] === 'users' && args[3] === 'maintenance') {
-            return { type: 'document', path: 'maintenance' } as any;
-        }
-        // Default mock for user preferences
-        return { type: 'document', path: 'user' } as any;
+    vi.spyOn(fs, 'doc').mockImplementation((...args: any[]) => {
+      // Based on call, return a specific mock
+      if (args[1] === 'users' && args[3] === 'maintenance') {
+        return { type: 'document', path: 'maintenance' } as any;
+      }
+      // Default mock for user preferences
+      return { type: 'document', path: 'user' } as any;
     });
 
     mockUpdateMaintenanceDates = vi.spyOn(firestore, 'updateMaintenanceDates').mockResolvedValue();
+    vi.spyOn(fcm, 'requestNotificationPermission').mockResolvedValue(true);
+    vi.spyOn(fcm, 'disableNotificationPermission').mockResolvedValue();
+    vi.spyOn(fcm, 'syncPushTokenIfPermitted').mockResolvedValue('mock-device-token');
 
     // This mock will now handle both maintenance and user preference snapshots
-    vi.spyOn(fs, 'onSnapshot').mockImplementation((ref: any, callback) => {
-        if (ref.path === 'maintenance') {
-            onSnapshotCallback = callback;
-            callback({ exists: () => false, data: () => ({}) });
-        } else { // For user preferences
-            callback({ exists: () => true, data: () => ({ preferences: { maintenanceFrequencies: {} } }) });
-        }
+    vi.spyOn(fs, 'onSnapshot').mockImplementation(((ref: any, callback: any) => {
+      if (ref.path === 'maintenance') {
+        onSnapshotCallback = callback;
+        callback({ exists: () => false, data: () => ({}) });
+      } else {
+        userSnapshotCallback = callback;
+        callback({ exists: () => true, data: () => ({ preferences: { maintenanceFrequencies: {} } }) });
+      }
       return () => {}; // Return an unsubscribe function
-    });
+    }) as any);
   });
 
   afterEach(() => {
@@ -151,5 +158,42 @@ describe('MaintenanceLog Component', () => {
     });
 
     expect(screen.queryByText(/הגיע הזמן!/i)).not.toBeInTheDocument();
+  });
+
+  test('enables and disables push notifications and allows sending test push', async () => {
+    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true }),
+    } as Response);
+
+    render(<MaintenanceLog />);
+    await user.click(screen.getByRole('button', { name: /התחל לתעד/i }));
+
+    // Initially push is disabled
+    const enableBtn = screen.getByRole('button', { name: /הפעלת התראות/i });
+    await user.click(enableBtn);
+
+    await waitFor(() => {
+      expect(fcm.requestNotificationPermission).toHaveBeenCalledWith('test-user');
+    });
+
+    // Now test push and disable buttons should be visible
+    const testPushBtn = await screen.findByRole('button', { name: /שלח התראת בדיקה/i });
+    await user.click(testPushBtn);
+
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledWith(
+        '/api/test-push',
+        expect.objectContaining({ method: 'POST' })
+      );
+      expect(screen.getByText(/התראת בדיקה נשלחה בהצלחה/i)).toBeInTheDocument();
+    });
+
+    const disableBtn = screen.getByRole('button', { name: /ביטול התראות/i });
+    await user.click(disableBtn);
+
+    await waitFor(() => {
+      expect(fcm.disableNotificationPermission).toHaveBeenCalledWith('test-user');
+    });
   });
 });

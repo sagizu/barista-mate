@@ -17,12 +17,42 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log("Received background message: ", payload);
 
-  const notificationTitle = payload.notification?.title || "Barista Mate";
+  // When a `notification` payload is present, the Firebase SDK automatically displays
+  // the system notification on Android/Web. Only call showNotification manually
+  // for data-only messages to avoid duplicate or dropped notifications.
+  if (payload.notification) {
+    return;
+  }
+
+  const notificationTitle = payload.data?.title || "Barista Mate";
   const notificationOptions = {
-    body: payload.notification?.body || "תזכורת חדשה",
+    body: payload.data?.body || "תזכורת חדשה",
     icon: "/icon-192.png",
-    // We can add a custom icon logic later if we upload PWA icons
+    badge: "/icon-192.png",
+    dir: "rtl",
+    lang: "he",
+    data: {
+      url: payload.data?.url || "/",
+    },
   };
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  return self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || "/";
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
+      for (const client of windowClients) {
+        if ("focus" in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
 });
