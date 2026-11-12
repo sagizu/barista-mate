@@ -10,8 +10,9 @@
   - [x] Per-device permission state check & in-app **"שלח התראת בדיקה"** button in `components/maintenance-log.tsx`.
   - [x] Unit tests (`components/__tests__/maintenance-log.test.tsx`, `lib/__tests__/cron-maintenance.test.ts`) and `next build` verified.
 
-- [x] **Task 1.5 (Security — Dependabot Alerts): Resolve All 20 Open GitHub Dependabot Alerts** *(Completed & Tested)*
+- [x] **Task 1.5 (Security — Dependabot Alerts): Resolve All Open GitHub Dependabot Alerts (0 Remaining)** *(Completed, Tested & Pushed — Commits `16681fd`, `c6ed674`)*
   - [x] Upgraded `next` (`16.4.6`), `vitest` (`4.1.12`), `@vitest/mocker` (`4.1.12`), `vite` (`6.4.6`), `fast-xml-parser` (`5.12.0`), `source-map-js` (`1.2.2`), `@fastify/busboy` (`3.2.5`), and `@grpc/grpc-js` (`1.14.7`).
+  - [x] Added transitive dependency overrides for `node-forge` (`^1.4.3`), `minimatch` (`^11.0.1`), `postcss-selector-parser` (`^6.1.5`), and `brace-expansion` (`^5.0.12`).
   - [x] Dismissed withdrawn `braces` advisory (#117, `GHSA-vfj7-8cjw-p6xm`).
 
 - [ ] **Task 2 (Priority 2 — Critical Security & Firestore Rules): Secure API Endpoints & Fix `firestore.rules`**
