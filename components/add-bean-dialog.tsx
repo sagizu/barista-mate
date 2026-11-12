@@ -244,7 +244,7 @@ export function AddBeanDialog({
                     const updates: Partial<SavedBean> = { beanName: value };
                     
                     if (metadata) {
-                        if (metadata.roastLevel) updates.roastLevel = metadata.roastLevel as RoastLevel;
+                        if (metadata.roastLevel) updates.roastLevel = Number(metadata.roastLevel) as RoastLevel;
                         if (metadata.flavorTags && metadata.flavorTags.length > 0) updates.flavorTags = metadata.flavorTags;
                     }
                     

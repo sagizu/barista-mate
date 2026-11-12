@@ -226,8 +226,8 @@ export const getGlobalRoasters = async (): Promise<{id: string, name: string}[]>
         const querySnapshot = await getDocs(globalRoastersRef);
         return querySnapshot.docs.map(doc => ({
             id: doc.id,
-            name: doc.data().name as string
-        }));
+            name: String(doc.data().name || '').trim()
+        })).filter(r => Boolean(r.name));
     } catch (error: any) {
         if (error.code === 'permission-denied') return [];
         handleError(error, 'getGlobalRoasters');
@@ -240,13 +240,17 @@ export const getGlobalBeans = async (roasterName: string): Promise<{id: string, 
         const globalBeansRef = collection(db, "global_beans");
         const q = query(globalBeansRef, where("roasterName", "==", roasterName.trim()));
         const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            roasterName: doc.data().roasterName,
-            beanName: doc.data().beanName,
-            roastLevel: doc.data().roastLevel,
-            flavorTags: doc.data().flavorTags,
-        }));
+        return querySnapshot.docs.map(doc => {
+            const rawRoast = doc.data().roastLevel;
+            const parsedRoast = rawRoast !== undefined && rawRoast !== null ? Number(rawRoast) : undefined;
+            return {
+                id: doc.id,
+                roasterName: String(doc.data().roasterName || '').trim(),
+                beanName: String(doc.data().beanName || '').trim(),
+                roastLevel: !Number.isNaN(parsedRoast) ? parsedRoast : undefined,
+                flavorTags: doc.data().flavorTags,
+            };
+        });
     } catch (error: any) {
         if (error.code === 'permission-denied') return [];
         handleError(error, 'getGlobalBeans');
@@ -258,6 +262,23 @@ export const submitForVerification = async (type: 'roaster' | 'bean', data: any)
     try {
         const user = auth.currentUser;
         if (!user) return; // Silent return if disconnected
+        if (data?.isTestData) return;
+
+        // Immediately promote to global_roasters / global_beans via the server sync endpoint
+        if (typeof fetch === 'function') {
+            try {
+                const res = await fetch('/api/catalog/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, data }),
+                });
+                if (res.ok) {
+                    return;
+                }
+            } catch {
+                // Fall back to pending_verification queue below if offline
+            }
+        }
         
         const pendingRef = collection(db, "pending_verification");
         await addDoc(pendingRef, {

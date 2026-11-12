@@ -21,10 +21,10 @@
   - [x] Updated `lib/fcm.ts` to omit `vapidKey` when `NEXT_PUBLIC_FIREBASE_VAPID_KEY` is unset, call `getOrRegisterServiceWorker()` in `setupForegroundMessageHandler()`, and added `displaySystemNotification()` with deduplicating `tag`.
   - [x] Improved error reporting and invalid-token cleanup in `/api/test-push` and `components/maintenance-log.tsx`.
 
-- [ ] **Task 3 (Priority 2 — Firebase Automation): Automate `pending_verification` → `global_roasters` & `global_beans` Pipeline**
-  - [ ] Create `/api/catalog/sync` using `adminDb` to automatically promote all existing and new non-test `pending_verification` items into `global_roasters` and `global_beans` and delete processed pending docs.
-  - [ ] Clean and normalize existing `global_beans` records (trim trailing newlines and normalize string `roastLevel` to numbers).
-  - [ ] Trigger automatic promotion immediately when users add a new bean/roaster and during the daily maintenance cron job.
+- [x] **Task 3 (Priority 2 — Firebase Automation): Automate `pending_verification` → `global_roasters` & `global_beans` Pipeline** *(Completed & Tested)*
+  - [x] Created `lib/catalog-sync.ts` and `/api/catalog/sync` using `adminDb` to automatically promote all existing and new non-test `pending_verification` items into `global_roasters` and `global_beans` and delete processed pending docs.
+  - [x] Cleaned and normalized existing `global_beans` records (trimming trailing newlines and normalizing string `roastLevel` to numbers).
+  - [x] Triggered automatic promotion immediately when users add a new bean/roaster (`submitForVerification`) and during the daily maintenance cron job.
 
 - [ ] **Task 4 (Priority 2 — Critical Security & Firestore Rules): Secure API Endpoints & Fix `firestore.rules`**
   - [ ] Strip invalid markdown fences from `firestore.rules` and add rules for `global_roasters`, `global_beans`, `pending_verification`, and `collectionGroup('beans')`.

@@ -25,6 +25,17 @@ vi.mock('@/lib/firebase-admin', () => ({
   },
 }));
 
+vi.mock('@/lib/catalog-sync', () => ({
+  syncCatalogAndPendingVerification: vi.fn().mockResolvedValue({
+    success: true,
+    promotedRoasters: [],
+    promotedBeans: [],
+    normalizedGlobalDocs: 0,
+    skippedTestDocs: 0,
+    deletedPendingDocs: 0,
+  }),
+}));
+
 import { GET } from '@/app/api/cron/maintenance/route';
 
 describe('Maintenance Cron Route (/api/cron/maintenance)', () => {

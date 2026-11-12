@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import * as admin from 'firebase-admin';
 import { adminDb, adminMessaging } from '@/lib/firebase-admin';
+import { syncCatalogAndPendingVerification } from '@/lib/catalog-sync';
 
 const DEFAULT_MAINTENANCE_FREQUENCIES = {
   lastDescaling: 180,
@@ -19,6 +20,11 @@ export async function GET(request: Request) {
   }
 
   try {
+    // Automatically drain any pending_verification roasters/beans into global collections
+    await syncCatalogAndPendingVerification().catch((syncErr) => {
+      console.error('Catalog sync during cron failed:', syncErr);
+    });
+
     const usersSnapshot = await adminDb.collection('users').get();
     
     let notificationsSent = 0;
