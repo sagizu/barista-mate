@@ -64,3 +64,10 @@ After pushing:
 1. Check the Vercel deployment triggered by the push (using `vercel ls` / `vercel inspect <url> --logs` via the `vercel-cli` skill, or checking deployment status).
 2. Confirm the deployment reaches `Ready` / `Succeeded` with no build errors, runtime errors, or configuration issues.
 3. Report the verified deployment status (and URL if available) to the user.
+
+## 8. Review Workflow & Rules
+
+At the end of each task:
+1. Check whether `AGENTS.md` or `.agents/skills/barista-mate-workflow/SKILL.md` should be updated (for example, if a step didn't flow as expected, a command/convention changed, or a new pitfall was discovered).
+2. If updates are needed, apply them cleanly (or propose them to the user if they change the core workflow) and commit/push them.
+

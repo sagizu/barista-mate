@@ -9,6 +9,7 @@ On **every new conversation** or **every new task** in this repository, you MUST
 5. **Verify:** Run `npm test` (`tsc --noEmit && vitest run`), `npm run lint`, `npm run build`, and any other relevant verification. All checks must pass after the final edit.
 6. **Push:** Commit and `git push` to the repository once verification passes.
 7. **Verify Vercel Deployment:** Confirm the resulting Vercel deployment succeeds with no build or runtime failures.
+8. **Review Workflow & Rules:** At the end of each task, check if `AGENTS.md` or `.agents/skills/barista-mate-workflow/SKILL.md` need updates based on what didn't flow as expected or new conventions discovered.
 
 ---
 
