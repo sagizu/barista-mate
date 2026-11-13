@@ -8,10 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { signInWithGoogle, signInAsGuest } from '@/lib/auth';
 import { db } from '@/firebase-config';
 import { collection, getCountFromServer } from 'firebase/firestore';
+import { SmartDialIn } from '@/components/smart-dial-in';
 import React, { useEffect, useState } from 'react';
 
 const LandingPage = () => {
   const [communityStats, setCommunityStats] = useState<{ roasters: number; beans: number } | null>(null);
+  const [showDemoDialIn, setShowDemoDialIn] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -89,8 +91,22 @@ const LandingPage = () => {
             <p className="text-xs text-[#EAE0D5]/60 text-center px-2">
               רוצה רק להציץ? אפשר להתחיל כאורח ולשדרג לחשבון Google בכל רגע מתוך ההגדרות.
             </p>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setShowDemoDialIn((prev) => !prev)}
+              className="text-xs text-[#C67C4E] hover:text-[#E6D2B5] hover:bg-[#1F1712]"
+            >
+              {showDemoDialIn ? 'הסתר הדגמת כיול חכם' : '☕ נסה את מחשבון הכיול עכשיו (ללא הרשמה)'}
+            </Button>
           </div>
         </section>
+
+        {showDemoDialIn && (
+          <section className="w-full max-w-xl mx-auto pb-12 text-right">
+            <SmartDialIn isDemo />
+          </section>
+        )}
 
         {/* Feature Grid */}
         <section className="w-full max-w-5xl mx-auto">

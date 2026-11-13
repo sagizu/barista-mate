@@ -39,6 +39,8 @@ import { auth } from "@/firebase-config";
 import { deleteUserData } from '@/lib/user-service';
 import { FeedbackForm } from "./feedback-form";
 import { FeatureAnnouncement } from "./feature-announcement";
+import { PwaInstallBanner } from "./pwa-install-banner";
+import { OnboardingChecklist } from "./onboarding-checklist";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -387,6 +389,14 @@ return (
       )}
 
       <main className="flex-1 w-full container mx-auto px-4 py-8 max-w-7xl">
+        <PwaInstallBanner />
+        {beansLoaded && userData !== null && (
+          <OnboardingChecklist
+            hasBean={beans.length > 0}
+            hasPush={Boolean(userData?.pushToken) || (Array.isArray(userData?.pushTokens) && userData.pushTokens.length > 0)}
+            onNavigateTab={setTab}
+          />
+        )}
         <Tabs value={tab} onValueChange={setTab} className="w-full flex flex-col items-center">
           <TabsList className="grid w-full h-auto grid-cols-3 gap-2 sm:h-10 max-w-xl mb-6">
             <TabsTrigger value="beans">ספריית פולים</TabsTrigger>

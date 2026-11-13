@@ -40,12 +40,12 @@
   - [x] **Deep-Link Recipe Sharing (`?shareBean=...` or `/explore`)**:
     - Allow users to share a direct link to a bean's dial-in profile so friends opening the link see the recipe card and can tap **"הוסף לספרייה שלי"** in one click.
 
-- [ ] **Phase 3 (Frictionless Onboarding & Retention): Try Before Sign-Up & PWA Install**
-  - [ ] **Interactive "Try Dial-In First" Mode**:
+- [x] **Phase 3 (Frictionless Onboarding & Retention): Try Before Sign-Up & PWA Install** *(Completed & Tested)*
+  - [x] **Interactive "Try Dial-In First" Mode**:
     - Let unauthenticated visitors use the **Smart Dial-In** calculator directly from the landing page (no login wall), prompting them to sign in with Google only when they click **"שמור הגדרה לספרייה"**.
-  - [ ] **First-Time Onboarding Checklist**:
+  - [x] **First-Time Onboarding Checklist**:
     - Show a lightweight 3-step progress bar for new users inside the dashboard: (1) הוסף פול ראשון, (2) בצע כיול ראשון, (3) הפעל התראות תחזוקה.
-  - [ ] **PWA Install Prompt Banner**:
+  - [x] **PWA Install Prompt Banner**:
     - Detect `beforeinstallprompt` on Android Chrome (and Safari on iOS) and show a dismissible Hebrew banner: **"התקן את Barista Mate כאפליקציה לגישה מהירה מהמסך הראשי"**.
 
 - [ ] **Phase 4 (Organic Acquisition & Measurement): Community SEO & Analytics**

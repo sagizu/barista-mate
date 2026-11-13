@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { calculateSmartDialIn, type DialInResult, type DrinkType } from "@/lib/dial-in";
 import { saveLastShot, updateBean } from "@/lib/firestore";
+import { signInWithGoogle } from "@/lib/auth";
 import { db, auth } from "@/firebase-config";
 import { doc, getDoc } from "firebase/firestore";
 import { AddBeanDialog } from "@/components/add-bean-dialog";
@@ -47,9 +48,10 @@ const translateDrinkType = (type: DrinkType) => {
 
 interface SmartDialInProps {
     activeBean?: SavedBean | null;
+    isDemo?: boolean;
 }
 
-export function SmartDialIn({ activeBean }: SmartDialInProps = {}) {
+export function SmartDialIn({ activeBean, isDemo = false }: SmartDialInProps = {}) {
     const [drinkType, setDrinkType] = useState<DrinkType | null>(null);
     const [roastLevel, setRoastLevel] = useState<number>(activeBean?.roastLevel || 0);
     const [grindInput, setGrindInput] = useState<string>(activeBean?.grindSetting || "");
@@ -107,9 +109,11 @@ export function SmartDialIn({ activeBean }: SmartDialInProps = {}) {
         feedback: res.feedback,
         advice: res.advice,
     };
-    saveLastShot(newShot);
+    if (!isDemo) {
+      saveLastShot(newShot);
+    }
     setLastShot(newShot);
-  }, [drinkType, roastLevel]);
+  }, [drinkType, roastLevel, isDemo]);
 
   const handleTimerToggle = () => {
     if (isTimerRunning) {
@@ -139,7 +143,11 @@ export function SmartDialIn({ activeBean }: SmartDialInProps = {}) {
     }
   };
 
-  const handleSaveToLibrary = () => {
+  const handleSaveToLibrary = async () => {
+    if (isDemo && !auth.currentUser) {
+      await signInWithGoogle();
+      return;
+    }
     let beanData: Partial<SavedBean> = {
       roastLevel: roastLevel as RoastLevel,
       grindSetting: grindInput.trim() || undefined,
