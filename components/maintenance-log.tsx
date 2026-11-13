@@ -247,7 +247,7 @@ export function MaintenanceLog() {
     const frequency =
       userPreferences?.maintenanceFrequencies?.[taskKey] ?? taskDefaultFrequency;
     try {
-      return differenceInDays(new Date(), parseISO(lastDate)) > frequency;
+      return differenceInDays(new Date(), parseISO(lastDate)) >= Number(frequency);
     } catch (e) {
       return false;
     }

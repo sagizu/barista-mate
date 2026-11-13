@@ -50,12 +50,21 @@ export function SmartDialIn() {
   
     const [timer, setTimer] = useState(0);
     const [isTimerRunning, setIsTimerRunning] = useState(false);
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const startTimeRef = useRef<number | null>(null);
   
     const [result, setResult] = useState<DialInResult | null>(null);
     const [addBeanOpen, setAddBeanOpen] = useState(false);
     const [beanForDialog, setBeanForDialog] = useState<Partial<SavedBean> | null>(null);
     const [lastShot, setLastShot] = useState<any>(null);
+
+    useEffect(() => {
+        return () => {
+            if (timerRef.current) {
+                clearInterval(timerRef.current);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         const fetchLastShot = async () => {
@@ -69,21 +78,6 @@ export function SmartDialIn() {
         };
         fetchLastShot();
     }, []);
-
-  const handleTimerToggle = () => {
-    if (isTimerRunning) {
-      clearInterval(timerRef.current!);
-      setIsTimerRunning(false);
-      handleCalculate(timer);
-    } else {
-      setTimer(0);
-      setResult(null);
-      setIsTimerRunning(true);
-      timerRef.current = setInterval(() => {
-        setTimer(prev => prev + 0.1);
-      }, 100);
-    }
-  };
 
   const handleCalculate = useCallback((finalTime: number) => {
     if (!drinkType || roastLevel === 0) return;
@@ -100,6 +94,34 @@ export function SmartDialIn() {
     saveLastShot(newShot);
     setLastShot(newShot);
   }, [drinkType, roastLevel]);
+
+  const handleTimerToggle = () => {
+    if (isTimerRunning) {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      setIsTimerRunning(false);
+      const elapsed =
+        startTimeRef.current !== null
+          ? (Date.now() - startTimeRef.current) / 1000
+          : timer;
+      startTimeRef.current = null;
+      setTimer(elapsed);
+      handleCalculate(elapsed);
+    } else {
+      setTimer(0);
+      setResult(null);
+      setIsTimerRunning(true);
+      const startedAt = Date.now();
+      startTimeRef.current = startedAt;
+      timerRef.current = setInterval(() => {
+        if (startTimeRef.current !== null) {
+          setTimer((Date.now() - startTimeRef.current) / 1000);
+        }
+      }, 100);
+    }
+  };
 
   const handleSaveToLibrary = () => {
     let beanData: Partial<SavedBean> = { roastLevel: roastLevel as RoastLevel };

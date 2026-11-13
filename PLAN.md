@@ -31,10 +31,10 @@
   - [x] Fixed `request.url.includes("localhost")` auth bypass in `/api/cron/maintenance` (restricted to `NODE_ENV === 'development'` hostname or valid `CRON_SECRET`).
   - [x] Required Firebase Auth ID token verification (`adminAuth.verifyIdToken`) in `/api/test-push`.
 
-- [ ] **Task 5 (Priority 3 — Functional Accuracy): Fix Extraction Stopwatch Drift & Align Overdue Math**
-  - [ ] Refactor `SmartDialIn` stopwatch to compute elapsed time via `Date.now()` delta and clean up interval on unmount.
-  - [ ] Align overdue day comparison (`>=` vs `>`) across UI and Cron.
-  - [ ] Fix truncated footer text in `components/dashboard.tsx`.
+- [x] **Task 5 (Priority 3 — Functional Accuracy): Fix Extraction Stopwatch Drift & Align Overdue Math** *(Completed & Tested)*
+  - [x] Refactor `SmartDialIn` stopwatch to compute elapsed time via `Date.now()` delta and clean up interval on unmount.
+  - [x] Align overdue day comparison (`>=` vs `>`) across UI and Cron.
+  - [x] Fix truncated footer text in `components/dashboard.tsx`.
 
 - [ ] **Task 6 (Priority 3 — Data & Storage Integrity): Clean Up Orphaned Images & Dangling Active Bean**
   - [ ] Clear `settings.general.activeBeanId` when deleting the active bean in `lib/firestore.ts`.

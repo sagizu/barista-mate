@@ -150,7 +150,7 @@ export default function Dashboard() {
       if (!lastDate) return false; // User requested not to alert if no date is set
       const freq = maintenanceFrequencies[key] || defaultFreq;
       try {
-        return differenceInDays(new Date(), parseISO(lastDate)) > Number(freq);
+        return differenceInDays(new Date(), parseISO(lastDate)) >= Number(freq);
       } catch (e) {
         return false;
       }
@@ -400,7 +400,7 @@ return (
 
       <footer className="w-full border-t border-[#3E2C22] py-6 mt-auto bg-[#0f0a08]/80">
         <p className="text-center text-sm text-[#EAE0D5]/70">
-          ❤️ Barista Mate · Built with
+          נבנה באהבה ❤️ עבור קהילת הקפה · Barista Mate
         </p>
       </footer>
     </div>
