@@ -46,8 +46,8 @@
   - [x] Consolidate duplicate Firestore `onSnapshot` listeners across `Dashboard`, `BeanLibrary`, and `MaintenanceLog`.
   - [x] Update `.github/workflows/ci.yml` to run `vitest run` and `npm run build`.
 
-- [ ] **Task 8 (Priority 4 — Feature Enhancements): Smart Dial-In Active Bean Sync, Freshness Window & Quick-Add**
-  - [ ] Pre-fill `SmartDialIn` from the active bean and allow one-tap grind setting update.
-  - [ ] Add optional `roastDate` and freshness badge on the active bean card.
-  - [ ] Add one-tap "Add to Library" on `BeanSuggestions` and `CommunitySpotlight` cards.
-  - [ ] Support upgrading Guest accounts to Google accounts via `linkWithPopup`.
+- [x] **Task 8 (Priority 4 — Feature Enhancements): Smart Dial-In Active Bean Sync, Freshness Window & Quick-Add** *(Completed & Tested)*
+  - [x] Pre-fill `SmartDialIn` from the active bean and allow one-tap grind setting update.
+  - [x] Add optional `roastDate` and freshness badge on the active bean card.
+  - [x] Add one-tap "Add to Library" on `BeanSuggestions` and `CommunitySpotlight` cards.
+  - [x] Support upgrading Guest accounts to Google accounts via `linkWithPopup`.

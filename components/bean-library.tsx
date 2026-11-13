@@ -9,7 +9,7 @@ import { useEffect, useState, useMemo } from "react";
 import { collection, onSnapshot, query, orderBy, doc } from "firebase/firestore";
 import { db, auth } from "@/firebase-config";
 import { deleteBean, updateGeneralSettings } from "@/lib/firestore";
-import { format } from "date-fns";
+import { format, parseISO, differenceInDays } from "date-fns";
 import type { SavedBean, GeneralSettings } from "@/lib/types";
 import { AddBeanDialog } from "@/components/add-bean-dialog";
 import { HybridDateInput } from "@/components/hybrid-date-input";
@@ -83,7 +83,7 @@ export function BeanLibrary({ sharedBeans, sharedGeneralSettings }: BeanLibraryP
   const [filteredBeans, setFilteredBeans] = useState<SavedBean[]>([]);
   const [loading, setLoading] = useState(true);
   const [addBeanOpen, setAddBeanOpen] = useState(false);
-  const [editingBean, setEditingBean] = useState<SavedBean | null>(null);
+  const [editingBean, setEditingBean] = useState<SavedBean | Partial<SavedBean> | null>(null);
   
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [filterRoastery, setFilterRoastery] = useState<string | null>(null);
@@ -329,16 +329,45 @@ export function BeanLibrary({ sharedBeans, sharedGeneralSettings }: BeanLibraryP
                             </div>
                         </div>
                         {isActive && (
-                            <div className="flex items-center gap-2 mt-2">
-                                <span className="text-xs text-[#EAE0D5]/70 whitespace-nowrap">נפתח בתאריך:</span>
-                                <div className="w-[130px]">
-                                <HybridDateInput 
-                                    id={`date-${bean.id}`}
-                                    value={activeOpenedDate}
-                                    onChange={(newVal) => updateGeneralSettings({ activeBeanOpenedDate: newVal })}
-                                    className="h-7 py-0 px-2 text-xs bg-transparent border-[#C67C4E]/30 text-[#E6D2B5] focus-visible:ring-[#C67C4E]/50 focus-visible:ring-offset-0 focus:border-[#C67C4E]"
-                                />
+                            <div className="flex flex-wrap items-center gap-3 mt-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-[#EAE0D5]/70 whitespace-nowrap">נפתח בתאריך:</span>
+                                    <div className="w-[130px]">
+                                    <HybridDateInput 
+                                        id={`date-${bean.id}`}
+                                        value={activeOpenedDate}
+                                        onChange={(newVal) => updateGeneralSettings({ activeBeanOpenedDate: newVal })}
+                                        className="h-7 py-0 px-2 text-xs bg-transparent border-[#C67C4E]/30 text-[#E6D2B5] focus-visible:ring-[#C67C4E]/50 focus-visible:ring-offset-0 focus:border-[#C67C4E]"
+                                    />
+                                    </div>
                                 </div>
+                                {bean.roastDate && (() => {
+                                    try {
+                                        const daysSinceRoast = differenceInDays(new Date(), parseISO(bean.roastDate));
+                                        if (Number.isNaN(daysSinceRoast) || daysSinceRoast < 0) return null;
+                                        if (daysSinceRoast <= 3) {
+                                            return (
+                                                <Badge variant="outline" className="border-amber-500/40 bg-amber-950/30 text-amber-300 text-xs">
+                                                    טרי מדי ({daysSinceRoast} ימים מהקלייה · מומלץ להמתין לדה-גז)
+                                                </Badge>
+                                            );
+                                        }
+                                        if (daysSinceRoast <= 30) {
+                                            return (
+                                                <Badge variant="outline" className="border-emerald-500/40 bg-emerald-950/30 text-emerald-300 text-xs">
+                                                    בחלון טריות אידיאלי ✨ ({daysSinceRoast} ימים מהקלייה)
+                                                </Badge>
+                                            );
+                                        }
+                                        return (
+                                            <Badge variant="outline" className="border-[#C67C4E]/40 bg-[#1F1712] text-[#EAE0D5]/80 text-xs">
+                                                {daysSinceRoast} ימים מהקלייה
+                                            </Badge>
+                                        );
+                                    } catch {
+                                        return null;
+                                    }
+                                })()}
                             </div> 
                         )}
                         <div className="flex flex-wrap items-center gap-4">
@@ -576,8 +605,19 @@ export function BeanLibrary({ sharedBeans, sharedGeneralSettings }: BeanLibraryP
             </Button>
         </div>
         {renderContent()}
-        <BeanSuggestions userBeans={beans} />
-        <CommunitySpotlight />
+        <BeanSuggestions
+          userBeans={beans}
+          onSelectBean={(suggested) => {
+            setEditingBean(suggested);
+            setAddBeanOpen(true);
+          }}
+        />
+        <CommunitySpotlight
+          onSelectBean={(suggested) => {
+            setEditingBean(suggested);
+            setAddBeanOpen(true);
+          }}
+        />
       </div>
 
       <AddBeanDialog

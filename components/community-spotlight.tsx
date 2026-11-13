@@ -6,11 +6,16 @@ import { db, auth } from "@/firebase-config";
 import type { SavedBean } from "@/lib/types";
 import { communityCache } from "@/lib/community-cache";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users } from "lucide-react";
+import { Users, PlusCircle } from "lucide-react";
 import { RoastRatingInput } from "./roast-rating-input";
 
-export function CommunitySpotlight() {
+interface CommunitySpotlightProps {
+  onSelectBean?: (bean: Partial<SavedBean>) => void;
+}
+
+export function CommunitySpotlight({ onSelectBean }: CommunitySpotlightProps = {}) {
   const [allValidBeans, setAllValidBeans] = useState<(SavedBean & { userId: string })[]>([]);
   const [spotlightBeans, setSpotlightBeans] = useState<(SavedBean & { userId: string })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -145,6 +150,28 @@ export function CommunitySpotlight() {
                       {tag}
                     </span>
                   ))}
+                </div>
+              )}
+
+              {onSelectBean && (
+                <div className="pt-2 mt-auto flex justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2.5 text-xs border-[#C67C4E]/40 text-[#E6D2B5] hover:bg-[#C67C4E]/15"
+                    onClick={() =>
+                      onSelectBean({
+                        roasterName: bean.roasterName,
+                        beanName: bean.beanName,
+                        roastLevel: bean.roastLevel ? (Number(bean.roastLevel) as any) : null,
+                        flavorTags: bean.flavorTags || [],
+                      })
+                    }
+                  >
+                    <PlusCircle className="h-3.5 w-3.5 ml-1 text-[#C67C4E]" />
+                    הוסף לספרייה
+                  </Button>
                 </div>
               )}
             </CardContent>

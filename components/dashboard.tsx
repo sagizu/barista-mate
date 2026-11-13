@@ -405,7 +405,7 @@ return (
             />
           </TabsContent>
           <TabsContent value="dial-in" className="w-full mt-0">
-            <SmartDialIn />
+            <SmartDialIn activeBean={activeBean} />
           </TabsContent>
           <TabsContent value="maintenance" className="w-full mt-0">
             <MaintenanceLog

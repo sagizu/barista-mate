@@ -12,11 +12,14 @@ const mockUseAuth = useAuth as Mock;
 
 vi.mock('@/lib/user-service', () => ({
     deleteUserData: vi.fn(),
+    createUserDocument: vi.fn(),
 }));
 
 // 1. Mock the specific Auth function
 vi.mock('firebase/auth', () => ({
     updateProfile: vi.fn(),
+    GoogleAuthProvider: vi.fn(),
+    linkWithPopup: vi.fn(),
 }));
 
 // 2. Create the missing "mockWriteBatch" object with fake functions

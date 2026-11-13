@@ -2,11 +2,12 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Calculator, BookMarked, Timer, Play, Square } from "lucide-react";
+import { Calculator, BookMarked, Timer, Play, Square, Target, Check } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { calculateSmartDialIn, type DialInResult, type DrinkType } from "@/lib/dial-in";
-import { saveLastShot } from "@/lib/firestore";
+import { saveLastShot, updateBean } from "@/lib/firestore";
 import { db, auth } from "@/firebase-config";
 import { doc, getDoc } from "firebase/firestore";
 import { AddBeanDialog } from "@/components/add-bean-dialog";
@@ -44,9 +45,24 @@ const translateDrinkType = (type: DrinkType) => {
     }
 };
 
-export function SmartDialIn() {
+interface SmartDialInProps {
+    activeBean?: SavedBean | null;
+}
+
+export function SmartDialIn({ activeBean }: SmartDialInProps = {}) {
     const [drinkType, setDrinkType] = useState<DrinkType | null>(null);
-    const [roastLevel, setRoastLevel] = useState<number>(0);
+    const [roastLevel, setRoastLevel] = useState<number>(activeBean?.roastLevel || 0);
+    const [grindInput, setGrindInput] = useState<string>(activeBean?.grindSetting || "");
+    const [grindSaved, setGrindSaved] = useState(false);
+
+    useEffect(() => {
+        if (activeBean) {
+            if (activeBean.roastLevel && roastLevel === 0) {
+                setRoastLevel(activeBean.roastLevel);
+            }
+            setGrindInput(activeBean.grindSetting || "");
+        }
+    }, [activeBean?.id, activeBean?.roastLevel, activeBean?.grindSetting]);
   
     const [timer, setTimer] = useState(0);
     const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -124,9 +140,19 @@ export function SmartDialIn() {
   };
 
   const handleSaveToLibrary = () => {
-    let beanData: Partial<SavedBean> = { roastLevel: roastLevel as RoastLevel };
+    let beanData: Partial<SavedBean> = {
+      roastLevel: roastLevel as RoastLevel,
+      grindSetting: grindInput.trim() || undefined,
+    };
     setBeanForDialog(beanData);
     setAddBeanOpen(true);
+  };
+
+  const handleUpdateActiveBeanGrind = async () => {
+    if (!activeBean?.id) return;
+    await updateBean(activeBean.id, { grindSetting: grindInput.trim() || null });
+    setGrindSaved(true);
+    setTimeout(() => setGrindSaved(false), 2500);
   };
 
   const handleDialogClose = () => {
@@ -149,6 +175,17 @@ export function SmartDialIn() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {activeBean && (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#C67C4E]/30 bg-[#C67C4E]/10 px-3 py-2 text-xs text-[#E6D2B5]">
+              <span className="flex items-center gap-1.5 font-medium">
+                <Target className="h-3.5 w-3.5 text-[#C67C4E]" />
+                פול פעיל: {activeBean.roasterName} · {activeBean.beanName}
+              </span>
+              {activeBean.grindSetting && (
+                <span className="text-[#EAE0D5]/80">טחינה נוכחית: {activeBean.grindSetting}</span>
+              )}
+            </div>
+          )}
           {lastShot && (
             <div className="text-sm text-gray-500 text-center">
                 חישוב אחרון: {translateDrinkType(lastShot.drinkType)} | קלייה: {lastShot.roastLevel} | {lastShot.time.toFixed(1)} שניות
@@ -187,6 +224,31 @@ export function SmartDialIn() {
               <p className="text-sm opacity-90 text-center">
                 זמן יעד: <strong>{result.targetTime.toFixed(1)}s</strong> · בפועל: <strong>{result.actualTime.toFixed(1)}s</strong>
               </p>
+              {activeBean && (
+                <div className="flex items-center justify-center gap-2 pt-2">
+                  <Input
+                    value={grindInput}
+                    onChange={(e) => setGrindInput(e.target.value)}
+                    placeholder="דרגת טחינה חדשה..."
+                    className="h-8 max-w-[160px] text-xs bg-[#1F1712] border-[#C67C4E]/40 text-[#EAE0D5]"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleUpdateActiveBeanGrind}
+                    className="h-8 bg-[#C67C4E] text-white hover:bg-[#C67C4E]/90 text-xs"
+                  >
+                    {grindSaved ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 ml-1" />
+                        עודכן!
+                      </>
+                    ) : (
+                      "עדכן טחינה לפול הפעיל"
+                    )}
+                  </Button>
+                </div>
+              )}
               <div className="flex justify-center pt-2">
                 <Button
                   variant="outline"

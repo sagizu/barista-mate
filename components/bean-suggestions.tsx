@@ -5,15 +5,17 @@ import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "@/firebase-config";
 import type { SavedBean } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles } from "lucide-react";
+import { Sparkles, PlusCircle } from "lucide-react";
 import { RoastRatingInput } from "./roast-rating-input";
 
 interface BeanSuggestionsProps {
   userBeans: SavedBean[];
+  onSelectBean?: (bean: Partial<SavedBean>) => void;
 }
 
-export function BeanSuggestions({ userBeans }: BeanSuggestionsProps) {
+export function BeanSuggestions({ userBeans, onSelectBean }: BeanSuggestionsProps) {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -175,6 +177,28 @@ export function BeanSuggestions({ userBeans }: BeanSuggestionsProps) {
                       {tag}
                     </span>
                   ))}
+                </div>
+              )}
+
+              {onSelectBean && (
+                <div className="pt-2 mt-auto flex justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2.5 text-xs border-[#C67C4E]/40 text-[#E6D2B5] hover:bg-[#C67C4E]/15"
+                    onClick={() =>
+                      onSelectBean({
+                        roasterName: bean.roasterName,
+                        beanName: bean.beanName,
+                        roastLevel: bean.roastLevel ? (Number(bean.roastLevel) as any) : null,
+                        flavorTags: bean.flavorTags || [],
+                      })
+                    }
+                  >
+                    <PlusCircle className="h-3.5 w-3.5 ml-1 text-[#C67C4E]" />
+                    הוסף לספרייה
+                  </Button>
                 </div>
               )}
             </CardContent>

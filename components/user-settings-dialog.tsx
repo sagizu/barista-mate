@@ -26,10 +26,10 @@ import {
     AlertDialogTrigger,
   } from "@/components/ui/alert-dialog";
   
-import { updateProfile } from 'firebase/auth';
+import { updateProfile, GoogleAuthProvider, linkWithPopup } from 'firebase/auth';
 import { doc, writeBatch } from 'firebase/firestore';
 import { auth, db } from '../firebase-config';
-import { deleteUserData } from '@/lib/user-service';
+import { deleteUserData, createUserDocument } from '@/lib/user-service';
 import type { SavedBean } from '@/lib/types';
 import { CoffeePassport } from './coffee-passport';
 
@@ -45,6 +45,29 @@ const UserSettingsDialog = ({ children, userBeans = [] }: UserSettingsDialogProp
   const [open, setOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isLinking, setIsLinking] = useState(false);
+
+  const handleUpgradeGuestToGoogle = async () => {
+    if (!auth.currentUser || !auth.currentUser.isAnonymous) return;
+    setError('');
+    setIsLinking(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await linkWithPopup(auth.currentUser, provider);
+      await createUserDocument(result.user);
+      setDisplayName(result.user.displayName || '');
+      setOpen(false);
+    } catch (err: any) {
+      console.error('Error linking guest account:', err);
+      if (err?.code === 'auth/credential-already-in-use') {
+        setError('חשבון Google זה כבר משויך למשתמש קיים.');
+      } else {
+        setError('שגיאה בחיבור לחשבון Google. אנא נסה שוב.');
+      }
+    } finally {
+      setIsLinking(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!user || user.isAnonymous) return;
@@ -93,9 +116,20 @@ const UserSettingsDialog = ({ children, userBeans = [] }: UserSettingsDialogProp
           <DialogTitle>הגדרות חשבון</DialogTitle>
         </DialogHeader>
         {user?.isAnonymous ? (
-          <DialogDescription className="text-[#EAE0D5]/90">
-            אתה מחובר כאורח. כדי לשמור את הנתונים שלך, עליך להירשם.
-          </DialogDescription>
+          <div className="flex flex-col gap-4 py-2">
+            <DialogDescription className="text-[#EAE0D5]/90">
+              אתה מחובר כאורח. כדי לשמור את הנתונים שלך, עליך להירשם.
+            </DialogDescription>
+            {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+            <Button
+              type="button"
+              onClick={handleUpgradeGuestToGoogle}
+              disabled={isLinking}
+              className="w-full bg-[#C67C4E] text-white hover:bg-[#C67C4E]/90"
+            >
+              {isLinking ? 'מתחבר...' : 'שדרג לחשבון Google ושמור נתונים'}
+            </Button>
+          </div>
         ) : (
           <div className="flex flex-col gap-6 py-2">
             <CoffeePassport userBeans={userBeans} userName={user?.displayName} />

@@ -36,6 +36,7 @@ export interface SavedBean {
   pricePerKilo?: number | null;
   createdAt: string;
   openedDate?: string;
+  roastDate?: string | null;
   dose?: number;
   rating?: number | null;
   imageUrl?: string | null;

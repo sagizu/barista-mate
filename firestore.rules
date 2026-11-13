@@ -30,6 +30,7 @@ rules_version = '2';
 //   - pricePerKilo: number | null (optional, >= 0)
 //   - createdAt: timestamp | string (optional)
 //   - openedDate: string | null (optional, <= 100 chars)
+//   - roastDate: string | null (optional, <= 64 chars)
 //   - dose: number | null (optional, > 0)
 //   - rating: number | null (optional, 0..5)
 //   - imageUrl: string | null (optional, <= 2048 chars)
@@ -93,6 +94,10 @@ service cloud.firestore {
              (data[field] is string && data[field].size() <= maxLen);
     }
 
+    function optionalString(data, field, maxLen) {
+      return isValidOptionalNullableString(data, field, maxLen);
+    }
+
     function isValidUser(data, userId) {
       return data.keys().hasOnly([
                'uid',
@@ -128,6 +133,7 @@ service cloud.firestore {
                'pricePerKilo',
                'createdAt',
                'openedDate',
+               'roastDate',
                'dose',
                'rating',
                'imageUrl'
@@ -142,6 +148,7 @@ service cloud.firestore {
              isValidOptionalNullableString(data, 'grindSetting', 200) &&
              isValidOptionalNullableString(data, 'beanDescription', 2000) &&
              isValidOptionalNullableString(data, 'openedDate', 100) &&
+             optionalString(data, 'roastDate', 64) &&
              isValidOptionalNullableString(data, 'imageUrl', 2048) &&
              (!('isTestData' in data) || data.isTestData is bool) &&
              (!('flavorTags' in data) || (data.flavorTags is list && data.flavorTags.size() <= 50)) &&

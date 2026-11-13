@@ -21,6 +21,7 @@ import { uploadBeanImage, deleteBeanImage } from "@/lib/storage";
 import { RoastRatingInput } from "./roast-rating-input";
 import { RoasterCombobox } from "./roaster-combobox";
 import { BeanCombobox } from "./bean-combobox";
+import { HybridDateInput } from "./hybrid-date-input";
 import roasteries from '@/roasteries.json';
 
 interface AddBeanDialogProps {
@@ -311,6 +312,14 @@ export function AddBeanDialog({
                 <Label htmlFor="bagWeight">משקל שקית (גרם)</Label>
                 <Input id="bagWeight" type="number" value={bean.bagWeightGrams || ''} onChange={(e) => setBean({ ...bean, bagWeightGrams: e.target.value ? parseInt(e.target.value, 10) : null })} />
             </div>
+           </div>
+           <div>
+            <Label htmlFor="roastDate" className="text-right">תאריך קלייה (אופציונלי)</Label>
+            <HybridDateInput
+              id="roastDate"
+              value={bean.roastDate || ''}
+              onChange={(val) => setBean({ ...bean, roastDate: val || null })}
+            />
            </div>
           <div>
             <Label>ציון אישי</Label>
