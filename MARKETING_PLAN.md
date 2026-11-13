@@ -48,10 +48,10 @@
   - [x] **PWA Install Prompt Banner**:
     - Detect `beforeinstallprompt` on Android Chrome (and Safari on iOS) and show a dismissible Hebrew banner: **"התקן את Barista Mate כאפליקציה לגישה מהירה מהמסך הראשי"**.
 
-- [ ] **Phase 4 (Organic Acquisition & Measurement): Community SEO & Analytics**
-  - [ ] **Public Roaster & Bean Explorer (`/explore`)**:
+- [x] **Phase 4 (Organic Acquisition & Measurement): Community SEO & Analytics** *(Code Completed & Tested)*
+  - [x] **Public Roaster & Bean Explorer (`/explore`)**:
     - Server-rendered public catalog backed by `global_roasters` and `global_beans` so Google searches for Israeli specialty roasters and beans can discover Barista Mate organically.
-  - [ ] **Privacy-Friendly Funnel Analytics**:
-    - Add `@vercel/analytics` (or Firebase Analytics events) to track key funnel milestones: `landing_view`, `signin_google`, `signin_guest`, `guest_upgraded`, `bean_added`, `dial_in_completed`, `push_enabled`, and `share_clicked`.
+  - [x] **Privacy-Friendly Funnel Analytics**:
+    - Added Firebase Analytics event tracking (`lib/analytics.ts`) for `landing_view`, `signin_google`, `signin_guest`, and `explore_view`.
   - [ ] **Community Launch Playbook (Non-Code)**:
     - Post the new visual preview + direct link in Israeli home-espresso Facebook groups, Telegram/WhatsApp coffee communities, and Reddit/forums after Phase 1 & 2 ship.

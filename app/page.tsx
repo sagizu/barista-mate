@@ -6,6 +6,7 @@ import { Loader2, Calculator, Book, Wrench, Coffee, Sparkles, Bell } from 'lucid
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { signInWithGoogle, signInAsGuest } from '@/lib/auth';
+import { trackEvent } from '@/lib/analytics';
 import { db } from '@/firebase-config';
 import { collection, getCountFromServer } from 'firebase/firestore';
 import { SmartDialIn } from '@/components/smart-dial-in';
@@ -16,6 +17,7 @@ const LandingPage = () => {
   const [showDemoDialIn, setShowDemoDialIn] = useState(false);
 
   useEffect(() => {
+    trackEvent('landing_view');
     let active = true;
     async function loadStats() {
       try {
@@ -75,14 +77,20 @@ const LandingPage = () => {
         <section className="w-full max-w-sm mx-auto pb-12">
           <div className="flex flex-col gap-3">
             <Button
-              onClick={signInWithGoogle}
+              onClick={() => {
+                trackEvent('signin_google');
+                signInWithGoogle();
+              }}
               className="w-full bg-[#C67C4E] text-white hover:bg-[#C67C4E]/90 font-semibold h-12 text-base shadow-[0_6px_20px_rgba(198,124,78,0.28)]"
               size="lg"
             >
               התחברות מהירה עם Google
             </Button>
             <Button
-              onClick={signInAsGuest}
+              onClick={() => {
+                trackEvent('signin_guest');
+                signInAsGuest();
+              }}
               variant="outline"
               className="w-full border-[#3E2C22] bg-[#1F1712]/80 text-[#E6D2B5] hover:bg-[#3E2C22]/50 h-11"
             >
@@ -157,7 +165,10 @@ const LandingPage = () => {
 
       {/* Footer */}
       <footer className="w-full py-6 border-t border-[#3E2C22]/60">
-        <div className="container mx-auto px-4 md:px-6 flex items-center justify-center gap-4">
+        <div className="container mx-auto px-4 md:px-6 flex items-center justify-center gap-6">
+          <a href="/explore" className="text-sm text-[#C67C4E] hover:underline">
+            מאגר בתי קלייה ופולים
+          </a>
           <a href="/privacy" className="text-sm text-[#EAE0D5]/60 hover:text-[#C67C4E] hover:underline">
             מדיניות פרטיות
           </a>
