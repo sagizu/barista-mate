@@ -26,6 +26,7 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { CommunitySpotlight } from "./community-spotlight";
 import { BeanSuggestions } from "./bean-suggestions";
+import { buildBeanShareUrl, generateBeanShareImage, shareImageOrDownload } from "@/lib/share-card";
 
 const flavorTagsOptions = [
   "שוקולדי", "אגוזי", "פירותי", "הדרים", "פרחוני", "מתוק", "חמצמץ", 
@@ -214,13 +215,15 @@ export function BeanLibrary({ sharedBeans, sharedGeneralSettings }: BeanLibraryP
   };
 
   const handleShare = async (bean: SavedBean) => {
-    const shareText = `המלצת קפה מהספרייה שלי ב-Barista Mate ☕:\n${bean.roasterName} - ${bean.beanName}\nטעמים: ${bean.flavorTags?.join(', ') || 'אין טעמים מוגדרים'}\n\nלניהול ספריית הפולים האישית שלכם: https://barista-mate.vercel.app/`;
+    const shareUrl = buildBeanShareUrl(bean);
+    const shareText = `המלצת קפה מהספרייה שלי ב-Barista Mate ☕:\n${bean.roasterName} - ${bean.beanName}${bean.grindSetting ? `\nדרגת טחינה: ${bean.grindSetting}` : ''}\nטעמים: ${bean.flavorTags?.join(', ') || 'אין טעמים מוגדרים'}\n\nלהוספה לספרייה שלך בלחיצה:\n${shareUrl}`;
     
     if (navigator.share) {
       try {
         await navigator.share({
           title: 'המלצת קפה - Barista Mate',
           text: shareText,
+          url: shareUrl,
         });
       } catch (error) {
         console.error("Error sharing:", error);
@@ -228,12 +231,23 @@ export function BeanLibrary({ sharedBeans, sharedGeneralSettings }: BeanLibraryP
     } else if (navigator.clipboard) {
       try {
         await navigator.clipboard.writeText(shareText);
-        alert("הטקסט הועתק ללוח!");
+        alert("הטקסט והקישור הועתקו ללוח!");
       } catch (err) {
         console.error('Failed to copy text: ', err);
       }
     } else {
       alert("השיתוף וההעתקה זמינים רק בחיבור מאובטח (HTTPS) או דרך הדפדפן שלך.");
+    }
+  };
+
+  const handleShareCardImage = async (bean: SavedBean) => {
+    try {
+      const shareUrl = buildBeanShareUrl(bean);
+      const file = await generateBeanShareImage(bean);
+      const shareText = `המלצת קפה ב-Barista Mate ☕: ${bean.roasterName} - ${bean.beanName}\n${shareUrl}`;
+      await shareImageOrDownload(file, shareText, 'המלצת קפה - Barista Mate', shareUrl);
+    } catch (error) {
+      console.error("Error sharing bean image:", error);
     }
   };
 
@@ -388,6 +402,16 @@ export function BeanLibrary({ sharedBeans, sharedGeneralSettings }: BeanLibraryP
                         </div>
                     </div>
                     <div className="flex gap-1 flex-shrink-0 flex-wrap justify-end">
+                        <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0 text-[#EAE0D5]/60 hover:text-[#C67C4E]"
+                        onClick={() => handleShareCardImage(bean)}
+                        aria-label="שתף כתמונה"
+                        title="שתף כתמונה"
+                        >
+                        <ImageIcon className="h-4 w-4" />
+                        </Button>
                         <Button
                         variant="ghost"
                         size="icon"

@@ -34,10 +34,10 @@
     - Soften the guest-mode copy (highlight the new one-tap **"שדרג לחשבון Google ושמור נתונים"** option instead of scaring new users away).
     - Add a concise visual preview/mockup of the 3 core tools (Smart Dial-In, Bean Library, Maintenance Alerts).
 
-- [ ] **Phase 2 (Viral Loops): Make Sharing Visual & Actionable**
-  - [ ] **Visual Share Card (`CoffeePassport` & Bean Recipe)**:
+- [x] **Phase 2 (Viral Loops): Make Sharing Visual & Actionable** *(Completed & Tested)*
+  - [x] **Visual Share Card (`CoffeePassport` & Bean Recipe)**:
     - Add a **"שתף כתמונה"** (Canvas-to-PNG / Web Share `files`) option for the Caffeine Passport and individual bean recipes (showing roaster, bean, roast level, grind setting, and flavor tags with subtle `Barista Mate` branding) tailored for Instagram Stories and WhatsApp coffee groups.
-  - [ ] **Deep-Link Recipe Sharing (`?shareBean=...` or `/explore`)**:
+  - [x] **Deep-Link Recipe Sharing (`?shareBean=...` or `/explore`)**:
     - Allow users to share a direct link to a bean's dial-in profile so friends opening the link see the recipe card and can tap **"הוסף לספרייה שלי"** in one click.
 
 - [ ] **Phase 3 (Frictionless Onboarding & Retention): Try Before Sign-Up & PWA Install**

@@ -1,8 +1,9 @@
 "use client";
 
 import type { SavedBean } from "@/lib/types";
-import { Coffee, Store, Award, Share2 } from "lucide-react";
+import { Coffee, Store, Award, Share2, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { generatePassportShareImage, shareImageOrDownload } from "@/lib/share-card";
 
 interface CoffeePassportProps {
   userBeans?: SavedBean[];
@@ -38,6 +39,16 @@ export function CoffeePassport({ userBeans = [], userName }: CoffeePassportProps
     }
   };
 
+  const handleShareImage = async () => {
+    try {
+      const file = await generatePassportShareImage({ userName, totalBeans, uniqueRoasters });
+      const text = `מדד הקפאין שלי ב-Barista Mate ☕ (${totalBeans} פולים, ${uniqueRoasters} בתי קלייה)`;
+      await shareImageOrDownload(file, text, 'מדד הקפאין שלי', 'https://barista-mate.vercel.app/');
+    } catch (error) {
+      console.error("Error sharing passport image:", error);
+    }
+  };
+
   return (
     <div className="relative overflow-hidden rounded-xl border border-[#3E2C22] bg-gradient-to-br from-[#2a1d18] to-[#1a110e] shadow-lg mb-4 pt-6 pb-4 px-5">
       {/* Decorative Background Elements */}
@@ -50,15 +61,26 @@ export function CoffeePassport({ userBeans = [], userName }: CoffeePassportProps
           <h3 className="text-lg font-bold text-[#E6D2B5] tracking-tight">מדד קפאין</h3>
           <p className="text-xs text-[#C67C4E] pr-0.5">{userName || "אורח"}</p>
         </div>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={handleShare}
-          className="text-[#EAE0D5]/60 hover:text-[#C67C4E] hover:bg-[#3E2C22]/50 rounded-full h-8 w-8"
-          title="שתף מדד"
-        >
-          <Share2 className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleShareImage}
+            className="text-[#EAE0D5]/60 hover:text-[#C67C4E] hover:bg-[#3E2C22]/50 rounded-full h-8 w-8"
+            title="שתף כתמונה"
+          >
+            <ImageIcon className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleShare}
+            className="text-[#EAE0D5]/60 hover:text-[#C67C4E] hover:bg-[#3E2C22]/50 rounded-full h-8 w-8"
+            title="שתף מדד"
+          >
+            <Share2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Stats Grid - Compact */}
