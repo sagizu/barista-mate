@@ -18,7 +18,7 @@ export function PwaInstallBanner() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (localStorage.getItem(DISMISS_KEY) === 'true') return;
+    if (typeof window.localStorage?.getItem === 'function' && window.localStorage.getItem(DISMISS_KEY) === 'true') return;
 
     const isStandalone =
       window.matchMedia?.('(display-mode: standalone)').matches ||
@@ -47,8 +47,8 @@ export function PwaInstallBanner() {
 
   const handleDismiss = () => {
     setDismissed(true);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(DISMISS_KEY, 'true');
+    if (typeof window !== 'undefined' && typeof window.localStorage?.setItem === 'function') {
+      window.localStorage.setItem(DISMISS_KEY, 'true');
     }
   };
 

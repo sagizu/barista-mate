@@ -78,12 +78,21 @@ describe('BeanLibrary', () => {
       expect(roasteryTitles[1]).toHaveTextContent('B Roastery');
     });
 
+    // Roasters are collapsed by default; expand both to verify bean sorting inside
+    expect(screen.queryByText(/Blend/)).not.toBeInTheDocument();
+
+    const roasteryTitles = screen.getAllByTestId('roastery-title');
+    fireEvent.click(roasteryTitles[0].closest('button')!);
+    fireEvent.click(roasteryTitles[1].closest('button')!);
+
     // Check bean name sorting within the same roastery
-    const bRoasteryBeans = screen.getAllByText(/Blend/);
-    // Based on sorting: Y Blend (from A), then X Blend, then Z Blend (both from B)
-    expect(bRoasteryBeans[0]).toHaveTextContent('Y Blend');
-    expect(bRoasteryBeans[1]).toHaveTextContent('X Blend');
-    expect(bRoasteryBeans[2]).toHaveTextContent('Z Blend');
+    await waitFor(() => {
+      const bRoasteryBeans = screen.getAllByText(/Blend/);
+      // Based on sorting: Y Blend (from A), then X Blend, then Z Blend (both from B)
+      expect(bRoasteryBeans[0]).toHaveTextContent('Y Blend');
+      expect(bRoasteryBeans[1]).toHaveTextContent('X Blend');
+      expect(bRoasteryBeans[2]).toHaveTextContent('Z Blend');
+    });
   });
 
   it('filters by roastery', async () => {
@@ -199,8 +208,8 @@ describe('BeanLibrary', () => {
        expect(spotlightHeading).toBeInTheDocument();
     });
 
-    // Verify the library section exists below it
-    expect(screen.getByRole('heading', { name: /ספריית הפולים/i })).toBeInTheDocument();
+    // Verify the library tab exists below it
+    expect(screen.getByRole('tab', { name: /הספרייה שלי/i })).toBeInTheDocument();
 
     // Verify 'A Roastery' list is COMPLETELY GONE from the collection
     // (Because its ONLY bean, Y Blend, was extracted to the Spotlight)
@@ -212,6 +221,62 @@ describe('BeanLibrary', () => {
 
     const yBlendInstances = screen.getAllByText('Y Blend');
     expect(yBlendInstances.length).toBe(1); // Should only exist in the spotlight, not twice
+  });
+
+  it('searches beans quickly and auto-expands matching roasters', async () => {
+    render(<BeanLibrary />);
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('roastery-title').length).toBe(2);
+    });
+
+    const searchInput = screen.getByLabelText('חפש פול או בית קלייה');
+    fireEvent.change(searchInput, { target: { value: 'Z Blend' } });
+
+    await waitFor(() => {
+      const roasteryTitles = screen.getAllByTestId('roastery-title');
+      expect(roasteryTitles.length).toBe(1);
+      expect(roasteryTitles[0]).toHaveTextContent('B Roastery');
+      expect(screen.getByText('Z Blend')).toBeInTheDocument();
+      expect(screen.queryByText('X Blend')).not.toBeInTheDocument();
+    });
+  });
+
+  it('filters by 1-tap roaster chip and toggles compact bean details', async () => {
+    render(<BeanLibrary />);
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('roastery-title').length).toBe(2);
+    });
+
+    const chipBar = screen.getByRole('region', { name: 'סינון מהיר לפי בית קלייה' });
+    fireEvent.click(within(chipBar).getByRole('button', { name: 'B Roastery' }));
+
+    await waitFor(() => {
+      const roasteryTitles = screen.getAllByTestId('roastery-title');
+      expect(roasteryTitles.length).toBe(1);
+      expect(roasteryTitles[0]).toHaveTextContent('B Roastery');
+      expect(screen.getByText('X Blend')).toBeInTheDocument();
+    });
+
+    // Toggle compact bean details on first bean
+    const detailsButtons = screen.getAllByRole('button', { name: 'הצג פרטים' });
+    fireEvent.click(detailsButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('קרמל')).toBeInTheDocument();
+    });
+  });
+
+  it('switches between personal library and discover tabs', async () => {
+    render(<BeanLibrary />);
+
+    const discoverTab = await screen.findByRole('tab', { name: /גילוי והמלצות/i });
+    fireEvent.click(discoverTab);
+
+    await waitFor(() => {
+      expect(discoverTab).toHaveAttribute('aria-selected', 'true');
+    });
   });
   
 });

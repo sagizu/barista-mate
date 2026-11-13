@@ -39,7 +39,7 @@ barista-mate/
 │   ├── auth-splash-screen.tsx  # Initial full-screen loading spinner
 │   ├── auth-wrapper.tsx        # Guards authenticated routes and renders splash during auth init
 │   ├── bean-combobox.tsx       # Searchable popover with autocomplete against global/verified beans
-│   ├── bean-library.tsx        # Bean management tab: Spotlight layout, filters, grouping, CRUD
+│   ├── bean-library.tsx        # Bean management tab: Spotlight layout, Personal/Discover sub-tabs, quick search, roaster chips, collapsible roaster accordions, filters, CRUD
 │   ├── bean-suggestions.tsx    # Recommendation engine matching user tastes against global beans
 │   ├── coffee-passport.tsx     # "Caffeine Index" stats card with Web Share API integration
 │   ├── community-spotlight.tsx # Randomized community bean discovery feed with in-memory caching
@@ -127,7 +127,8 @@ barista-mate/
 - Decouples `activeBean` visually from the main library grid.
 - Stored as `settings.activeBeanId` inside Firestore document `users/{uid}`.
 - Pinned at the top of the library inside a dedicated spotlight card with an inline `HybridDateInput` updating `activeBeanOpenedDate`.
-- The remaining collection is categorized and grouped by `roasterName`.
+- Below the Spotlight, segmented sub-tabs separate the personal library (`הספרייה שלי`) from discovery (`גילוי והמלצות`: `BeanSuggestions` + `CommunitySpotlight`).
+- The personal library provides quick text search, 1-tap horizontal roaster filter chips, advanced collapsible filters, and collapsible roaster accordions (collapsed by default, auto-expanded when searching/filtering) with compact expandable bean rows.
 
 #### Community Recommendation Engine (`components/bean-suggestions.tsx`)
 - Computes user flavor preferences and average roast level from the user's current bean library.

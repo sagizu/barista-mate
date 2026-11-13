@@ -33,7 +33,7 @@ A professional Progressive Web App (PWA) designed to manage and perfect your hom
 - **Bean Imagery**: Upload photos of your coffee bags directly to your library. Images are automatically compressed on the client-side to save bandwidth and stored securely in Firebase Cloud Storage.
 - **Comprehensive Bean Library**: Maintain a detailed library of your coffee beans, including roaster name, bean name, grind setting, roast level (visual 1-5 rating), price paid, bag weight, and flavor notes.
 - **Community Spotlight**: Discover what the community is brewing with a dynamic, randomized showcase of high-quality beans shared by other users in your Bean Library.
-- **Smart Filtering & Sorting**: Organize your library by roastery, and instantly filter your collection by flavor profile, exact roast level range, and price per kilo.
+- **Smart Filtering, Search & Mobile-First Accordions**: Organize your personal library into collapsible roaster accordions with compact bean rows, instant text search, 1-tap roaster chips, advanced flavor/roast/price filters, and a dedicated Discover tab for personalized suggestions and Community Spotlight.
 - **Dial-In Integration**: Save dial-in settings (grind size, dose, and roast level) directly from the Smart Dial-In Calculator to your bean library as a default for future shots.
 
 ### 5. Maintenance Log & Push Notifications

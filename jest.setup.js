@@ -83,6 +83,20 @@ vi.stubGlobal('ResizeObserver', ResizeObserver);
 // Mock scrollIntoView for Vitest/JSDOM
 window.HTMLElement.prototype.scrollIntoView = vi.fn();
 
+// Polyfill localStorage when Node/JSDOM provides an incomplete Storage object
+if (typeof window !== 'undefined' && typeof window.localStorage?.getItem !== 'function') {
+    const store = new Map();
+    const memoryStorage = {
+        getItem: (key) => (store.has(key) ? store.get(key) : null),
+        setItem: (key, val) => { store.set(String(key), String(val)); },
+        removeItem: (key) => { store.delete(String(key)); },
+        clear: () => { store.clear(); },
+        key: (i) => Array.from(store.keys())[i] ?? null,
+        get length() { return store.size; },
+    };
+    vi.stubGlobal('localStorage', memoryStorage);
+}
+
 // Mock auth hook
 vi.mock('react-firebase-hooks/auth', () => ({
     useAuthState: vi.fn(() => [{ uid: 'test-user' }, false, undefined]),

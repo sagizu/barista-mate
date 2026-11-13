@@ -71,3 +71,20 @@ At the end of each task:
 1. Check whether `AGENTS.md` or `.agents/skills/barista-mate-workflow/SKILL.md` should be updated (for example, if a step didn't flow as expected, a command/convention changed, or a new pitfall was discovered).
 2. If updates are needed, apply them cleanly (or propose them to the user if they change the core workflow) and commit/push them.
 
+---
+
+## Windows Environment Notes (For Agents)
+
+If `node`, `npm`, `git`, or `vercel` are not on the default shell `PATH` in a sandboxed terminal, prepend these installed paths before concluding they are missing:
+- **Node.js / npm / npx:** `C:\Program Files\nodejs`
+- **Git (MinGit via WinGet):** `C:\Users\bella\AppData\Local\Microsoft\WinGet\Packages\Git.MinGit_Microsoft.Winget.Source_8wekyb3d8bbwe\cmd`
+- **Vercel CLI:** `C:\Users\bella\AppData\Roaming\npm`
+
+Example PowerShell prefix:
+```powershell
+$env:PATH = "C:\Users\bella\AppData\Local\Microsoft\WinGet\Packages\Git.MinGit_Microsoft.Winget.Source_8wekyb3d8bbwe\cmd;C:\Users\bella\AppData\Roaming\npm;C:\Program Files\nodejs;" + $env:PATH
+```
+
+Note on Next.js 16 builds in this environment:
+- If `npm run build` (Turbopack) fails in the sandbox due to Google Fonts (`Heebo`) network access or a Turbopack CSS worker issue on Windows, verify with `npx next build --webpack` (with network access if needed).
+
