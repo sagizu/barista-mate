@@ -17,7 +17,7 @@ Follow this workflow for every new conversation and every new task in the `baris
 Before proposing or writing any code:
 1. Read `README.md` to understand the product mission, features, and setup.
 2. Read `CODEMAP.md` to understand the current architecture, file layout, data models, and component responsibilities.
-3. Keep project conventions from `rules.md` in mind (Hebrew UI labels/toasts, `shadcn/ui` + Tailwind CSS, Cloud Firestore persistence, `lib/types.ts` types, Vitest).
+3. Keep the project conventions in `AGENTS.md` in mind (Hebrew UI labels/toasts, `shadcn/ui` + Tailwind CSS, Cloud Firestore persistence, `lib/types.ts` types, Vitest).
 
 ## 2. Suggest What to Implement and How
 
@@ -31,7 +31,7 @@ Before making changes:
 
 ## 3. Implement
 
-- Follow existing patterns in `CODEMAP.md` and `rules.md`.
+- Follow existing patterns in `CODEMAP.md` and `AGENTS.md`.
 - Keep changes minimal, clean, and well-typed against `lib/types.ts`.
 - Add or update Vitest tests for new or modified behavior.
 
