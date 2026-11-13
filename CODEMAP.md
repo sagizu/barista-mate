@@ -72,7 +72,8 @@ barista-mate/
 │   ├── manifest.json           # PWA web app manifest
 │   └── icons & svgs            # App icons, espresso SVGs
 ├── roasteries.json             # Seed list of popular Israeli specialty coffee roasters
-├── rules.md                    # Antigravity AI rules and project conventions
+├── AGENTS.md                   # Always-on Antigravity AI workflow & project conventions
+├── .agents/skills/barista-mate-workflow/SKILL.md  # Mandatory end-to-end project workflow skill
 ├── firestore.rules             # Cloud Firestore security rules
 ├── next.config.js              # Next.js configuration (e.g., allowedDevOrigins)
 ├── tailwind.config.ts          # Tailwind CSS theme configuration (custom coffee palette)
@@ -159,7 +160,7 @@ barista-mate/
 
 | Configuration File | Scope & Critical Settings |
 | :--- | :--- |
-| `rules.md` | **Mandatory AI agent instructions**: Hebrew UI requirement, shadcn/ui exclusive usage, Firestore data persistence rules, Spotlight layout constraints, Vitest testing patterns. |
+| `AGENTS.md` & `.agents/skills/barista-mate-workflow/SKILL.md` | **Mandatory AI agent rules & workflow**: Always-on project conventions (Hebrew UI, shadcn/ui, Firestore-only persistence, Spotlight layout, Vitest patterns) and end-to-end task workflow (plan, implement, docs, test/lint/build, push, Vercel verify). |
 | `next.config.js` | Configures `allowedDevOrigins` for local LAN testing over mobile devices (`192.168.31.35`). |
 | `tailwind.config.ts` | Theme definitions: custom colors (`terracotta`, `coffee`, `amber`), Hebrew font mapping (`var(--font-hebrew)`), RTL class support. |
 | `firestore.rules` | Security rules: `users/{userId}/{document=**}` restricted to authenticated user matching `userId`. Write-only access for `feedback/{feedbackId}`. |
@@ -187,7 +188,7 @@ Before making any code modifications in a new session, every AI agent must execu
 
 ```text
 [ ] STEP 1: CONTEXT & RULE VALIDATION
-    - Review `rules.md` for project-specific constraints:
+    - Review `AGENTS.md` and `.agents/skills/barista-mate-workflow/SKILL.md` for project-specific constraints and workflow:
       * UI labels, error toasts, and UI-facing text MUST be in Hebrew.
       * Only `shadcn/ui` components and inline Tailwind CSS classes are permitted.
       * No persistent user data in LocalStorage (all persistent state belongs in Firestore).
