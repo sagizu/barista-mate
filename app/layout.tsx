@@ -13,30 +13,30 @@ const heebo = Heebo({
 });
 
 export const metadata: Metadata = {
-  title: "Barista Mate",
-  description: "The ultimate tool for home baristas: track beans, dial-ins and manage espresso machine maintenance.",
+  title: "Barista Mate | העוזר האישי לבריסטה הביתי — כיול אספרסו, ספריית פולים ותחזוקה",
+  description: "הכלי האולטימטיבי לבריסטה הביתי: מחשבון כיול חכם לטחינה וזמן חילוץ, ניהול ספריית פולי קפה מומלצים, והתראות תחזוקה למכונת האספרסו.",
+  keywords: [
+    "אספרסו ביתי",
+    "כיול אספרסו",
+    "כיול טחינה",
+    "פולי קפה",
+    "בתי קלייה בישראל",
+    "תחזוקת מכונת אספרסו",
+    "Barista Mate",
+  ],
   metadataBase: new URL('https://barista-mate.vercel.app'),
   openGraph: {
-    title: "Barista Mate",
-    description: "The ultimate tool for home baristas: track beans, dial-ins and manage espresso machine maintenance.",
+    title: "Barista Mate — העוזר האישי לבריסטה הביתי",
+    description: "מחשבון כיול חכם, ספריית פולי קפה אישית עם המלצות קהילה, ומעקב תחזוקה למכונת האספרסו עם התראות לנייד.",
     url: "https://barista-mate.vercel.app",
     siteName: "Barista Mate",
-    images: [
-      {
-        url: '/icon.svg',
-        width: 800,
-        height: 800,
-        alt: 'Barista Mate Logo',
-      },
-    ],
     locale: 'he_IL',
     type: 'website',
   },
   twitter: {
-    card: "summary",
-    title: "Barista Mate",
-    description: "The ultimate tool for home baristas: track beans, dial-ins and manage espresso machine maintenance.",
-    images: ['/icon.svg'],
+    card: "summary_large_image",
+    title: "Barista Mate — העוזר האישי לבריסטה הביתי",
+    description: "מחשבון כיול חכם, ספריית פולי קפה אישית עם המלצות קהילה, ומעקב תחזוקה למכונת האספרסו.",
   },
   icons: {
     icon: '/icon.svg',

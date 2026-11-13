@@ -2,92 +2,148 @@
 
 import { useAuth } from '@/lib/auth-context';
 import Dashboard from '@/components/dashboard';
-import { Loader2, Calculator, Book, Wrench, Coffee } from 'lucide-react';
+import { Loader2, Calculator, Book, Wrench, Coffee, Sparkles, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { signInWithGoogle, signInAsGuest } from '@/lib/auth';
-import React from 'react';
+import { db } from '@/firebase-config';
+import { collection, getCountFromServer } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
 
 const LandingPage = () => {
-  const style = {
-    '--primary-color': '#C67C4E',
-    '--dark-accent': '#3E2C22',
-    '--background-cream': '#F5F5DC'
-  } as React.CSSProperties;
+  const [communityStats, setCommunityStats] = useState<{ roasters: number; beans: number } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    async function loadStats() {
+      try {
+        const [roastersSnap, beansSnap] = await Promise.all([
+          getCountFromServer(collection(db, 'global_roasters')),
+          getCountFromServer(collection(db, 'global_beans')),
+        ]);
+        if (!active) return;
+        const roasters = roastersSnap.data().count;
+        const beans = beansSnap.data().count;
+        if (roasters > 0 && beans > 0) {
+          setCommunityStats({ roasters, beans });
+        }
+      } catch {
+        // Ignore if offline or unauthenticated in restricted environments
+      }
+    }
+    loadStats();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#2a1d18] via-[#1a110e] to-[#0f0a08] rtl" style={style}>
-      <main className="flex-1 flex flex-col items-center justify-center p-4 text-center">
+    <div className="flex flex-col min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#2a1d18] via-[#1a110e] to-[#0f0a08] rtl text-[#EAE0D5]">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-10 text-center">
         {/* Hero Section */}
-        <section className="w-full max-w-4xl mx-auto pt-16 pb-2 md:pt-24 md:pb-4">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center space-y-2 text-center">
-              <Coffee className="w-16 h-16 text-[var(--primary-color)]" />
-              <h1 className="text-4xl md:text-6xl font-bold tracking-tighter" style={{color: 'var(--dark-accent)'}}>
-                Barista Mate
-              </h1>
-              <p className="max-w-[700px] text-lg md:text-xl font-medium text-zinc-100">
-                הכלי האולטימטיבי לשיפור חווית האספרסו הביתית שלך.
-              </p>
+        <section className="w-full max-w-4xl mx-auto pt-6 pb-8 md:pt-12 md:pb-10">
+          <div className="flex flex-col items-center space-y-4 text-center">
+            <div className="rounded-2xl bg-[#C67C4E]/15 border border-[#C67C4E]/40 p-4 shadow-[0_0_24px_rgba(198,124,78,0.2)]">
+              <Coffee className="w-12 h-12 text-[#C67C4E]" />
             </div>
+
+            {communityStats && (
+              <Badge
+                variant="outline"
+                className="border-[#C67C4E]/40 bg-[#1F1712] text-[#E6D2B5] px-3 py-1 text-xs font-medium"
+              >
+                <Sparkles className="w-3.5 h-3.5 ml-1.5 text-[#C67C4E]" />
+                כבר במאגר: {communityStats.roasters} בתי קלייה ו-{communityStats.beans} סוגי פולים
+              </Badge>
+            )}
+
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-[#E6D2B5]">
+              Barista Mate
+            </h1>
+            <p className="max-w-[680px] text-lg md:text-xl font-medium text-[#EAE0D5]/90 leading-relaxed">
+              הכלי האולטימטיבי לשיפור חווית האספרסו הביתית שלך.
+            </p>
+            <p className="max-w-[560px] text-sm text-[#EAE0D5]/65">
+              כוון את הטחינה תוך שניות, שמור את הפולים האהובים עליך, וקבל תזכורות תחזוקה אוטומטיות ישירות לנייד.
+            </p>
+          </div>
+        </section>
+
+        {/* Action Center */}
+        <section className="w-full max-w-sm mx-auto pb-12">
+          <div className="flex flex-col gap-3">
+            <Button
+              onClick={signInWithGoogle}
+              className="w-full bg-[#C67C4E] text-white hover:bg-[#C67C4E]/90 font-semibold h-12 text-base shadow-[0_6px_20px_rgba(198,124,78,0.28)]"
+              size="lg"
+            >
+              התחברות מהירה עם Google
+            </Button>
+            <Button
+              onClick={signInAsGuest}
+              variant="outline"
+              className="w-full border-[#3E2C22] bg-[#1F1712]/80 text-[#E6D2B5] hover:bg-[#3E2C22]/50 h-11"
+            >
+              המשך כאורח
+            </Button>
+            <p className="text-xs text-[#EAE0D5]/60 text-center px-2">
+              רוצה רק להציץ? אפשר להתחיל כאורח ולשדרג לחשבון Google בכל רגע מתוך ההגדרות.
+            </p>
           </div>
         </section>
 
         {/* Feature Grid */}
         <section className="w-full max-w-5xl mx-auto">
-          <div className="container grid items-start justify-center gap-2 px-4 md:px-6 md:grid-cols-3">
-            <div className="flex flex-col items-center text-center gap-2">
-              <div className="flex items-center justify-center rounded-full bg-[var(--primary-color)] p-4">
-                <Calculator className="w-8 h-8 text-white" />
+          <div className="grid items-stretch justify-center gap-4 md:grid-cols-3 text-right">
+            <div className="flex flex-col justify-between gap-3 rounded-xl border border-[#3E2C22] bg-[#1F1712]/80 p-6 hover:border-[#C67C4E]/40 transition-colors">
+              <div className="space-y-3">
+                <div className="inline-flex items-center justify-center rounded-xl bg-[#C67C4E]/15 border border-[#C67C4E]/30 p-3">
+                  <Calculator className="w-6 h-6 text-[#C67C4E]" />
+                </div>
+                <h3 className="text-xl font-bold text-[#E6D2B5]">מחשבון כיול</h3>
+                <p className="text-sm text-[#EAE0D5]/75 leading-relaxed">
+                  מחשבון מיצוי חכם להתאמת הטחינה והזמן לפי סוג המשקה ודרגת הקלייה.
+                </p>
               </div>
-              <h3 className="text-xl font-bold" style={{color: 'var(--dark-accent)'}}>מחשבון כיול</h3>
-              <p className="text-zinc-300">מחשבון מיצוי חכם להתאמת הטחינה והזמן.</p>
+              <span className="text-xs text-[#C67C4E] font-medium">⏱️ טיימר חילוץ מדויק · עדכון בלחיצה</span>
             </div>
-            <div className="flex flex-col items-center text-center gap-2">
-              <div className="flex items-center justify-center rounded-full bg-[var(--primary-color)] p-4">
-                <Book className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold" style={{color: 'var(--dark-accent)'}}>ספריית פולים</h3>
-              <p className="text-zinc-300">ניהול ספריית פולים אישית עם סינון לפי טעמים ומחיר.</p>
-            </div>
-            <div className="flex flex-col items-center text-center gap-2">
-              <div className="flex items-center justify-center rounded-full bg-[var(--primary-color)] p-4">
-                <Wrench className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold" style={{color: 'var(--dark-accent)'}}>עמוד תחזוקה</h3>
-              <p className="text-zinc-300">מעקב תחזוקה שוטפת למכונה (אבנית, פילטר, ניקוי ראש).</p>
-            </div>
-          </div>
-        </section>
 
-        {/* Action Center */}
-        <section className="w-full max-w-xs mx-auto py-8">
-          <div className="flex flex-col gap-4">
-            <Button
-              onClick={signInWithGoogle}
-              className="w-full bg-[var(--primary-color)] text-white hover:bg-[var(--primary-color)]/90"
-              size="lg"
-            >
-              התחברות עם Google
-            </Button>
-            <Button
-              onClick={signInAsGuest}
-              variant="link"
-              className="text-slate-200"
-            >
-              המשך כאורח
-            </Button>
-            <p className="text-xs text-zinc-400 text-center px-4">
-             במצב אורח, הנתונים נשמרים רק על המכשיר הנוכחי ויימחקו ביציאה.
-            </p>
+            <div className="flex flex-col justify-between gap-3 rounded-xl border border-[#3E2C22] bg-[#1F1712]/80 p-6 hover:border-[#C67C4E]/40 transition-colors">
+              <div className="space-y-3">
+                <div className="inline-flex items-center justify-center rounded-xl bg-[#C67C4E]/15 border border-[#C67C4E]/30 p-3">
+                  <Book className="w-6 h-6 text-[#C67C4E]" />
+                </div>
+                <h3 className="text-xl font-bold text-[#E6D2B5]">ספריית פולים</h3>
+                <p className="text-sm text-[#EAE0D5]/75 leading-relaxed">
+                  ניהול ספריית פולים אישית עם סינון לפי טעמים, חלון טריות והמלצות קהילה.
+                </p>
+              </div>
+              <span className="text-xs text-[#C67C4E] font-medium">✨ המלצות חכמות לפי הטעם שלך</span>
+            </div>
+
+            <div className="flex flex-col justify-between gap-3 rounded-xl border border-[#3E2C22] bg-[#1F1712]/80 p-6 hover:border-[#C67C4E]/40 transition-colors">
+              <div className="space-y-3">
+                <div className="inline-flex items-center justify-center rounded-xl bg-[#C67C4E]/15 border border-[#C67C4E]/30 p-3">
+                  <Wrench className="w-6 h-6 text-[#C67C4E]" />
+                </div>
+                <h3 className="text-xl font-bold text-[#E6D2B5]">עמוד תחזוקה</h3>
+                <p className="text-sm text-[#EAE0D5]/75 leading-relaxed">
+                  מעקב תחזוקה שוטפת למכונה (אבנית, פילטר, ניקוי ראש) עם התראות Push לנייד.
+                </p>
+              </div>
+              <span className="text-xs text-[#C67C4E] font-medium inline-flex items-center gap-1">
+                <Bell className="w-3.5 h-3.5" /> תזכורות אוטומטיות לאנדרואיד ודפדפן
+              </span>
+            </div>
           </div>
         </section>
       </main>
 
       {/* Footer */}
-      <footer className="w-full py-6">
-        <div className="container mx-auto px-4 md:px-6 flex items-center justify-center">
-          <a href="/privacy" className="text-sm text-zinc-400 hover:underline">
-            Privacy Policy
+      <footer className="w-full py-6 border-t border-[#3E2C22]/60">
+        <div className="container mx-auto px-4 md:px-6 flex items-center justify-center gap-4">
+          <a href="/privacy" className="text-sm text-[#EAE0D5]/60 hover:text-[#C67C4E] hover:underline">
+            מדיניות פרטיות
           </a>
         </div>
       </footer>
