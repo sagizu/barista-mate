@@ -69,6 +69,7 @@ export default function Dashboard() {
   });
   const [maintenanceDates, setMaintenanceDates] = useState<any>({});
   const [maintenanceLoaded, setMaintenanceLoaded] = useState(false);
+  const [hasDialIn, setHasDialIn] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -78,6 +79,7 @@ export default function Dashboard() {
       setSettings({});
       setMaintenanceDates({});
       setMaintenanceLoaded(false);
+      setHasDialIn(false);
       return;
     }
 
@@ -135,6 +137,14 @@ export default function Dashboard() {
         if (error.code === 'permission-denied') return;
     });
 
+    // Listener for lastShot (tracks whether user has completed at least one dial-in)
+    const lastShotRef = doc(db, 'users', user.uid, 'lastShot', 'current');
+    const unsubscribeLastShot = onSnapshot(lastShotRef, (snapshot) => {
+      setHasDialIn(snapshot.exists());
+    }, (error) => {
+        if (error.code === 'permission-denied') return;
+    });
+
     // Initialize foreground messaging listener (async — store unsubscribe for cleanup)
     let unsubscribeFCM: (() => void) | undefined;
     setupForegroundMessageHandler().then((unsub) => {
@@ -145,6 +155,7 @@ export default function Dashboard() {
       unsubscribeUser();
       unsubscribeBeans();
       unsubscribeMaintenance();
+      unsubscribeLastShot();
       unsubscribeFCM?.();
       clearTimeout(initialTimer);
       clearInterval(intervalTimer);
@@ -393,6 +404,7 @@ return (
         {beansLoaded && userData !== null && (
           <OnboardingChecklist
             hasBean={beans.length > 0}
+            hasDialIn={hasDialIn}
             hasPush={Boolean(userData?.pushToken) || (Array.isArray(userData?.pushTokens) && userData.pushTokens.length > 0)}
             onNavigateTab={setTab}
           />
