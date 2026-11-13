@@ -1,10 +1,16 @@
 
 "use client";
 
-import { BookOpen, Trash2, PlusCircle, Pencil, Coffee, Filter, X, Share2, Star, Target, Image as ImageIcon } from "lucide-react";
+import { BookOpen, Trash2, PlusCircle, Pencil, Coffee, Filter, X, Share2, Star, Target, Image as ImageIcon, MoreVertical } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useEffect, useState, useMemo } from "react";
 import { collection, onSnapshot, query, orderBy, doc } from "firebase/firestore";
 import { db, auth } from "@/firebase-config";
@@ -216,7 +222,7 @@ export function BeanLibrary({ sharedBeans, sharedGeneralSettings }: BeanLibraryP
 
   const handleShare = async (bean: SavedBean) => {
     const shareUrl = buildBeanShareUrl(bean);
-    const shareText = `המלצת קפה מהספרייה שלי ב-Barista Mate ☕:\n${bean.roasterName} - ${bean.beanName}${bean.grindSetting ? `\nדרגת טחינה: ${bean.grindSetting}` : ''}\nטעמים: ${bean.flavorTags?.join(', ') || 'אין טעמים מוגדרים'}\n\nלהוספה לספרייה שלך בלחיצה:\n${shareUrl}`;
+    const shareText = `הנה הכיול שעבד לי ל-${bean.beanName} של ${bean.roasterName} ☕${bean.grindSetting ? `\nדרגת טחינה: ${bean.grindSetting}` : ''}${bean.flavorTags && bean.flavorTags.length > 0 ? `\nטעמים: ${bean.flavorTags.join(', ')}` : ''}\n\nלחץ להוסיף ישר לרשימה שלך:\n${shareUrl}`;
     
     if (navigator.share) {
       try {
@@ -401,11 +407,11 @@ export function BeanLibrary({ sharedBeans, sharedGeneralSettings }: BeanLibraryP
                             )}
                         </div>
                     </div>
-                    <div className="flex gap-1 flex-shrink-0 flex-wrap justify-end">
+                    <div className="flex gap-1 flex-shrink-0 flex-wrap justify-end items-center">
                         <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 shrink-0 text-[#EAE0D5]/60 hover:text-[#C67C4E]"
+                        className="h-8 w-8 shrink-0 text-[#EAE0D5]/70 hover:text-[#C67C4E]"
                         onClick={() => handleShareCardImage(bean)}
                         aria-label="שתף כתמונה"
                         title="שתף כתמונה"
@@ -415,30 +421,43 @@ export function BeanLibrary({ sharedBeans, sharedGeneralSettings }: BeanLibraryP
                         <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 shrink-0 text-[#EAE0D5]/60 hover:text-[#C67C4E]"
+                        className="h-8 w-8 shrink-0 text-[#EAE0D5]/70 hover:text-[#C67C4E]"
                         onClick={() => handleShare(bean)}
                         aria-label="שתף"
+                        title="שתף מתכון"
                         >
                         <Share2 className="h-4 w-4" />
                         </Button>
-                        <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 shrink-0 text-[#EAE0D5]/60 hover:text-[#C67C4E]"
-                        onClick={() => handleEdit(bean)}
-                        aria-label="ערוך"
-                        >
-                        <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 shrink-0 text-[#EAE0D5]/60 hover:text-red-300"
-                        onClick={() => handleDelete(bean.id)}
-                        aria-label="מחק"
-                        >
-                        <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 shrink-0 text-[#EAE0D5]/60 hover:text-[#EAE0D5]"
+                              aria-label="אפשרויות נוספות"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-[#1F1712] border-[#3E2C22] text-[#EAE0D5]">
+                            <DropdownMenuItem
+                              onClick={() => handleEdit(bean)}
+                              aria-label="ערוך"
+                              className="cursor-pointer focus:bg-[#3E2C22] focus:text-[#EAE0D5]"
+                            >
+                              <Pencil className="h-4 w-4 ml-2" />
+                              <span>ערוך</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDelete(bean.id)}
+                              aria-label="מחק"
+                              className="cursor-pointer text-red-400 focus:bg-[#3E2C22] focus:text-red-300"
+                            >
+                              <Trash2 className="h-4 w-4 ml-2" />
+                              <span>מחק</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
                 

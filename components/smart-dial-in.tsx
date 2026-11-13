@@ -2,19 +2,20 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Calculator, BookMarked, Timer, Play, Square, Target, Check } from "lucide-react";
+import { Calculator, BookMarked, Timer, Play, Square, Target, Check, Share2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { calculateSmartDialIn, type DialInResult, type DrinkType } from "@/lib/dial-in";
-import { saveLastShot, updateBean } from "@/lib/firestore";
+import { saveLastShot, updateBean, getRecentShots } from "@/lib/firestore";
+import { buildBeanShareUrl } from "@/lib/share-card";
 import { signInWithGoogle } from "@/lib/auth";
 import { db, auth } from "@/firebase-config";
 import { doc, getDoc } from "firebase/firestore";
 import { AddBeanDialog } from "@/components/add-bean-dialog";
 import { RoastRatingInput } from "@/components/roast-rating-input";
 import { cn } from "@/lib/utils";
-import type { SavedBean, RoastLevel } from "@/lib/types";
+import type { SavedBean, RoastLevel, DialInRecord } from "@/lib/types";
 import { Label } from "./ui/label";
 
 import { RistrettoIcon } from "./ui/ristretto-icon";
@@ -56,6 +57,9 @@ export function SmartDialIn({ activeBean, isDemo = false }: SmartDialInProps = {
     const [roastLevel, setRoastLevel] = useState<number>(activeBean?.roastLevel || 0);
     const [grindInput, setGrindInput] = useState<string>(activeBean?.grindSetting || "");
     const [grindSaved, setGrindSaved] = useState(false);
+    const [doseGrams, setDoseGrams] = useState<string>(activeBean?.dose ? String(activeBean.dose) : "");
+    const [yieldGrams, setYieldGrams] = useState<string>("");
+    const [recentShots, setRecentShots] = useState<DialInRecord[]>([]);
 
     useEffect(() => {
         if (activeBean) {
@@ -97,10 +101,21 @@ export function SmartDialIn({ activeBean, isDemo = false }: SmartDialInProps = {
         fetchLastShot();
     }, []);
 
+    useEffect(() => {
+        if (!auth.currentUser || isDemo) return;
+        getRecentShots?.(activeBean?.id || null).then((shots) => {
+            if (Array.isArray(shots)) {
+                setRecentShots(shots);
+            }
+        });
+    }, [activeBean?.id, isDemo]);
+
   const handleCalculate = useCallback((finalTime: number) => {
     if (!drinkType || roastLevel === 0) return;
     const res = calculateSmartDialIn(drinkType, roastLevel, finalTime);
     setResult(res);
+    const parsedDose = doseGrams ? parseFloat(doseGrams) : undefined;
+    const parsedYield = yieldGrams ? parseFloat(yieldGrams) : undefined;
     const newShot = {
         drinkType,
         roastLevel,
@@ -108,12 +123,16 @@ export function SmartDialIn({ activeBean, isDemo = false }: SmartDialInProps = {
         targetTime: res.targetTime,
         feedback: res.feedback,
         advice: res.advice,
+        ...(parsedDose && parsedDose > 0 ? { dose: parsedDose } : {}),
+        ...(parsedYield && parsedYield > 0 ? { yieldGrams: parsedYield } : {}),
+        ...(activeBean?.id ? { beanId: activeBean.id } : {}),
     };
     if (!isDemo) {
       saveLastShot(newShot);
+      setRecentShots((prev) => [{ ...newShot, createdAt: new Date().toISOString() }, ...prev].slice(0, 5));
     }
     setLastShot(newShot);
-  }, [drinkType, roastLevel, isDemo]);
+  }, [drinkType, roastLevel, isDemo, doseGrams, yieldGrams, activeBean?.id]);
 
   const handleTimerToggle = () => {
     if (isTimerRunning) {
@@ -162,6 +181,42 @@ export function SmartDialIn({ activeBean, isDemo = false }: SmartDialInProps = {
     setGrindSaved(true);
     setTimeout(() => setGrindSaved(false), 2500);
   };
+
+  const handleSharePerfectShot = async () => {
+    if (!result) return;
+    const ratioNum =
+      doseGrams && yieldGrams && parseFloat(doseGrams) > 0 && parseFloat(yieldGrams) > 0
+        ? ` (יחס 1:${(parseFloat(yieldGrams) / parseFloat(doseGrams)).toFixed(1)})`
+        : '';
+    const shareUrl = activeBean
+      ? buildBeanShareUrl({
+          roasterName: activeBean.roasterName,
+          beanName: activeBean.beanName,
+          roastLevel: activeBean.roastLevel,
+          grindSetting: grindInput.trim() || activeBean.grindSetting,
+          flavorTags: activeBean.flavorTags,
+        })
+      : 'https://barista-mate.vercel.app/';
+
+    const text = activeBean
+      ? `פגעתי בול עם ${activeBean.beanName} (${activeBean.roasterName}) ב-${result.actualTime.toFixed(1)} שניות${ratioNum}! ☕\n${grindInput.trim() ? `דרגת טחינה: ${grindInput.trim()}\n` : ''}לחץ להוסיף את המתכון לספרייה שלך:\n${shareUrl}`
+      : `חילוץ מושלם של ${translateDrinkType(drinkType || 'espresso')} ב-${result.actualTime.toFixed(1)} שניות${ratioNum} עם Barista Mate ☕\n${shareUrl}`;
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({ title: 'מתכון אספרסו מוצלח - Barista Mate', text, url: shareUrl });
+      } catch {
+        // User cancelled share
+      }
+    } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      await navigator.clipboard.writeText(text);
+      alert('המתכון הועתק ללוח!');
+    }
+  };
+
+  const parsedDose = doseGrams ? parseFloat(doseGrams) : 0;
+  const parsedYield = yieldGrams ? parseFloat(yieldGrams) : 0;
+  const liveRatio = parsedDose > 0 && parsedYield > 0 ? (parsedYield / parsedDose).toFixed(1) : null;
 
   const handleDialogClose = () => {
     setAddBeanOpen(false);
@@ -216,6 +271,38 @@ export function SmartDialIn({ activeBean, isDemo = false }: SmartDialInProps = {
             <Label className="mb-3 block">2. דרגת קלייה</Label>
             <RoastRatingInput rating={roastLevel} onRatingChange={setRoastLevel} />
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="dial-dose" className="text-xs text-[#EAE0D5]/80">מנת קפה (גרם · אופציונלי)</Label>
+              <Input
+                id="dial-dose"
+                type="number"
+                step="0.1"
+                placeholder="למשל 18"
+                value={doseGrams}
+                onChange={(e) => setDoseGrams(e.target.value)}
+                className="mt-1 h-9 bg-[#1F1712] border-[#3E2C22]"
+              />
+            </div>
+            <div>
+              <Label htmlFor="dial-yield" className="text-xs text-[#EAE0D5]/80">משקל משקה (גרם · אופציונלי)</Label>
+              <Input
+                id="dial-yield"
+                type="number"
+                step="0.1"
+                placeholder="למשל 36"
+                value={yieldGrams}
+                onChange={(e) => setYieldGrams(e.target.value)}
+                className="mt-1 h-9 bg-[#1F1712] border-[#3E2C22]"
+              />
+            </div>
+          </div>
+          {liveRatio && (
+            <p className="text-xs text-center text-[#C67C4E] font-medium">
+              יחס חליטה: <strong>1:{liveRatio}</strong> ({parsedDose}g → {parsedYield}g)
+            </p>
+          )}
           
           <div className="text-center space-y-4">
             <Button onClick={handleTimerToggle} disabled={!isReady} size="lg" className="h-24 w-24 rounded-full flex-col gap-1 shadow-lg">
@@ -257,7 +344,18 @@ export function SmartDialIn({ activeBean, isDemo = false }: SmartDialInProps = {
                   </Button>
                 </div>
               )}
-              <div className="flex justify-center pt-2">
+              <div className="flex flex-wrap justify-center gap-2 pt-2">
+                {result.feedback === 'perfect' && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="bg-[#C67C4E] text-white hover:bg-[#C67C4E]/90"
+                    onClick={handleSharePerfectShot}
+                  >
+                    <Share2 className="h-4 w-4 ml-2" />
+                    שתף מתכון מוצלח ☕
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -267,6 +365,25 @@ export function SmartDialIn({ activeBean, isDemo = false }: SmartDialInProps = {
                   <BookMarked className="h-4 w-4 ml-2" />
                   שמור הגדרה לספרייה
                 </Button>
+              </div>
+            </div>
+          )}
+
+          {recentShots.length > 0 && (
+            <div className="pt-3 border-t border-[#3E2C22]/60 space-y-2">
+              <p className="text-xs font-medium text-[#EAE0D5]/70">
+                {activeBean ? `היסטוריית חליטות (${activeBean.beanName})` : 'חליטות אחרונות'}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {recentShots.map((shot, i) => (
+                  <span
+                    key={i}
+                    className="rounded-lg border border-[#3E2C22] bg-[#0f0a08]/60 px-2.5 py-1 text-xs text-[#EAE0D5]/80"
+                  >
+                    {translateDrinkType(shot.drinkType)} · {Number(shot.time).toFixed(1)}s
+                    {shot.dose && shot.yieldGrams ? ` · ${shot.dose}g→${shot.yieldGrams}g` : ''}
+                  </span>
+                ))}
               </div>
             </div>
           )}

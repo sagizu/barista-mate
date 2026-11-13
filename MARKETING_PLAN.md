@@ -55,3 +55,13 @@
     - Added Firebase Analytics event tracking (`lib/analytics.ts`) for `landing_view`, `signin_google`, `signin_guest`, and `explore_view`.
   - [ ] **Community Launch Playbook (Non-Code)**:
     - Post the new visual preview + direct link in Israeli home-espresso Facebook groups, Telegram/WhatsApp coffee communities, and Reddit/forums after Phase 1 & 2 ship.
+
+- [x] **Phase 5 (Viral UX, Display Polish & Shot Ratio/History)** *(Completed & Tested)*
+  - [x] **Clean Up Mobile Top Banners & Bean Card Actions**:
+    - Show at most one top-of-page banner (`OnboardingChecklist` takes priority over `PwaInstallBanner`) so the primary tools stay above the fold.
+    - Group secondary bean card actions (`ערוך`, `מחק`) into a clean `⋮` menu while keeping **Share** prominent, and frame bean share text as a helpful friend-to-friend recipe tip.
+  - [x] **Surface Caffeine Passport, Taste Profile & Badges**:
+    - Expose **מדד קפאין** directly from the Dashboard header, compute the user's **taste personality** (preferred roast & top flavor notes), and display unlockable barista badges (*טועם מתחיל*, *חוקר בתי קלייה*, *אספן*).
+  - [x] **Aha! Moment Share Trigger, Dose/Yield Ratio & Shot History**:
+    - Add a **"שתף מתכון מוצלח ☕"** button when `SmartDialIn` hits `perfect`.
+    - Add optional `dose` (גרם קפה) and `yieldGrams` (משקל משקה) inputs with live ratio (`1:2.0`) and per-bean shot history (last 5 shots).

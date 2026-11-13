@@ -18,6 +18,8 @@ export interface DialInRecord {
   advice: string;
   grindSetting?: string;
   dose?: number;
+  yieldGrams?: number;
+  beanId?: string | null;
   createdAt: string;
 }
 

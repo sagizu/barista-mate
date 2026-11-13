@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from "react";
-import { Coffee, Settings, User, LogOut, MessageSquare } from "lucide-react";
+import { Coffee, Settings, User, LogOut, MessageSquare, Award } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { db } from '../firebase-config';
 import { signOut } from 'firebase/auth';
@@ -41,12 +41,14 @@ import { FeedbackForm } from "./feedback-form";
 import { FeatureAnnouncement } from "./feature-announcement";
 import { PwaInstallBanner } from "./pwa-install-banner";
 import { OnboardingChecklist } from "./onboarding-checklist";
+import { CoffeePassport } from "./coffee-passport";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [tab, setTab] = useState("beans");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [passportOpen, setPassportOpen] = useState(false);
   const [pulseClass, setPulseClass] = useState("animate-soft-pulse-initial");
   const [feedbackSent, setFeedbackSent] = useState(false);
 
@@ -260,6 +262,17 @@ return (
             </div>
             {/* Right side: Actions and User Menu */}
             <div className="flex items-center gap-1 shrink-0">
+              {user && !user.isAnonymous && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPassportOpen(true)}
+                  className="hidden sm:inline-flex items-center gap-1.5 text-xs text-[#E6D2B5] hover:bg-[#3E2C22]/50 rounded-full px-3"
+                >
+                  <Award className="h-4 w-4 text-[#C67C4E]" />
+                  <span>מדד קפאין</span>
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
@@ -322,6 +335,15 @@ return (
         </header>
 
         <FeatureAnnouncement />
+
+      <Dialog open={passportOpen} onOpenChange={setPassportOpen}>
+        <DialogContent className="bg-[#1F1712] border-[#3E2C22]">
+          <DialogHeader>
+            <DialogTitle>מדד הקפאין שלי</DialogTitle>
+          </DialogHeader>
+          <CoffeePassport userBeans={beans} userName={user?.displayName} />
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
         <DialogContent className="bg-[#1F1712] border-[#3E2C22]">
@@ -400,14 +422,15 @@ return (
       )}
 
       <main className="flex-1 w-full container mx-auto px-4 py-8 max-w-7xl">
-        <PwaInstallBanner />
-        {beansLoaded && userData !== null && (
+        {beansLoaded && userData !== null && !(beans.length > 0 && hasDialIn && (Boolean(userData?.pushToken) || (Array.isArray(userData?.pushTokens) && userData.pushTokens.length > 0))) ? (
           <OnboardingChecklist
             hasBean={beans.length > 0}
             hasDialIn={hasDialIn}
             hasPush={Boolean(userData?.pushToken) || (Array.isArray(userData?.pushTokens) && userData.pushTokens.length > 0)}
             onNavigateTab={setTab}
           />
+        ) : (
+          <PwaInstallBanner />
         )}
         <Tabs value={tab} onValueChange={setTab} className="w-full flex flex-col items-center">
           <TabsList className="grid w-full h-auto grid-cols-3 gap-2 sm:h-10 max-w-xl mb-6">

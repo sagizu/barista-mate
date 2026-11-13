@@ -52,6 +52,8 @@ rules_version = '2';
 //   - advice: string (required, <= 500 chars)
 //   - grindSetting: string (optional, <= 200 chars)
 //   - dose: number (optional, > 0)
+//   - beanId: string | null (optional, <= 200 chars)
+//   - yieldGrams: number | null (optional, > 0)
 //   - createdAt: timestamp | string (optional)
 //
 // Subcollection: users/{userId}/roasters/{docId}
@@ -183,6 +185,8 @@ service cloud.firestore {
                'advice',
                'grindSetting',
                'dose',
+               'beanId',
+               'yieldGrams',
                'createdAt'
              ]) &&
              data.drinkType is string && data.drinkType.size() <= 50 &&
@@ -192,7 +196,9 @@ service cloud.firestore {
              data.feedback is string && data.feedback.size() <= 50 &&
              data.advice is string && data.advice.size() <= 500 &&
              isValidOptionalNullableString(data, 'grindSetting', 200) &&
-             (!('dose' in data) || data.dose == null || (data.dose is number && data.dose > 0));
+             (!('dose' in data) || data.dose == null || (data.dose is number && data.dose > 0)) &&
+             isValidOptionalNullableString(data, 'beanId', 200) &&
+             (!('yieldGrams' in data) || data.yieldGrams == null || (data.yieldGrams is number && data.yieldGrams > 0));
     }
 
     function isValidPrivateRoasters(data) {

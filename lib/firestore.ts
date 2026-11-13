@@ -1,6 +1,6 @@
 
 import { auth, db } from "@/firebase-config";
-import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, setDoc, getDoc, arrayUnion, query, where, getDocs, arrayRemove, deleteField } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, setDoc, getDoc, arrayUnion, query, where, getDocs, arrayRemove, deleteField, orderBy, limit } from "firebase/firestore";
 import type { SavedBean, MaintenanceDates, GeneralSettings, DialInRecord } from "./types";
 const getBeansCollection = () => {
     const user = auth.currentUser;
@@ -157,18 +157,45 @@ export const updateMaintenanceFrequencies = async (frequencies: {[key: string]: 
 
 
 
-// Save the last shot record
+// Save the last shot record and append to shot history
 export const saveLastShot = async (record: Omit<DialInRecord, 'createdAt'>) => {
     try {
         const user = auth.currentUser;
         if (!user) throw new Error("User not authenticated");
+        const cleanRecord = Object.fromEntries(
+            Object.entries(record).filter(([, v]) => v !== undefined)
+        );
         const lastShotRef = doc(db, 'users', user.uid, 'lastShot', 'current');
-        return await setDoc(lastShotRef, {
-            ...record,
+        await setDoc(lastShotRef, {
+            ...cleanRecord,
+            createdAt: serverTimestamp()
+        });
+        const historyCol = collection(db, 'users', user.uid, 'lastShot');
+        await addDoc(historyCol, {
+            ...cleanRecord,
             createdAt: serverTimestamp()
         });
     } catch (error) {
         handleError(error, 'saveLastShot');
+    }
+};
+
+export const getRecentShots = async (beanId?: string | null): Promise<DialInRecord[]> => {
+    try {
+        const user = auth.currentUser;
+        if (!user) return [];
+        const historyCol = collection(db, 'users', user.uid, 'lastShot');
+        const q = beanId
+            ? query(historyCol, where('beanId', '==', beanId), orderBy('createdAt', 'desc'), limit(5))
+            : query(historyCol, orderBy('createdAt', 'desc'), limit(6));
+        const snapshot = await getDocs(q);
+        return snapshot.docs
+            .filter((d) => d.id !== 'current')
+            .slice(0, 5)
+            .map((d) => d.data() as DialInRecord);
+    } catch (error: any) {
+        if (error?.code === 'permission-denied') return [];
+        return [];
     }
 };
 

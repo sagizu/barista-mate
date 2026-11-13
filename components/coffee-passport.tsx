@@ -1,8 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
 import type { SavedBean } from "@/lib/types";
-import { Coffee, Store, Award, Share2, Image as ImageIcon } from "lucide-react";
+import { Coffee, Store, Award, Share2, Image as ImageIcon, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { generatePassportShareImage, shareImageOrDownload } from "@/lib/share-card";
 
 interface CoffeePassportProps {
@@ -14,8 +16,52 @@ export function CoffeePassport({ userBeans = [], userName }: CoffeePassportProps
   const totalBeans = userBeans.length;
   const uniqueRoasters = new Set(userBeans.map(b => b.roasterName).filter(Boolean)).size;
 
+  const tasteProfile = useMemo(() => {
+    if (userBeans.length === 0) return null;
+    const flavorCounts: Record<string, number> = {};
+    let roastSum = 0;
+    let roastCount = 0;
+
+    userBeans.forEach((b) => {
+      if (b.roastLevel) {
+        roastSum += b.roastLevel;
+        roastCount++;
+      }
+      b.flavorTags?.forEach((t) => {
+        flavorCounts[t] = (flavorCounts[t] || 0) + 1;
+      });
+    });
+
+    const avgRoast = roastCount > 0 ? Math.round(roastSum / roastCount) : null;
+    const roastLabel =
+      avgRoast === null
+        ? null
+        : avgRoast <= 2
+        ? 'קלייה בהירה'
+        : avgRoast === 3
+        ? 'קלייה בינונית'
+        : 'קלייה כהה';
+
+    const topFlavors = Object.entries(flavorCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 2)
+      .map(([tag]) => tag);
+
+    const parts = [roastLabel, topFlavors.length > 0 ? topFlavors.join(' ו') : null].filter(Boolean);
+    return parts.length > 0 ? parts.join(' · ') : null;
+  }, [userBeans]);
+
+  const unlockedBadges = useMemo(() => {
+    const badges: string[] = [];
+    if (totalBeans >= 1) badges.push('טועם מתחיל');
+    if (uniqueRoasters >= 3) badges.push('חוקר בתי קלייה');
+    if (totalBeans >= 5) badges.push('אספן קפה');
+    return badges;
+  }, [totalBeans, uniqueRoasters]);
+
   const handleShare = async () => {
-    const text = `מדד הקפאין שלי ב-Barista Mate ☕\n\n${totalBeans} סוגי פולים באוסף\n${uniqueRoasters} בתי קלייה\n\nבואו לנהל את אוסף הקפה שלכם!\nhttps://barista-mate.vercel.app/`;
+    const profileLine = tasteProfile ? `\nסגנון הקפה שלי: ${tasteProfile}` : '';
+    const text = `מדד הקפאין שלי ב-Barista Mate ☕\n\n${totalBeans} סוגי פולים באוסף\n${uniqueRoasters} בתי קלייה${profileLine}\n\nבואו לבדוק מה סגנון הקפה שלכם:\nhttps://barista-mate.vercel.app/`;
     
     if (navigator.share) {
       try {
@@ -104,6 +150,28 @@ export function CoffeePassport({ userBeans = [], userName }: CoffeePassportProps
           <Store className="h-5 w-5 text-[#E07A5F] opacity-80" />
         </div>
       </div>
+
+      {tasteProfile && (
+        <div className="relative z-10 flex items-center gap-2 rounded-lg border border-[#C67C4E]/30 bg-[#1F1712]/70 px-3 py-2 text-xs text-[#E6D2B5] mb-2">
+          <Sparkles className="h-3.5 w-3.5 text-[#C67C4E] shrink-0" />
+          <span>סגנון הקפה שלך: <strong>{tasteProfile}</strong></span>
+        </div>
+      )}
+
+      {unlockedBadges.length > 0 && (
+        <div className="relative z-10 flex flex-wrap gap-1.5 pt-1">
+          {unlockedBadges.map((badge) => (
+            <Badge
+              key={badge}
+              variant="outline"
+              className="border-[#C67C4E]/40 bg-[#C67C4E]/10 text-[#E6D2B5] text-[11px]"
+            >
+              <Award className="h-3 w-3 ml-1 text-[#C67C4E]" />
+              {badge}
+            </Badge>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

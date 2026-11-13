@@ -11,6 +11,7 @@ import { AddBeanDialog } from '@/components/add-bean-dialog';
 vi.mock('@/lib/firestore', () => ({
   saveLastShot: vi.fn(),
   updateBean: vi.fn(),
+  getRecentShots: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock('firebase/firestore', async () => {
