@@ -106,7 +106,7 @@ describe('AddBeanDialog', () => {
   });
 
   test('should edit an existing bean', async () => {
-    const beanToEdit = { id: '1', beanName: 'פול ישן', roasterName: 'קפה רות', grindSetting: '4', roastLevel: 2 };
+    const beanToEdit = { id: '1', beanName: 'פול ישן', roasterName: 'קפה רות', grindSetting: '4', roastLevel: 2 as const };
     render(<AddBeanDialog open={true} onOpenChange={() => { }} onBeanAdded={onBeanAdded} beanToEdit={beanToEdit} onDialogClose={onDialogClose} />);
 
     const dialog = screen.getByRole('dialog', { name: /ערוך פול קיים/i });

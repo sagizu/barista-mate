@@ -51,14 +51,14 @@ const mockUser = {
 } as User;
 
 beforeEach(() => {
-  vi.spyOn(fs, 'onSnapshot').mockImplementation((ref: any, callback: (snapshot: any) => void) => {
+  vi.spyOn(fs, 'onSnapshot').mockImplementation(((ref: any, callback: (snapshot: any) => void) => {
     if (ref.type === 'document') {
         callback({ exists: () => true, data: () => ({ settings: { general: mockSettings }, preferences: {} }) });
     } else if (ref.type === 'query') {
         callback({ docs: mockBeans.map(bean => ({ id: bean.id, data: () => bean })) });
     }
     return () => {}; // Return an unsubscribe function
-  });
+  }) as any);
   vi.spyOn(fs, 'doc').mockImplementation(() => ({ type: 'document' }) as any);
   vi.spyOn(fs, 'collection').mockImplementation(() => ({ type: 'collection' }) as any);
   vi.spyOn(fs, 'query').mockImplementation(() => ({ type: 'query' }) as any);

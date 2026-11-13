@@ -56,6 +56,8 @@ export default function Dashboard() {
 
   
   const [beans, setBeans] = useState<SavedBean[]>([]);
+  const [beansLoaded, setBeansLoaded] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
   const [settings, setSettings] = useState<GeneralSettings>({});
   const [settingsInput, setSettingsInput] = useState<GeneralSettings | null>(null);
   const [maintenanceFrequencies, setMaintenanceFrequencies] = useState<{[key: string]: number | ''}>({
@@ -64,11 +66,16 @@ export default function Dashboard() {
     lastBackflush: 60,
   });
   const [maintenanceDates, setMaintenanceDates] = useState<any>({});
+  const [maintenanceLoaded, setMaintenanceLoaded] = useState(false);
 
   useEffect(() => {
     if (!user) {
       setBeans([]);
+      setBeansLoaded(false);
+      setUserData(null);
       setSettings({});
+      setMaintenanceDates({});
+      setMaintenanceLoaded(false);
       return;
     }
 
@@ -87,11 +94,14 @@ export default function Dashboard() {
     const userRef = doc(db, 'users', user.uid);
     const unsubscribeUser = onSnapshot(userRef, (snapshot) => {
         if (snapshot.exists()) {
-            const userData = snapshot.data();
-            setSettings(userData.settings?.general || {});
-            if (userData.preferences?.maintenanceFrequencies) {
-                setMaintenanceFrequencies(userData.preferences.maintenanceFrequencies);
+            const data = snapshot.data();
+            setUserData(data);
+            setSettings(data.settings?.general || {});
+            if (data.preferences?.maintenanceFrequencies) {
+                setMaintenanceFrequencies(data.preferences.maintenanceFrequencies);
             }
+        } else {
+            setUserData({});
         }
     }, (error) => {
         if (error.code === 'permission-denied') return;
@@ -104,6 +114,7 @@ export default function Dashboard() {
     const unsubscribeBeans = onSnapshot(q, (snapshot) => {
       const beansData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as SavedBean));
       setBeans(beansData);
+      setBeansLoaded(true);
     }, (error) => {
         if (error.code === 'permission-denied') return;
         console.error("Dashboard beans error:", error);
@@ -117,6 +128,7 @@ export default function Dashboard() {
       } else {
         setMaintenanceDates({});
       }
+      setMaintenanceLoaded(true);
     }, (error) => {
         if (error.code === 'permission-denied') return;
     });
@@ -387,13 +399,19 @@ return (
             </TabsTrigger>
           </TabsList>
           <TabsContent value="beans" className="w-full mt-0 overflow-y-auto">
-            <BeanLibrary />
+            <BeanLibrary
+              sharedBeans={beansLoaded ? beans : undefined}
+              sharedGeneralSettings={userData !== null ? settings : undefined}
+            />
           </TabsContent>
           <TabsContent value="dial-in" className="w-full mt-0">
             <SmartDialIn />
           </TabsContent>
           <TabsContent value="maintenance" className="w-full mt-0">
-            <MaintenanceLog />
+            <MaintenanceLog
+              sharedDates={maintenanceLoaded ? maintenanceDates : undefined}
+              sharedUserData={userData !== null ? userData : undefined}
+            />
           </TabsContent>
         </Tabs>
       </main>

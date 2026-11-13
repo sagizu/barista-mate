@@ -81,7 +81,7 @@ describe('SmartDialIn', () => {
 
   test('displays feedback after calculation', async () => {
     const user = userEvent.setup();
-    const mockResult = {
+    const mockResult: dialIn.DialInResult = {
       feedback: 'perfect',
       message: 'חילוץ מעולה!',
       advice: '',

@@ -64,7 +64,12 @@ function MaintenanceLogSkeleton() {
   );
 }
 
-export function MaintenanceLog() {
+interface MaintenanceLogProps {
+  sharedDates?: MaintenanceDates;
+  sharedUserData?: any;
+}
+
+export function MaintenanceLog({ sharedDates, sharedUserData }: MaintenanceLogProps = {}) {
   const [dates, setDates] = useState<MaintenanceDates>({});
   const [loading, setLoading] = useState(true);
   const [showDashboard, setShowDashboard] = useState(false);
@@ -79,6 +84,46 @@ export function MaintenanceLog() {
   const hasSyncedTokenRef = useRef(false);
 
   useEffect(() => {
+    if (sharedUserData === undefined) return;
+    const data = sharedUserData || {};
+    setUserPreferences(data.preferences || {});
+
+    const hasFirestoreToken =
+      Boolean(data.pushToken) ||
+      (Array.isArray(data.pushTokens) && data.pushTokens.length > 0);
+    const isBrowserPermissionGranted =
+      typeof window !== 'undefined' && 'Notification' in window
+        ? Notification.permission === 'granted'
+        : true;
+
+    const enabled = hasFirestoreToken && isBrowserPermissionGranted;
+    setPushEnabled(enabled);
+
+    const user = auth.currentUser;
+    if (
+      user &&
+      enabled &&
+      !hasSyncedTokenRef.current &&
+      typeof window !== 'undefined' &&
+      'Notification' in window &&
+      Notification.permission === 'granted'
+    ) {
+      hasSyncedTokenRef.current = true;
+      syncPushTokenIfPermitted(user.uid);
+    }
+  }, [sharedUserData]);
+
+  useEffect(() => {
+    if (sharedDates === undefined) return;
+    setDates(sharedDates || {});
+    setLoading(false);
+  }, [sharedDates]);
+
+  useEffect(() => {
+    if (sharedDates !== undefined && sharedUserData !== undefined) {
+      return;
+    }
+
     const user = auth.currentUser;
     if (!user) {
       setLoading(false);
@@ -146,7 +191,7 @@ export function MaintenanceLog() {
       unsubUser();
       unsubMaintenance();
     };
-  }, []);
+  }, [sharedDates !== undefined, sharedUserData !== undefined]);
 
   const handleDateChange = (key: keyof MaintenanceDates, value: string) => {
     setDates((prev) => ({ ...prev, [key]: value })); // Optimistic update

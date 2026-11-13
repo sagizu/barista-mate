@@ -41,10 +41,10 @@
   - [x] Delete Firebase Storage images inside `deleteUserData()` in `lib/user-service.ts`.
   - [x] Revoke blob preview URLs (`URL.revokeObjectURL`) in `components/add-bean-dialog.tsx`.
 
-- [ ] **Task 7 (Priority 4 — Code Quality & CI): Fix Test Suite TypeScript Errors & Deduplicate Firestore Listeners**
-  - [ ] Resolve all TypeScript errors in `components/__tests__/*` and include tests in `tsconfig.json`.
-  - [ ] Consolidate duplicate Firestore `onSnapshot` listeners across `Dashboard`, `BeanLibrary`, and `MaintenanceLog`.
-  - [ ] Update `.github/workflows/ci.yml` to run `vitest run` and `npm run build`.
+- [x] **Task 7 (Priority 4 — Code Quality & CI): Fix Test Suite TypeScript Errors & Deduplicate Firestore Listeners** *(Completed & Tested)*
+  - [x] Resolve all TypeScript errors in `components/__tests__/*` and include tests in `tsconfig.json`.
+  - [x] Consolidate duplicate Firestore `onSnapshot` listeners across `Dashboard`, `BeanLibrary`, and `MaintenanceLog`.
+  - [x] Update `.github/workflows/ci.yml` to run `vitest run` and `npm run build`.
 
 - [ ] **Task 8 (Priority 4 — Feature Enhancements): Smart Dial-In Active Bean Sync, Freshness Window & Quick-Add**
   - [ ] Pre-fill `SmartDialIn` from the active bean and allow one-tap grind setting update.

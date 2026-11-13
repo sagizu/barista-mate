@@ -10,7 +10,7 @@ import { collection, onSnapshot, query, orderBy, doc } from "firebase/firestore"
 import { db, auth } from "@/firebase-config";
 import { deleteBean, updateGeneralSettings } from "@/lib/firestore";
 import { format } from "date-fns";
-import type { SavedBean } from "@/lib/types";
+import type { SavedBean, GeneralSettings } from "@/lib/types";
 import { AddBeanDialog } from "@/components/add-bean-dialog";
 import { HybridDateInput } from "@/components/hybrid-date-input";
 import { RoastRatingInput } from "./roast-rating-input";
@@ -58,7 +58,27 @@ function BeanLibrarySkeleton() {
   );
 }
 
-export function BeanLibrary() {
+interface BeanLibraryProps {
+  sharedBeans?: SavedBean[];
+  sharedGeneralSettings?: GeneralSettings;
+}
+
+const sortBeansByRoasterAndName = (list: SavedBean[]) => {
+  return [...list].sort((a, b) => {
+    const roasterNameA = a.roasterName?.toLowerCase() || '';
+    const roasterNameB = b.roasterName?.toLowerCase() || '';
+    const beanNameA = a.beanName?.toLowerCase() || '';
+    const beanNameB = b.beanName?.toLowerCase() || '';
+
+    if (roasterNameA < roasterNameB) return -1;
+    if (roasterNameA > roasterNameB) return 1;
+    if (beanNameA < beanNameB) return -1;
+    if (beanNameA > beanNameB) return 1;
+    return 0;
+  });
+};
+
+export function BeanLibrary({ sharedBeans, sharedGeneralSettings }: BeanLibraryProps = {}) {
   const [beans, setBeans] = useState<SavedBean[]>([]);
   const [filteredBeans, setFilteredBeans] = useState<SavedBean[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,6 +138,25 @@ export function BeanLibrary() {
   };
 
   useEffect(() => {
+    if (sharedGeneralSettings !== undefined) {
+      setActiveBeanId(sharedGeneralSettings.activeBeanId || null);
+      setActiveOpenedDate(sharedGeneralSettings.activeBeanOpenedDate || "");
+    }
+  }, [sharedGeneralSettings]);
+
+  useEffect(() => {
+    if (sharedBeans !== undefined) {
+      const sorted = sortBeansByRoasterAndName(sharedBeans);
+      setBeans(sorted);
+      setLoading(false);
+    }
+  }, [sharedBeans]);
+
+  useEffect(() => {
+    if (sharedBeans !== undefined && sharedGeneralSettings !== undefined) {
+      return;
+    }
+
     const user = auth.currentUser;
     if (!user) {
       setLoading(false);
@@ -134,21 +173,9 @@ export function BeanLibrary() {
     const beansRef = collection(db, "users", user.uid, "beans");
     const q = query(beansRef);
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      let beansFromDb = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as SavedBean));
-      
-      // Sort beans by roaster name then by bean name
-      beansFromDb.sort((a, b) => {
-        const roasterNameA = a.roasterName?.toLowerCase() || '';
-        const roasterNameB = b.roasterName?.toLowerCase() || '';
-        const beanNameA = a.beanName?.toLowerCase() || '';
-        const beanNameB = b.beanName?.toLowerCase() || '';
-
-        if (roasterNameA < roasterNameB) return -1;
-        if (roasterNameA > roasterNameB) return 1;
-        if (beanNameA < beanNameB) return -1;
-        if (beanNameA > beanNameB) return 1;
-        return 0;
-      });
+      const beansFromDb = sortBeansByRoasterAndName(
+        snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as SavedBean))
+      );
 
       setBeans(beansFromDb);
       setFilteredBeans(beansFromDb); // Initially, filtered beans are all beans
@@ -161,7 +188,7 @@ export function BeanLibrary() {
        unsubscribe();
        unsubscribeUser();
     }
-  }, []);
+  }, [sharedBeans !== undefined, sharedGeneralSettings !== undefined]);
 
   const handleSetActive = async (id: string | null) => {
      if (!auth.currentUser) return;

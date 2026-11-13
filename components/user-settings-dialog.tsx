@@ -35,10 +35,10 @@ import { CoffeePassport } from './coffee-passport';
 
 interface UserSettingsDialogProps {
   children: React.ReactNode;
-  userBeans: SavedBean[];
+  userBeans?: SavedBean[];
 }
 
-const UserSettingsDialog = ({ children, userBeans }: UserSettingsDialogProps) => {
+const UserSettingsDialog = ({ children, userBeans = [] }: UserSettingsDialogProps) => {
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [error, setError] = useState('');
@@ -59,7 +59,7 @@ const UserSettingsDialog = ({ children, userBeans }: UserSettingsDialogProps) =>
         batch.update(userDocRef, { displayName });
         await batch.commit();
     } catch (err) {
-      setError('Failed to update display name.');
+      setError('שגיאה בעדכון השם.');
       console.error(err);
     } finally {
         setIsSaving(false);
@@ -78,7 +78,7 @@ const UserSettingsDialog = ({ children, userBeans }: UserSettingsDialogProps) =>
         // Delete user from auth
         await user.delete();
     } catch (error) {
-        setError("Failed to delete account. Please try again.");
+        setError("שגיאה במחיקת החשבון. אנא נסה שוב.");
         console.error("Error deleting account:", error);
         setIsDeleting(false);
     }

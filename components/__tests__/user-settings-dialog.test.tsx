@@ -1,6 +1,6 @@
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { describe, test, expect, vi, beforeEach, type Mock } from 'vitest';
 import UserSettingsDialog from '../user-settings-dialog';
 import { useAuth } from '../../lib/auth-context';
 import { updateProfile } from 'firebase/auth';
@@ -8,7 +8,7 @@ import { deleteUserData } from '@/lib/user-service';
 
 // Mocks
 vi.mock('../../lib/auth-context');
-const mockUseAuth = useAuth as vi.Mock;
+const mockUseAuth = useAuth as Mock;
 
 vi.mock('@/lib/user-service', () => ({
     deleteUserData: vi.fn(),
@@ -49,7 +49,7 @@ describe('UserSettingsDialog', () => {
         vi.clearAllMocks();
         mockUseAuth.mockReturnValue({ user: mockUser });
         mockUser.delete.mockResolvedValue(undefined);
-        (updateProfile as vi.Mock).mockResolvedValue(undefined);
+        (updateProfile as Mock).mockResolvedValue(undefined);
     });
 
     test('should open the dialog and show user settings for a registered user', () => {

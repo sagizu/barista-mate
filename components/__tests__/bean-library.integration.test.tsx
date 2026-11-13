@@ -49,7 +49,7 @@ describe('BeanLibrary', () => {
   beforeEach(() => {
     // Reset mocks before each test
     vi.clearAllMocks();
-    (onSnapshot as vi.Mock).mockImplementation((queryOrRef, callback) => {
+    (onSnapshot as any).mockImplementation((queryOrRef: any, callback: any) => {
         if (queryOrRef?.type === 'document') {
            const userSnapshot = {
                exists: () => true,
@@ -121,13 +121,13 @@ describe('BeanLibrary', () => {
     
     fireEvent.click(screen.getByText('הצג סינון'));
     
-    let filterContent;
+    let filterContent: HTMLElement;
     await waitFor(() => {
-        filterContent = screen.getByText('סינון פולים').parentElement.parentElement;
+        filterContent = screen.getByText('סינון פולים').parentElement!.parentElement!;
     });
 
     await waitFor(() => {
-        fireEvent.click(within(filterContent).getByText('שוקולדי'));
+        fireEvent.click(within(filterContent!).getByText('שוקולדי'));
     });
 
     await waitFor(() => {
@@ -146,13 +146,13 @@ describe('BeanLibrary', () => {
     // Open filter and apply a filter
     fireEvent.click(screen.getByText('הצג סינון'));
     
-    let filterContent;
+    let filterContent: HTMLElement;
     await waitFor(() => {
-        filterContent = screen.getByText('סינון פולים').parentElement.parentElement;
+        filterContent = screen.getByText('סינון פולים').parentElement!.parentElement!;
     });
 
     await waitFor(() => {
-        fireEvent.click(within(filterContent).getByText('שוקולדי'));
+        fireEvent.click(within(filterContent!).getByText('שוקולדי'));
     });
 
     // Make sure filter is applied
@@ -161,7 +161,7 @@ describe('BeanLibrary', () => {
     });
 
     // Clear filters
-    fireEvent.click(within(filterContent).getByText('נקה'));
+    fireEvent.click(within(filterContent!).getByText('נקה'));
 
     await waitFor(() => {
       // Should display all roasteries again
@@ -172,7 +172,7 @@ describe('BeanLibrary', () => {
 
   it('renders the Spotlight Layout when an active bean exists', async () => {
     // Override the mock to return an active bean (id: '2', which is 'Y Blend' from 'A Roastery')
-    (onSnapshot as vi.Mock).mockImplementation((queryOrRef, callback) => {
+    (onSnapshot as any).mockImplementation((queryOrRef: any, callback: any) => {
         if (queryOrRef?.type === 'document') {
            const userSnapshot = {
                exists: () => true,
