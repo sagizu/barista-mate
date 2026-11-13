@@ -79,6 +79,8 @@ export const updateBean = async (id: string, updates: Partial<Omit<SavedBean, 'i
 // Delete a bean
 export const deleteBean = async (id: string) => {
     try {
+        const user = auth.currentUser;
+        if (!user) throw new Error("User not authenticated");
         const beansCollection = getBeansCollection();
         const beanRef = doc(beansCollection, id);
         
@@ -91,6 +93,24 @@ export const deleteBean = async (id: string) => {
                 const { deleteBeanImage } = await import('./storage');
                 await deleteBeanImage(beanData.imageUrl);
             }
+        }
+
+        // Clear activeBeanId if the deleted bean was currently active
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists() && userDoc.data()?.settings?.general?.activeBeanId === id) {
+            await setDoc(
+                userRef,
+                {
+                    settings: {
+                        general: {
+                            activeBeanId: null,
+                            activeBeanOpenedDate: "",
+                        },
+                    },
+                },
+                { merge: true }
+            );
         }
 
         return await deleteDoc(beanRef);

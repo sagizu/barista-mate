@@ -1,6 +1,7 @@
 import { db } from '@/firebase-config';
 import { doc, writeBatch, collection, getDocs, setDoc, serverTimestamp } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
+import { deleteBeanImage } from './storage';
 
 export const createUserDocument = async (user: User) => {
     const userDocRef = doc(db, 'users', user.uid);
@@ -28,9 +29,15 @@ export const deleteUserData = async (userId: string) => {
     for (const subcol of subcollections) {
         const colRef = collection(db, 'users', userId, subcol);
         const snapshot = await getDocs(colRef);
-        snapshot.forEach((doc) => {
-            batch.delete(doc.ref);
-        });
+        for (const docSnap of snapshot.docs) {
+            if (subcol === 'beans') {
+                const beanData = docSnap.data();
+                if (beanData?.imageUrl) {
+                    await deleteBeanImage(beanData.imageUrl);
+                }
+            }
+            batch.delete(docSnap.ref);
+        }
     }
 
     // Delete the user document itself

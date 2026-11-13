@@ -66,21 +66,44 @@ export function AddBeanDialog({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+  const revokeBlobPreview = (previewUrl: string | null) => {
+    if (previewUrl && previewUrl.startsWith("blob:") && typeof URL.revokeObjectURL === "function") {
+      URL.revokeObjectURL(previewUrl);
+    }
+  };
+
   useEffect(() => {
     if (open) {
       setImageFile(null);
       if (beanToEdit && beanToEdit.id) { // Check for a full bean to edit
         setBean(beanToEdit);
-        setImagePreview(beanToEdit.imageUrl || null);
+        setImagePreview((prev) => {
+          revokeBlobPreview(prev);
+          return beanToEdit.imageUrl || null;
+        });
       } else if (beanToEdit) { // Partial bean
         setBean({ ...beanToEdit, flavorTags: beanToEdit.flavorTags || []});
-        setImagePreview(null);
+        setImagePreview((prev) => {
+          revokeBlobPreview(prev);
+          return null;
+        });
       } else { // For new beans
         setBean({ flavorTags: [], roastLevel: null, rating: null });
-        setImagePreview(null);
+        setImagePreview((prev) => {
+          revokeBlobPreview(prev);
+          return null;
+        });
       }
     }
   }, [open, beanToEdit]);
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview && imagePreview.startsWith("blob:") && typeof URL.revokeObjectURL === "function") {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   const handleSave = async () => {
     setError(null);
@@ -163,7 +186,10 @@ export function AddBeanDialog({
     onDialogClose();
     setBean({ flavorTags: [], roastLevel: null, rating: null }); // Reset form state on close
     setImageFile(null);
-    setImagePreview(null);
+    setImagePreview((prev) => {
+      revokeBlobPreview(prev);
+      return null;
+    });
     setError(null);
   };
 
@@ -171,7 +197,11 @@ export function AddBeanDialog({
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+      const nextUrl = URL.createObjectURL(file);
+      setImagePreview((prev) => {
+        revokeBlobPreview(prev);
+        return nextUrl;
+      });
       // Reset the input value so the same file can be selected again if removed
       e.target.value = '';
     }
@@ -179,7 +209,10 @@ export function AddBeanDialog({
 
   const handleRemoveImage = () => {
     setImageFile(null);
-    setImagePreview(null);
+    setImagePreview((prev) => {
+      revokeBlobPreview(prev);
+      return null;
+    });
     setBean({ ...bean, imageUrl: null }); // Explicitly remove from bean state
   };
 

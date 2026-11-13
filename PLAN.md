@@ -36,10 +36,10 @@
   - [x] Align overdue day comparison (`>=` vs `>`) across UI and Cron.
   - [x] Fix truncated footer text in `components/dashboard.tsx`.
 
-- [ ] **Task 6 (Priority 3 — Data & Storage Integrity): Clean Up Orphaned Images & Dangling Active Bean**
-  - [ ] Clear `settings.general.activeBeanId` when deleting the active bean in `lib/firestore.ts`.
-  - [ ] Delete Firebase Storage images inside `deleteUserData()` in `lib/user-service.ts`.
-  - [ ] Revoke blob preview URLs (`URL.revokeObjectURL`) in `components/add-bean-dialog.tsx`.
+- [x] **Task 6 (Priority 3 — Data & Storage Integrity): Clean Up Orphaned Images & Dangling Active Bean** *(Completed & Tested)*
+  - [x] Clear `settings.general.activeBeanId` when deleting the active bean in `lib/firestore.ts`.
+  - [x] Delete Firebase Storage images inside `deleteUserData()` in `lib/user-service.ts`.
+  - [x] Revoke blob preview URLs (`URL.revokeObjectURL`) in `components/add-bean-dialog.tsx`.
 
 - [ ] **Task 7 (Priority 4 — Code Quality & CI): Fix Test Suite TypeScript Errors & Deduplicate Firestore Listeners**
   - [ ] Resolve all TypeScript errors in `components/__tests__/*` and include tests in `tsconfig.json`.
